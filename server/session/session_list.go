@@ -135,17 +135,26 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		model = []byte("{}")
 	}
 	return protocol.Skin{
-		PlayFabID:                 s.PlayFabID,
-		SkinID:                    uuid.New().String(),
-		SkinResourcePatch:         s.ModelConfig.Encode(),
-		SkinImageWidth:            uint32(s.Bounds().Max.X),
-		SkinImageHeight:           uint32(s.Bounds().Max.Y),
-		SkinData:                  s.Pix,
-		CapeImageWidth:            uint32(s.Cape.Bounds().Max.X),
-		CapeImageHeight:           uint32(s.Cape.Bounds().Max.Y),
-		CapeData:                  s.Cape.Pix,
-		SkinGeometry:              model,
-		PersonaSkin:               s.Persona,
+		PlayFabID:         s.PlayFabID,
+		SkinID:            uuid.New().String(),
+		SkinResourcePatch: s.ModelConfig.Encode(),
+		SkinImageWidth:    uint32(s.Bounds().Max.X),
+		SkinImageHeight:   uint32(s.Bounds().Max.Y),
+		SkinData:          s.Pix,
+		CapeImageWidth:    uint32(s.Cape.Bounds().Max.X),
+		CapeImageHeight:   uint32(s.Cape.Bounds().Max.Y),
+		CapeData:          s.Cape.Pix,
+		SkinGeometry:      model,
+		// PersonaSkin is intentionally always false here, regardless of the skin's original
+		// PersonaSkin flag: skin.Skin has no fields for PersonaPieces/PieceTintColours (parseSkin
+		// never reads them off the incoming login.ClientData either), so a Persona skin would be
+		// re-broadcast as PersonaSkin: true with no piece data at all - a combination some clients
+		// don't render, falling back to the default skin instead. The flat SkinData/SkinGeometry
+		// captured above is already a complete, valid classic-style skin representation regardless
+		// of whether the original skin was Persona-based, so forcing false here makes it render
+		// through the normal flat-skin path, the same one non-Persona skins already use
+		// successfully.
+		PersonaSkin:               false,
 		CapeID:                    uuid.New().String(),
 		FullID:                    fullID,
 		Animations:                animations,
