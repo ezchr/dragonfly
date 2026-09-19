@@ -11,9 +11,32 @@ import (
 type Skin struct {
 	w, h int
 	// Persona specifies if the skin uses the persona skin system.
-	Persona   bool
+	Persona bool
+	// Premium specifies if the skin was obtained through the marketplace.
+	Premium bool
+	// CapeOnClassic specifies if the cape the player has equipped belongs to a classic skin.
+	CapeOnClassic bool
+	// PrimaryUser specifies if the skin belongs to the primary user of the device.
+	PrimaryUser bool
+
+	// PersonaPieces holds the pieces a persona skin is assembled from. A persona skin sends marketplace
+	// content IDs rather than pixels, so re-broadcasting one without these leaves the receiving client with
+	// nothing to assemble the body out of.
+	PersonaPieces []PersonaPiece
+	// PieceTintColours holds the tint colours applied to some of the PersonaPieces.
+	PieceTintColours []PersonaPieceTintColour
+	// AnimationData is the raw JSON animation data belonging to the skin, driving an animated face or body.
+	AnimationData string
+
 	PlayFabID string
-	FullID    string
+	// SkinID identifies the skin. Clients cache a skin against this, so it is carried through unchanged
+	// rather than regenerated, which would make every re-broadcast look like a brand new skin.
+	SkinID string
+	// CapeID identifies the cape, and is cached by the client in the same way as SkinID.
+	CapeID string
+	FullID string
+	// GeometryVersion is the minimum engine version the geometry in Model targets.
+	GeometryVersion string
 
 	// Pix holds the raw pixel data of the skin. This is an RGBA byte slice, meaning that every first byte is
 	// a Red value, the second a Green value, the third a Blue value and the fourth an Alpha value.
@@ -33,6 +56,16 @@ type Skin struct {
 	// Animations holds a list of all animations that the skin has. These animations must be pointed to in the
 	// ModelConfig, in order to display them on the skin.
 	Animations []Animation
+
+	// ArmSize is the size of the arms of the player's model - either "wide" (generally for male/Steve-style
+	// skins) or "slim" (generally for female/Alex-style skins), as sent by the real client in
+	// login.ClientData.ArmSize. Previously never captured or re-forwarded here, meaning every player shown
+	// through this skin type was rebroadcast to other clients with arm geometry defaulting to the protocol
+	// zero value (ArmSizeSlim), regardless of the real skin's actual arm size.
+	ArmSize string
+	// SkinColour is a hex representation (including '#') of the base colour of the skin, as sent by the real
+	// client in login.ClientData.SkinColour. Previously never captured or re-forwarded here.
+	SkinColour string
 }
 
 // New creates a new skin using the width and height passed. The dimensions passed must be either 64x32,

@@ -636,11 +636,40 @@ func (srv *Server) parseSkin(data login.ClientData) skin.Skin {
 
 	playerSkin := skin.New(data.SkinImageWidth, data.SkinImageHeight)
 	playerSkin.Persona = data.PersonaSkin
+	playerSkin.Premium = data.PremiumSkin
+	playerSkin.CapeOnClassic = data.CapeOnClassicSkin
 	playerSkin.Pix, _ = base64.StdEncoding.DecodeString(data.SkinData)
 	playerSkin.Model, _ = base64.StdEncoding.DecodeString(data.SkinGeometry)
 	playerSkin.ModelConfig, _ = skin.DecodeModelConfig(skinResourcePatch)
 	playerSkin.PlayFabID = data.PlayFabID
+	playerSkin.SkinID = data.SkinID
+	playerSkin.CapeID = data.CapeID
 	playerSkin.FullID = data.SkinID
+	playerSkin.GeometryVersion = data.SkinGeometryVersion
+	playerSkin.ArmSize = data.ArmSize
+	playerSkin.SkinColour = data.SkinColour
+	playerSkin.AnimationData = data.SkinAnimationData
+
+	// A persona skin names the marketplace content it is built from instead of carrying pixels for it. These
+	// two lists are that content: without them a receiving client is told the skin is a persona but given
+	// nothing to assemble, and renders an incomplete model.
+	playerSkin.PersonaPieces = make([]skin.PersonaPiece, 0, len(data.PersonaPieces))
+	for _, piece := range data.PersonaPieces {
+		playerSkin.PersonaPieces = append(playerSkin.PersonaPieces, skin.PersonaPiece{
+			PieceID:   piece.PieceID,
+			PieceType: piece.PieceType,
+			PackID:    piece.PackID,
+			Default:   piece.Default,
+			ProductID: piece.ProductID,
+		})
+	}
+	playerSkin.PieceTintColours = make([]skin.PersonaPieceTintColour, 0, len(data.PieceTintColours))
+	for _, tint := range data.PieceTintColours {
+		playerSkin.PieceTintColours = append(playerSkin.PieceTintColours, skin.PersonaPieceTintColour{
+			PieceType: tint.PieceType,
+			Colours:   tint.Colours,
+		})
+	}
 
 	playerSkin.Cape = skin.NewCape(data.CapeImageWidth, data.CapeImageHeight)
 	playerSkin.Cape.Pix, _ = base64.StdEncoding.DecodeString(data.CapeData)
