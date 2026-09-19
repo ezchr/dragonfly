@@ -590,6 +590,12 @@ func (srv *Server) createPlayer(id uuid.UUID, conn session.Conn, conf player.Con
 
 	handle := world.EntitySpawnOpts{Position: conf.Position, ID: id}.New(player.Type, conf)
 	s.SetHandle(handle, conf.Skin)
+
+	// A skin built in the in-game character creator arrives as a list of
+	// marketplace content IDs rather than as pixels, so it cannot be shown to
+	// other players as sent. Rebuild it into an ordinary flat skin in the
+	// background; until that lands the player keeps the skin they joined with.
+	session.ResolvePersona(w, handle, conf.XUID, conf.Skin, srv.conf.Log)
 	return incoming{s: s, w: w, conf: conf, p: &onlinePlayer{name: conf.Name, xuid: conf.XUID, handle: handle}}
 }
 
@@ -641,6 +647,8 @@ func (srv *Server) parseSkin(data login.ClientData) skin.Skin {
 	playerSkin.ModelConfig, _ = skin.DecodeModelConfig(skinResourcePatch)
 	playerSkin.PlayFabID = data.PlayFabID
 	playerSkin.FullID = data.SkinID
+	playerSkin.ArmSize = data.ArmSize
+	playerSkin.SkinColour = data.SkinColour
 
 	playerSkin.Cape = skin.NewCape(data.CapeImageWidth, data.CapeImageHeight)
 	playerSkin.Cape.Pix, _ = base64.StdEncoding.DecodeString(data.CapeData)

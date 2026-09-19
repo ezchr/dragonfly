@@ -33,6 +33,16 @@ type Skin struct {
 	// Animations holds a list of all animations that the skin has. These animations must be pointed to in the
 	// ModelConfig, in order to display them on the skin.
 	Animations []Animation
+
+	// ArmSize is the size of the arms of the player's model - either "wide" (generally for male/Steve-style
+	// skins) or "slim" (generally for female/Alex-style skins), as sent by the real client in
+	// login.ClientData.ArmSize. Previously never captured or re-forwarded here, meaning every player shown
+	// through this skin type was rebroadcast to other clients with arm geometry defaulting to the protocol
+	// zero value (ArmSizeSlim), regardless of the real skin's actual arm size.
+	ArmSize string
+	// SkinColour is a hex representation (including '#') of the base colour of the skin, as sent by the real
+	// client in login.ClientData.SkinColour. Previously never captured or re-forwarded here.
+	SkinColour string
 }
 
 // New creates a new skin using the width and height passed. The dimensions passed must be either 64x32,

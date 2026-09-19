@@ -1028,6 +1028,34 @@ func (p *Player) respawn(f func(p *Player)) {
 		np.Teleport(pos)
 		np.session().SendRespawn(pos, p)
 		np.SetVisible()
+		// DEBUGPATCH: real live report + our own confirmed trace - showEntity's normal ViewSkin
+		// call on this same re-add already fires with correct, valid skin data (right UUID,
+		// non-empty pixels, PersonaSkin no longer mismatched), but other players still see the
+		// default skin after a respawn specifically - never on first join. This looks like a
+		// client-side timing/race quirk around the respawn entity re-add rather than a
+		// missing-data or missing-call bug (both were ruled out via debug logging on 2026-09-18).
+		// BedrockSkinRestorer (this same server's Paper-side skin plugin) has to work around a
+		// comparable class of issue with a deliberate delay before re-applying a skin after a
+		// character/world change - re-sending ViewSkin to this player's current viewers here on
+		// the same pattern, after giving the respawn's own entity/spawn packets a moment to land
+		// client-side first, is the same kind of workaround for the same kind of quirk.
+		respawnedHandle := np.H()
+		respawnWorld := w
+		time.AfterFunc(500*time.Millisecond, func() {
+			respawnWorld.Do(func(tx *world.Tx) {
+				e, ok := respawnedHandle.Entity(tx)
+				if !ok {
+					return
+				}
+				rp, ok := e.(*Player)
+				if !ok {
+					return
+				}
+				for _, v := range rp.viewers() {
+					v.ViewSkin(rp)
+				}
+			})
+		})
 		if f != nil {
 			f(np)
 		}

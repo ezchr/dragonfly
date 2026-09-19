@@ -106,6 +106,14 @@ func (l *sessionList) unsendSessionFrom(s, from *Session) {
 
 // skinToProtocol converts a skin to its protocol representation.
 func skinToProtocol(s skin.Skin) protocol.Skin {
+	// DEBUGPATCH: both a body-animation-only filter and a strip-everything filter were tried and
+	// reverted here 2026-09-18 while investigating a real floating-head/invisible-body report for
+	// animated Persona skins. Neither improved things - stripping only body animations left the
+	// same floating head, and stripping ALL animations (including the previously-untouched face
+	// animation) made it worse, reducing the visible player down to just a floating hair piece.
+	// That progression (removing more animation data => less of the model renders) is the
+	// opposite of what "animation data causes the bug" would predict, so animation forwarding is
+	// restored to real, complete, unfiltered data - the actual cause is elsewhere.
 	var animations []protocol.SkinAnimation
 	for _, animation := range s.Animations {
 		protocolAnim := protocol.SkinAnimation{
@@ -125,6 +133,11 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		protocolAnim.ExpressionType = uint32(animation.AnimationExpression)
 		animations = append(animations, protocolAnim)
 	}
+	// DEBUGPATCH: also tried sorting animations to put Head/Face before Body (the real client
+	// always sends Body first, Head second) in case the receiving client needed a specific
+	// canonical order to bind frames correctly - confirmed 2026-09-18 this did not fix the
+	// floating-head/invisible-body symptom either, reverted back to forwarding s.Animations in
+	// its original order.
 
 	fullID := s.FullID
 	if fullID == "" {
@@ -135,17 +148,36 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		model = []byte("{}")
 	}
 	return protocol.Skin{
-		PlayFabID:                 s.PlayFabID,
-		SkinID:                    uuid.New().String(),
-		SkinResourcePatch:         s.ModelConfig.Encode(),
-		SkinImageWidth:            uint32(s.Bounds().Max.X),
-		SkinImageHeight:           uint32(s.Bounds().Max.Y),
-		SkinData:                  s.Pix,
-		CapeImageWidth:            uint32(s.Cape.Bounds().Max.X),
-		CapeImageHeight:           uint32(s.Cape.Bounds().Max.Y),
-		CapeData:                  s.Cape.Pix,
-		SkinGeometry:              model,
-		PersonaSkin:               s.Persona,
+		PlayFabID:         s.PlayFabID,
+		SkinID:            uuid.New().String(),
+		SkinResourcePatch: s.ModelConfig.Encode(),
+		SkinImageWidth:    uint32(s.Bounds().Max.X),
+		SkinImageHeight:   uint32(s.Bounds().Max.Y),
+		SkinData:          s.Pix,
+		CapeImageWidth:    uint32(s.Cape.Bounds().Max.X),
+		CapeImageHeight:   uint32(s.Cape.Bounds().Max.Y),
+		CapeData:          s.Cape.Pix,
+		SkinGeometry:      model,
+		// ArmSize was never previously set here, so it always defaulted to the protocol zero value
+		// (ArmSizeSlim = 0) regardless of the real player's actual arm size - meaning every player
+		// relayed through this skin type was shown to others with slim (Alex-style) arm geometry no
+		// matter what their real skin actually specified. skin.Skin.ArmSize now carries the real
+		// value captured in parseSkin ("wide"/"slim", matching login.ClientData.ArmSize's own
+		// string format exactly), so this maps it to the correct protocol constant instead of
+		// silently defaulting.
+		ArmSize: armSizeToProtocol(s.ArmSize),
+		// PersonaSkin is intentionally always false here, regardless of the skin's original
+		// PersonaSkin flag: skin.Skin has no fields for PersonaPieces/PieceTintColours (parseSkin
+		// never reads them off the incoming login.ClientData either), so a Persona skin would be
+		// re-broadcast as PersonaSkin: true with no piece data at all - a combination some clients
+		// don't render, falling back to the default skin instead. The flat SkinData/SkinGeometry
+		// captured above is already a complete, valid classic-style skin representation regardless
+		// of whether the original skin was Persona-based, so forcing false here makes it render
+		// through the normal flat-skin path, the same one non-Persona skins already use
+		// successfully. Confirmed 2026-09-18 by reverting this to s.Persona as a test: the default
+		// skin bug came straight back, and a separate invisible-body bug some players see was NOT
+		// fixed by the revert either - that second bug is real but unrelated to this flag.
+		PersonaSkin:               false,
 		CapeID:                    uuid.New().String(),
 		FullID:                    fullID,
 		Animations:                animations,
@@ -153,4 +185,15 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		OverrideAppearance:        true,
 		GeometryDataEngineVersion: []byte(protocol.CurrentVersion),
 	}
+}
+
+// armSizeToProtocol maps the real client's ArmSize string (login.ClientData.ArmSize, "wide" or
+// "slim") to the protocol.ArmSize* constant a re-broadcast skin packet needs. Defaults to
+// ArmSizeWide (the more common/vanilla-default value) for anything else, including an empty
+// string from an older client that never sent one, rather than silently defaulting to slim.
+func armSizeToProtocol(armSize string) uint8 {
+	if armSize == "slim" {
+		return protocol.ArmSizeSlim
+	}
+	return protocol.ArmSizeWide
 }

@@ -1137,6 +1137,18 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 	s.Model = sk.SkinGeometry
 	s.PlayFabID = sk.PlayFabID
 	s.FullID = sk.FullID
+	// ArmSize was never captured here either - the same gap fixed 2026-09-18 in parseSkin
+	// (server.go, the initial-login path) for the outgoing skin.Skin type, but this is a separate
+	// code path (a live in-game skin change via the PlayerSkin packet, handled by
+	// PlayerSkinHandler) that was never updated to match. protocol.Skin.ArmSize here is already
+	// the numeric ArmSizeWide/ArmSizeSlim constant (unlike login.ClientData.ArmSize, a plain
+	// "wide"/"slim" string) - converted to the same string representation skin.Skin.ArmSize uses
+	// everywhere else, so armSizeToProtocol (session_list.go) only ever needs to handle one format.
+	if sk.ArmSize == protocol.ArmSizeSlim {
+		s.ArmSize = "slim"
+	} else {
+		s.ArmSize = "wide"
+	}
 
 	s.Cape = skin.NewCape(int(sk.CapeImageWidth), int(sk.CapeImageHeight))
 	s.Cape.Pix = sk.CapeData
@@ -1160,7 +1172,13 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 		case protocol.SkinAnimationBody128x128:
 			t = skin.AnimationBody128x128
 		default:
-			return skin.Skin{}, fmt.Errorf("invalid animation type: %v", anim.AnimationType)
+			// Was: return skin.Skin{}, fmt.Errorf(...) - discarding the ENTIRE skin change over
+			// one unrecognized animation entry. gophertunnel only documents 3 animation type
+			// constants (Head/Body32x32/Body128x128), so a real client sending anything else -
+			// a newer type this pinned protocol version doesn't know about yet, for example -
+			// would silently fail the whole skin change rather than applying everything it does
+			// understand. Skipping just the one unrecognized entry is strictly safer.
+			continue
 		}
 
 		animation := skin.NewAnimation(int(anim.ImageWidth), int(anim.ImageHeight), int(anim.ExpressionType), t)
