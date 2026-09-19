@@ -1187,6 +1187,7 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 
 		s.Animations = append(s.Animations, animation)
 	}
+	s.DisableIfAnimatedPersona()
 	return
 }
 

@@ -177,7 +177,13 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		// successfully. Confirmed 2026-09-18 by reverting this to s.Persona as a test: the default
 		// skin bug came straight back, and a separate invisible-body bug some players see was NOT
 		// fixed by the revert either - that second bug is real but unrelated to this flag.
-		PersonaSkin:               false,
+		// ForceRejected sends PersonaSkin true with none of the piece data real
+		// persona pieces need, which is the exact shape DisableIfAnimatedPersona
+		// relies on other clients refusing outright and replacing with their own
+		// built-in default skin - confirmed live this session as what a client
+		// does with an incomplete persona skin, before PersonaSkin was hardcoded
+		// false below to stop it happening to legitimate persona skins.
+		PersonaSkin: s.ForceRejected,
 		CapeID:                    uuid.New().String(),
 		FullID:                    fullID,
 		Animations:                animations,

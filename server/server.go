@@ -671,6 +671,7 @@ func (srv *Server) parseSkin(data login.ClientData) skin.Skin {
 		playerSkin.Animations = append(playerSkin.Animations, anim)
 	}
 
+	playerSkin.DisableIfAnimatedPersona()
 	return playerSkin
 }
 

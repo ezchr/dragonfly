@@ -29,7 +29,12 @@ import (
 // Enabled controls whether persona skins are resolved at all. Resolving reaches
 // out to a Minecraft service, so it is kept behind a single switch that a
 // server not wanting that traffic can turn off.
-var Enabled = true
+// Resolution is off: rebuilding a persona into a flat skin was tried against a
+// real animated persona and did not fix the floating head it was meant to fix,
+// so the server is back to forwarding whatever the client sends. The package is
+// left in place because the conversion itself is correct and verified; only the
+// assumption that a rebuilt skin renders the body turned out to be wrong.
+var Enabled = false
 
 // Endpoint is the URL template the resolved persona model is fetched from. The
 // single verb is the XUID of the player.
@@ -148,10 +153,11 @@ func fetch(ctx context.Context, xuid string) (*Model, error) {
 	return Build(b)
 }
 
-// Apply returns s rebuilt around the resolved persona model: the packed atlas
-// replaces the texture, the converted boxes replace the geometry, and the
-// persona flag is cleared, because the result is now an ordinary flat skin that
-// needs nothing from the receiving client to render.
+// Apply returns s rebuilt around the resolved persona model: the rebuilt
+// classic texture replaces the skin, the stock player geometry the rebuild
+// targets replaces the model, and the persona flag is cleared, because the
+// result is now an ordinary flat skin that needs nothing from the receiving
+// client to render.
 //
 // The face animation of an animated persona is deliberately dropped. The
 // resolved export is a still model, and an animation entry pointing at a face
@@ -162,11 +168,21 @@ func Apply(s skin.Skin, m *Model) skin.Skin {
 
 	out.Persona = false
 	out.PlayFabID = s.PlayFabID
-	out.FullID = s.FullID
 	out.Cape = s.Cape
 	out.SkinColour = s.SkinColour
 	out.ArmSize = m.ArmSize
-	out.Model = m.Geometry
-	out.ModelConfig = skin.ModelConfig{Default: GeometryIdentifier}
+	// No custom geometry: the rebuild targets one of the stock player models, so
+	// the skin carries only a resource patch naming it, exactly as an ordinary
+	// skin does.
+	out.Model = nil
+	out.ModelConfig = skin.ModelConfig{Default: m.Geometry}
+	// Clients cache a skin against its full ID. Reusing the ID the persona
+	// arrived under would let a client serve the persona it already has cached,
+	// which is the broken appearance this rebuild exists to replace, so the
+	// rebuilt skin is published under its own derived ID. It stays stable across
+	// rejoins so the cache still does its job.
+	if s.FullID != "" {
+		out.FullID = s.FullID + "-resolved"
+	}
 	return out
 }

@@ -12,6 +12,12 @@ type Skin struct {
 	w, h int
 	// Persona specifies if the skin uses the persona skin system.
 	Persona   bool
+	// ForceRejected marks a skin to be sent in a shape that other clients are
+	// known to refuse and fall back to their own default appearance for,
+	// rather than the shape the wearer's own client actually sent. Set by
+	// DisableIfAnimatedPersona; skinToProtocol (session/session_list.go) is
+	// what actually acts on it.
+	ForceRejected bool
 	PlayFabID string
 	FullID    string
 
@@ -43,6 +49,38 @@ type Skin struct {
 	// SkinColour is a hex representation (including '#') of the base colour of the skin, as sent by the real
 	// client in login.ClientData.SkinColour. Previously never captured or re-forwarded here.
 	SkinColour string
+}
+
+// DisableIfAnimatedPersona marks the skin to be rejected by other clients if
+// it is both a Persona skin and carries animation data.
+//
+// Persona plus animation is also the one combination nether2rak's relay is
+// unable to render correctly to other players: the affected player becomes an
+// invisible body with only a floating head visible to everyone else, while
+// looking completely normal to themselves. Since only the wearer can tell
+// anything is wrong, this was being used deliberately to grief other players.
+//
+// This does not blank the skin's own pixel data - an empty 64x64 texture is
+// still a technically valid skin, and sending one made the wearer fully
+// invisible with no name tag at all, worse than the bug it was meant to
+// mitigate. Instead ForceRejected is set, and skinToProtocol (session_list.go)
+// turns that into the specific combination already confirmed, live, to make a
+// client refuse the skin and fall back to its own built-in default appearance
+// on its own: PersonaSkin true with no PersonaPieces data at all. That is
+// exactly the shape that produced the "skin shows as default Steve" bug this
+// session fixed for legitimate persona skins by forcing PersonaSkin false -
+// deliberately reintroduced here, only for this one flagged case, because a
+// real client-side default skin is what closes the exploit without the server
+// needing a texture asset of its own.
+//
+// This is a mitigation, not a fix: the actual rendering bug is still
+// unresolved (see PERSONA_SKIN_FIX.md). It trades the exploit for the same
+// default skin a client already shows itself whenever it rejects a skin,
+// which is a worthwhile trade until the real cause is found.
+func (s *Skin) DisableIfAnimatedPersona() {
+	if s.Persona && len(s.Animations) > 0 {
+		s.ForceRejected = true
+	}
 }
 
 // New creates a new skin using the width and height passed. The dimensions passed must be either 64x32,
