@@ -191,19 +191,21 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		AnimationData:     []byte(s.AnimationData),
 		// ArmSize was never previously set here, so it always defaulted to the protocol zero value
 		// (ArmSizeSlim = 0) regardless of the real player's actual arm size.
-		ArmSize:                   armSizeToProtocol(s.ArmSize),
-		SkinColour:                parseARGB(s.SkinColour),
-		PremiumSkin:               s.Premium,
-		PersonaSkin:               s.Persona,
-		PersonaCapeOnClassicSkin:  s.CapeOnClassic,
-		PrimaryUser:               s.PrimaryUser,
-		PersonaPieces:             pieces,
-		PieceTintColours:          tints,
-		CapeID:                    s.CapeID,
-		FullID:                    fullID,
-		Animations:                animations,
-		Trusted:                   true,
-		OverrideAppearance:        s.OverrideAppearance,
+		ArmSize:                  armSizeToProtocol(s.ArmSize),
+		SkinColour:               parseARGB(s.SkinColour),
+		PremiumSkin:              s.Premium,
+		PersonaSkin:              s.Persona,
+		PersonaCapeOnClassicSkin: s.CapeOnClassic,
+		PrimaryUser:              s.PrimaryUser,
+		PersonaPieces:            pieces,
+		PieceTintColours:         tints,
+		CapeID:                   s.CapeID,
+		FullID:                   fullID,
+		Animations:               animations,
+		Trusted:                  true,
+		// OverrideAppearance always true: this tells the receiving client to use the skin data sent
+		// here rather than falling back to any appearance it might otherwise guess for the player.
+		OverrideAppearance:        true,
 		GeometryDataEngineVersion: []byte(geometryVersion),
 	}
 }
