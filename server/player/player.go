@@ -2037,7 +2037,41 @@ func (p *Player) attackWithSpear() bool {
 	if hits > 0 {
 		p.damageHeldItem()
 	}
+	p.triggerSpearLunge()
 	return true
+}
+
+// triggerSpearLunge propels the player forward if their held spear has Lunge, applying its hunger and
+// exhaustion cost. Lunge only fires on a jab attack (attackWithSpear's caller), never on a charge attack,
+// and is silently skipped - rather than refused outright - whenever a real client would not send the jab
+// in the first place (mounted, gliding, in water) or does not have enough hunger for it to trigger.
+func (p *Player) triggerSpearLunge() {
+	l, ok := p.spearLunge()
+	if !ok {
+		return
+	}
+	if p.Gliding() || p.insideOfWater() {
+		return
+	}
+	if _, riding := p.RidingEntity(p.tx); riding {
+		return
+	}
+	level := l.Level()
+	if p.Food() < enchantment.Lunge.MinimumFood() {
+		return
+	}
+
+	p.Exhaust(enchantment.Lunge.ExhaustionCost(level))
+	p.AddFood(-enchantment.Lunge.FoodCost(level))
+
+	dir := p.Rotation().Vec3()
+	speed := enchantment.Lunge.Speed(level)
+	p.SetVelocity(p.Velocity().Add(mgl64.Vec3{dir[0] * speed, 0, dir[2] * speed}))
+}
+
+func (p *Player) spearLunge() (item.Enchantment, bool) {
+	held, _ := p.HeldItems()
+	return held.Enchantment(enchantment.Lunge)
 }
 
 func (p *Player) attackEntity(e world.Entity, criticalAllowed bool) (valid, hit bool) {
