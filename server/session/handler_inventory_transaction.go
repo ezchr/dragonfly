@@ -218,6 +218,12 @@ func (h *InventoryTransactionHandler) handleUseItemTransaction(data *protocol.Us
 		if !shieldUseHandled {
 			c.UseItem()
 		}
+	case protocol.UseItemActionUseAsAttack:
+		if !c.UseItemAsAttack() {
+			slot := int(*s.heldSlot)
+			it, _ := s.inv.Item(slot)
+			s.sendItem(it, slot, protocol.WindowIDInventory)
+		}
 	default:
 		return fmt.Errorf("unhandled UseItem ActionType %v", data.ActionType)
 	}
