@@ -1133,10 +1133,41 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 
 	s = skin.New(int(sk.SkinImageWidth), int(sk.SkinImageHeight))
 	s.Persona = sk.PersonaSkin
+	s.Premium = sk.PremiumSkin
+	s.CapeOnClassic = sk.PersonaCapeOnClassicSkin
+	s.PrimaryUser = sk.PrimaryUser
+	s.OverrideAppearance = sk.OverrideAppearance
 	s.Pix = sk.SkinData
 	s.Model = sk.SkinGeometry
 	s.PlayFabID = sk.PlayFabID
+	s.SkinID = sk.SkinID
+	s.CapeID = sk.CapeID
 	s.FullID = sk.FullID
+	s.GeometryVersion = string(sk.GeometryDataEngineVersion)
+	s.AnimationData = string(sk.AnimationData)
+	s.SkinColour = argbToString(sk.SkinColour)
+
+	// The marketplace content a persona is assembled from, carried through so this skin can be re-broadcast
+	// to other players as something they can actually build. PieceType arrives as a numeric type on the wire
+	// and is converted back to the persona_* name the skin package works in.
+	s.PersonaPieces = make([]skin.PersonaPiece, 0, len(sk.PersonaPieces))
+	for _, piece := range sk.PersonaPieces {
+		s.PersonaPieces = append(s.PersonaPieces, skin.PersonaPiece{
+			PieceID:   piece.PieceID,
+			PieceType: skin.PersonaPieceTypeName(piece.PieceType),
+			PackID:    piece.PackID.String(),
+			Default:   piece.Default,
+			ProductID: piece.ProductID,
+		})
+	}
+	s.PieceTintColours = make([]skin.PersonaPieceTintColour, 0, len(sk.PieceTintColours))
+	for _, tint := range sk.PieceTintColours {
+		t := skin.PersonaPieceTintColour{PieceType: tint.PieceType}
+		for i, colour := range tint.Colours {
+			t.Colours[i] = argbToString(colour)
+		}
+		s.PieceTintColours = append(s.PieceTintColours, t)
+	}
 	// ArmSize was never captured here either - the same gap fixed 2026-09-18 in parseSkin
 	// (server.go, the initial-login path) for the outgoing skin.Skin type, but this is a separate
 	// code path (a live in-game skin change via the PlayerSkin packet, handled by
@@ -1187,8 +1218,13 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 
 		s.Animations = append(s.Animations, animation)
 	}
-	s.DisableIfAnimatedPersona()
 	return
+}
+
+// argbToString formats a colour the way login data and the skin package spell one: hex with a leading '#',
+// alpha first. It is the inverse of parseARGB in session_list.go.
+func argbToString(c color.RGBA) string {
+	return fmt.Sprintf("#%02x%02x%02x%02x", c.A, c.R, c.G, c.B)
 }
 
 // shapeAttachedEntityRuntimeID returns the runtime ID of the entity attached to a debug shape.

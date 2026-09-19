@@ -11,15 +11,35 @@ import (
 type Skin struct {
 	w, h int
 	// Persona specifies if the skin uses the persona skin system.
-	Persona   bool
-	// ForceRejected marks a skin to be sent in a shape that other clients are
-	// known to refuse and fall back to their own default appearance for,
-	// rather than the shape the wearer's own client actually sent. Set by
-	// DisableIfAnimatedPersona; skinToProtocol (session/session_list.go) is
-	// what actually acts on it.
-	ForceRejected bool
+	Persona bool
+	// Premium specifies if the skin was obtained through the marketplace.
+	Premium bool
+	// CapeOnClassic specifies if the cape the player has equipped belongs to a classic skin.
+	CapeOnClassic bool
+	// PrimaryUser specifies if the skin belongs to the primary user of the device.
+	PrimaryUser bool
+	// OverrideAppearance specifies if this skin replaces whatever appearance the receiving client would
+	// otherwise pick for the player.
+	OverrideAppearance bool
+
+	// PersonaPieces holds the pieces a persona skin is assembled from. A persona skin sends marketplace
+	// content IDs rather than pixels, so re-broadcasting one without these leaves the receiving client with
+	// nothing to assemble the body out of.
+	PersonaPieces []PersonaPiece
+	// PieceTintColours holds the tint colours applied to some of the PersonaPieces.
+	PieceTintColours []PersonaPieceTintColour
+	// AnimationData is the raw JSON animation data belonging to the skin, driving an animated face or body.
+	AnimationData string
+
 	PlayFabID string
-	FullID    string
+	// SkinID identifies the skin. Clients cache a skin against this, so it is carried through unchanged
+	// rather than regenerated, which would make every re-broadcast look like a brand new skin.
+	SkinID string
+	// CapeID identifies the cape, and is cached by the client in the same way as SkinID.
+	CapeID string
+	FullID string
+	// GeometryVersion is the minimum engine version the geometry in Model targets.
+	GeometryVersion string
 
 	// Pix holds the raw pixel data of the skin. This is an RGBA byte slice, meaning that every first byte is
 	// a Red value, the second a Green value, the third a Blue value and the fourth an Alpha value.
@@ -49,38 +69,6 @@ type Skin struct {
 	// SkinColour is a hex representation (including '#') of the base colour of the skin, as sent by the real
 	// client in login.ClientData.SkinColour. Previously never captured or re-forwarded here.
 	SkinColour string
-}
-
-// DisableIfAnimatedPersona marks the skin to be rejected by other clients if
-// it is both a Persona skin and carries animation data.
-//
-// Persona plus animation is also the one combination nether2rak's relay is
-// unable to render correctly to other players: the affected player becomes an
-// invisible body with only a floating head visible to everyone else, while
-// looking completely normal to themselves. Since only the wearer can tell
-// anything is wrong, this was being used deliberately to grief other players.
-//
-// This does not blank the skin's own pixel data - an empty 64x64 texture is
-// still a technically valid skin, and sending one made the wearer fully
-// invisible with no name tag at all, worse than the bug it was meant to
-// mitigate. Instead ForceRejected is set, and skinToProtocol (session_list.go)
-// turns that into the specific combination already confirmed, live, to make a
-// client refuse the skin and fall back to its own built-in default appearance
-// on its own: PersonaSkin true with no PersonaPieces data at all. That is
-// exactly the shape that produced the "skin shows as default Steve" bug this
-// session fixed for legitimate persona skins by forcing PersonaSkin false -
-// deliberately reintroduced here, only for this one flagged case, because a
-// real client-side default skin is what closes the exploit without the server
-// needing a texture asset of its own.
-//
-// This is a mitigation, not a fix: the actual rendering bug is still
-// unresolved (see PERSONA_SKIN_FIX.md). It trades the exploit for the same
-// default skin a client already shows itself whenever it rejects a skin,
-// which is a worthwhile trade until the real cause is found.
-func (s *Skin) DisableIfAnimatedPersona() {
-	if s.Persona && len(s.Animations) > 0 {
-		s.ForceRejected = true
-	}
 }
 
 // New creates a new skin using the width and height passed. The dimensions passed must be either 64x32,

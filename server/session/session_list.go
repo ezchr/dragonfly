@@ -1,7 +1,10 @@
 package session
 
 import (
+	"image/color"
 	"slices"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/df-mc/dragonfly/server/internal/sliceutil"
@@ -105,16 +108,14 @@ func (l *sessionList) unsendSessionFrom(s, from *Session) {
 }
 
 // skinToProtocol converts a skin to its protocol representation.
+//
+// Everything the client sent is carried back out unchanged. That matters most for persona skins: a persona
+// is assembled by the receiving client out of the marketplace pieces named in PersonaPieces and tinted by
+// PieceTintColours, so dropping either leaves the client with a skin it is told is a persona but cannot
+// build, which renders as an incomplete model. The same applies to AnimationData, which drives an animated
+// face or body.
 func skinToProtocol(s skin.Skin) protocol.Skin {
-	// DEBUGPATCH: both a body-animation-only filter and a strip-everything filter were tried and
-	// reverted here 2026-09-18 while investigating a real floating-head/invisible-body report for
-	// animated Persona skins. Neither improved things - stripping only body animations left the
-	// same floating head, and stripping ALL animations (including the previously-untouched face
-	// animation) made it worse, reducing the visible player down to just a floating hair piece.
-	// That progression (removing more animation data => less of the model renders) is the
-	// opposite of what "animation data causes the bug" would predict, so animation forwarding is
-	// restored to real, complete, unfiltered data - the actual cause is elsewhere.
-	var animations []protocol.SkinAnimation
+	animations := make([]protocol.SkinAnimation, 0, len(s.Animations))
 	for _, animation := range s.Animations {
 		protocolAnim := protocol.SkinAnimation{
 			ImageWidth:  uint32(animation.Bounds().Max.X),
@@ -133,23 +134,52 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		protocolAnim.ExpressionType = uint32(animation.AnimationExpression)
 		animations = append(animations, protocolAnim)
 	}
-	// DEBUGPATCH: also tried sorting animations to put Head/Face before Body (the real client
-	// always sends Body first, Head second) in case the receiving client needed a specific
-	// canonical order to bind frames correctly - confirmed 2026-09-18 this did not fix the
-	// floating-head/invisible-body symptom either, reverted back to forwarding s.Animations in
-	// its original order.
+
+	pieces := make([]protocol.PersonaPiece, 0, len(s.PersonaPieces))
+	for _, piece := range s.PersonaPieces {
+		packID, err := uuid.Parse(piece.PackID)
+		if err != nil {
+			// A malformed pack ID is not worth dropping the whole piece over: the client keys the piece off
+			// PieceID, and a nil pack ID is what it receives for a piece with no pack anyway.
+			packID = uuid.Nil
+		}
+		pieces = append(pieces, protocol.PersonaPiece{
+			PieceID:   piece.PieceID,
+			PieceType: skin.PersonaPieceTypeID(piece.PieceType),
+			PackID:    packID,
+			Default:   piece.Default,
+			ProductID: piece.ProductID,
+		})
+	}
+
+	tints := make([]protocol.PersonaPieceTintColour, 0, len(s.PieceTintColours))
+	for _, tint := range s.PieceTintColours {
+		t := protocol.PersonaPieceTintColour{PieceType: tint.PieceType}
+		for i, colour := range tint.Colours {
+			t.Colours[i] = parseARGB(colour)
+		}
+		tints = append(tints, t)
+	}
 
 	fullID := s.FullID
 	if fullID == "" {
 		fullID = uuid.New().String()
 	}
+	skinID := s.SkinID
+	if skinID == "" {
+		skinID = fullID
+	}
 	model := s.Model
 	if len(model) == 0 {
 		model = []byte("{}")
 	}
+	geometryVersion := s.GeometryVersion
+	if geometryVersion == "" {
+		geometryVersion = protocol.CurrentVersion
+	}
 	return protocol.Skin{
 		PlayFabID:         s.PlayFabID,
-		SkinID:            uuid.New().String(),
+		SkinID:            skinID,
 		SkinResourcePatch: s.ModelConfig.Encode(),
 		SkinImageWidth:    uint32(s.Bounds().Max.X),
 		SkinImageHeight:   uint32(s.Bounds().Max.Y),
@@ -158,39 +188,35 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		CapeImageHeight:   uint32(s.Cape.Bounds().Max.Y),
 		CapeData:          s.Cape.Pix,
 		SkinGeometry:      model,
+		AnimationData:     []byte(s.AnimationData),
 		// ArmSize was never previously set here, so it always defaulted to the protocol zero value
-		// (ArmSizeSlim = 0) regardless of the real player's actual arm size - meaning every player
-		// relayed through this skin type was shown to others with slim (Alex-style) arm geometry no
-		// matter what their real skin actually specified. skin.Skin.ArmSize now carries the real
-		// value captured in parseSkin ("wide"/"slim", matching login.ClientData.ArmSize's own
-		// string format exactly), so this maps it to the correct protocol constant instead of
-		// silently defaulting.
-		ArmSize: armSizeToProtocol(s.ArmSize),
-		// PersonaSkin is intentionally always false here, regardless of the skin's original
-		// PersonaSkin flag: skin.Skin has no fields for PersonaPieces/PieceTintColours (parseSkin
-		// never reads them off the incoming login.ClientData either), so a Persona skin would be
-		// re-broadcast as PersonaSkin: true with no piece data at all - a combination some clients
-		// don't render, falling back to the default skin instead. The flat SkinData/SkinGeometry
-		// captured above is already a complete, valid classic-style skin representation regardless
-		// of whether the original skin was Persona-based, so forcing false here makes it render
-		// through the normal flat-skin path, the same one non-Persona skins already use
-		// successfully. Confirmed 2026-09-18 by reverting this to s.Persona as a test: the default
-		// skin bug came straight back, and a separate invisible-body bug some players see was NOT
-		// fixed by the revert either - that second bug is real but unrelated to this flag.
-		// ForceRejected sends PersonaSkin true with none of the piece data real
-		// persona pieces need, which is the exact shape DisableIfAnimatedPersona
-		// relies on other clients refusing outright and replacing with their own
-		// built-in default skin - confirmed live this session as what a client
-		// does with an incomplete persona skin, before PersonaSkin was hardcoded
-		// false below to stop it happening to legitimate persona skins.
-		PersonaSkin: s.ForceRejected,
-		CapeID:                    uuid.New().String(),
+		// (ArmSizeSlim = 0) regardless of the real player's actual arm size.
+		ArmSize:                   armSizeToProtocol(s.ArmSize),
+		SkinColour:                parseARGB(s.SkinColour),
+		PremiumSkin:               s.Premium,
+		PersonaSkin:               s.Persona,
+		PersonaCapeOnClassicSkin:  s.CapeOnClassic,
+		PrimaryUser:               s.PrimaryUser,
+		PersonaPieces:             pieces,
+		PieceTintColours:          tints,
+		CapeID:                    s.CapeID,
 		FullID:                    fullID,
 		Animations:                animations,
 		Trusted:                   true,
-		OverrideAppearance:        true,
-		GeometryDataEngineVersion: []byte(protocol.CurrentVersion),
+		OverrideAppearance:        s.OverrideAppearance,
+		GeometryDataEngineVersion: []byte(geometryVersion),
 	}
+}
+
+// parseARGB reads a colour written as hex with a leading '#', as both login.ClientData.SkinColour and the
+// persona piece tints use. Anything unparsable becomes a fully transparent zero colour, which is what an
+// unused tint slot ("#0") means anyway.
+func parseARGB(s string) color.RGBA {
+	v, err := strconv.ParseUint(strings.TrimPrefix(s, "#"), 16, 32)
+	if err != nil {
+		return color.RGBA{}
+	}
+	return color.RGBA{A: uint8(v >> 24), R: uint8(v >> 16), G: uint8(v >> 8), B: uint8(v)}
 }
 
 // armSizeToProtocol maps the real client's ArmSize string (login.ClientData.ArmSize, "wide" or
