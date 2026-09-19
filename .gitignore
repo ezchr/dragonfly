@@ -1,0 +1,12 @@
+# IDEs
+.idea/
+.zed/
+.vscode/
+
+# Dragonfly
+/world/
+/players/
+/resources/
+
+# NetherNet server identity keys
+/keys
