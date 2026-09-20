@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
 )
@@ -65,6 +66,25 @@ func (e *Ent) Velocity() mgl64.Vec3 {
 // that axis in blocks/tick.
 func (e *Ent) SetVelocity(v mgl64.Vec3) {
 	e.data.Vel = v
+}
+
+// heldItemsBehaviour may be implemented by a Behaviour to make its Ent satisfy item.Carrier - a
+// generic hook so any custom entity (e.g. one displaying a held/equipped item, such as a real
+// minecraft:sulfur_cube showing an absorbed block) can opt in without Ent needing to know about
+// that entity's own type. Entities whose Behaviour does not implement this are simply not
+// item.Carriers, matching the previous behaviour exactly (nothing implemented HeldItems on Ent
+// before this).
+type heldItemsBehaviour interface {
+	HeldItems() (mainHand, offHand item.Stack)
+}
+
+// HeldItems returns the items currently held by the entity, if its Behaviour implements
+// heldItemsBehaviour. Both stacks are empty otherwise.
+func (e *Ent) HeldItems() (mainHand, offHand item.Stack) {
+	if c, ok := e.Behaviour().(heldItemsBehaviour); ok {
+		return c.HeldItems()
+	}
+	return item.Stack{}, item.Stack{}
 }
 
 // Teleport teleports the entity to the position given.
