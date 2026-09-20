@@ -100,6 +100,26 @@ func (e *Ent) HeldItems() (mainHand, offHand item.Stack) {
 	return item.Stack{}, item.Stack{}
 }
 
+// invisibleBehaviour may be implemented by a Behaviour to make its Ent report itself invisible to
+// viewers, the same generic-hook pattern as heldItemsBehaviour just above (see its doc comment) -
+// session's own invisible-entity check (server/session/entity_metadata.go) already accepts any
+// world.Entity implementing Invisible() bool, previously only ever satisfied by *player.Player.
+// This lets a non-player entity (e.g. a block-hunt disguise's own sulfur-cube body, which should
+// never render - only the block it displays should) opt into the same mechanism.
+type invisibleBehaviour interface {
+	Invisible() bool
+}
+
+// Invisible reports whether the entity should be hidden from viewers, if its Behaviour implements
+// invisibleBehaviour. False otherwise - i.e. entities whose Behaviour does not opt in render
+// exactly as before this was added.
+func (e *Ent) Invisible() bool {
+	if i, ok := e.Behaviour().(invisibleBehaviour); ok {
+		return i.Invisible()
+	}
+	return false
+}
+
 // Teleport teleports the entity to the position given.
 func (e *Ent) Teleport(pos mgl64.Vec3) {
 	viewers := e.tx.Viewers(e.data.Pos)
