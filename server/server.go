@@ -22,7 +22,6 @@ import (
 	"github.com/df-mc/dragonfly/server/internal/sliceutil"
 	_ "github.com/df-mc/dragonfly/server/item" // Imported for maintaining correct initialisation order.
 	"github.com/df-mc/dragonfly/server/player"
-	"github.com/df-mc/dragonfly/server/player/chat"
 	"github.com/df-mc/dragonfly/server/player/skin"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
@@ -324,7 +323,7 @@ func (srv *Server) close() {
 
 	srv.conf.Log.Debug("Disconnecting players...")
 	for p := range srv.Players(nil) {
-		p.Disconnect(chat.MessageServerDisconnect.Resolve(p.Locale()))
+		p.Disconnect(srv.conf.ShutdownMessage.Resolve(p.Locale()))
 	}
 	srv.pwg.Wait()
 
