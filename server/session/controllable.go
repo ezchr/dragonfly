@@ -46,6 +46,7 @@ type Controllable interface {
 	Speed() float64
 	FlightSpeed() float64
 	VerticalFlightSpeed() float64
+	Operator() bool
 
 	Sleep(pos cube.Pos)
 	Wake()
