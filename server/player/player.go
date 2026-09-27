@@ -91,6 +91,7 @@ type playerData struct {
 	speed               float64
 	flightSpeed         float64
 	verticalFlightSpeed float64
+	operator            bool
 
 	health     *entity.HealthManager
 	experience *entity.ExperienceManager
@@ -501,6 +502,21 @@ func (p *Player) Speed() float64 {
 func (p *Player) SetFlightSpeed(flightSpeed float64) {
 	p.flightSpeed = flightSpeed
 	p.session().SendAbilities(p)
+}
+
+// SetOperator sets whether the client treats the player as an operator. It
+// only changes what the client offers: it suggests target selector arguments
+// (@e[type=...,c=...]) to operators alone. Commands still decide for
+// themselves who may run them.
+func (p *Player) SetOperator(op bool) {
+	p.operator = op
+	p.session().SendAbilities(p)
+}
+
+// Operator reports whether the client treats the player as an operator. See
+// SetOperator.
+func (p *Player) Operator() bool {
+	return p.operator
 }
 
 // FlightSpeed returns the flight speed of the player, with the value representing the base speed. The actual
