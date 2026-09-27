@@ -4242,7 +4242,7 @@ func (p *Player) Data() Config {
 		Skin:                p.skin,
 		XUID:                p.xuid,
 		UUID:                p.UUID(),
-		Name:                p.nameTag,
+		Name:                p.Name(), // upstream saves p.nameTag, which carries rank colour codes
 		Locale:              p.locale,
 		GameMode:            p.gameMode,
 		Position:            p.Position(),

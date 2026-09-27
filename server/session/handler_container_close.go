@@ -2,7 +2,6 @@ package session
 
 import (
 	"github.com/df-mc/dragonfly/server/world"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
@@ -12,6 +11,10 @@ type ContainerCloseHandler struct{}
 // Handle ...
 func (h *ContainerCloseHandler) Handle(p packet.Packet, s *Session, tx *world.Tx, c Controllable) error {
 	pk := p.(*packet.ContainerClose)
+	trading := s.trade.Load() != nil
+	if trading {
+		s.conf.Log.Debug("container close while trading", "window", pk.WindowID, "type", pk.ContainerType, "server_side", pk.ServerSide, "open_window", s.openedWindowID.Load())
+	}
 
 	c.MoveItemsToInventory()
 
@@ -22,21 +25,30 @@ func (h *ContainerCloseHandler) Handle(p packet.Packet, s *Session, tx *world.Tx
 		s.invOpened = false
 	case byte(s.openedWindowID.Load()):
 		containerType = byte(s.openedContainerID.Load())
-		s.closeCurrentContainer(tx, true)
+		if !trading {
+			s.closeCurrentContainer(tx, true)
+		}
 	case 0xff:
 		// Sent when an inventory/container is opened at the same time as chat.
 		s.invOpened = false
-		if s.containerOpened.Load() {
-			s.closeCurrentContainer(tx, false)
+		if !trading {
+			if s.containerOpened.Load() {
+				s.closeCurrentContainer(tx, false)
+			}
+			return nil
 		}
-		return nil
 	default:
 		containerType = pk.ContainerType
-		// A trading window closed under a window id we did not expect must
-		// still end the trade, or the trader stays busy for this client.
-		if pk.ContainerType == protocol.ContainerTypeTrade && s.trade.Load() != nil {
-			s.closeCurrentContainer(tx, true)
-		}
+	}
+
+	if trading {
+		// The trading window is the only window the client can have open, so
+		// whatever id it closes it under ends the trade. The client waits for
+		// an answer carrying its own window id and container type before it
+		// opens another window (PowerNukkitX ContainerCloseHandler.sendClose),
+		// so echo both back - otherwise the villager never opens again.
+		s.closeCurrentContainer(tx, true)
+		containerType = pk.ContainerType
 	}
 	s.writePacket(&packet.ContainerClose{
 		WindowID:      pk.WindowID,

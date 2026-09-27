@@ -63,7 +63,10 @@ func isTradeContainer(id byte) bool {
 // called for every completed trade with the offer's index and the number of
 // times it was traded; returning false refuses the trade.
 func (s *Session) OpenTrade(tx *world.Tx, trader world.Entity, name string, offers []TradeOffer, onTrade func(index, times int) bool) {
-	s.closeCurrentContainer(tx, false)
+	// The player can only click a trader with no window open client-side, so a
+	// trade still recorded here is stale: end it without telling the client to
+	// close a window it already closed.
+	s.closeCurrentContainer(tx, s.trade.Load() != nil)
 
 	windowID := s.nextWindowID()
 	// Several container paths read the block at openedPos while a window is
