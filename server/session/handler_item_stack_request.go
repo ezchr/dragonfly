@@ -93,6 +93,10 @@ func (h *ItemStackRequestHandler) handleRequest(req protocol.ItemStackRequest, s
 		case *protocol.BeaconPaymentStackRequestAction:
 			err = h.handleBeaconPayment(a, s, tx)
 		case *protocol.CraftRecipeStackRequestAction:
+			if s.trade.Load() != nil {
+				err = h.handleTrade(a.RecipeNetworkID, int(a.NumberOfCrafts), req, s, tx)
+				break
+			}
 			if s.containerOpened.Load() {
 				var special bool
 				switch tx.Block(*s.openedPos.Load()).(type) {
@@ -110,6 +114,10 @@ func (h *ItemStackRequestHandler) handleRequest(req protocol.ItemStackRequest, s
 			}
 			err = h.handleCraft(a, s, tx)
 		case *protocol.AutoCraftRecipeStackRequestAction:
+			if s.trade.Load() != nil {
+				err = h.handleTrade(a.RecipeNetworkID, int(a.NumberOfCrafts), req, s, tx)
+				break
+			}
 			err = h.handleAutoCraft(a, s, tx)
 		case *protocol.CraftRecipeOptionalStackRequestAction:
 			err = h.handleCraftRecipeOptional(a, s, req.FilterStrings, c, tx)

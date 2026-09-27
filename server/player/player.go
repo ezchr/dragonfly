@@ -3064,6 +3064,22 @@ func (p *Player) OpenBlockContainer(pos cube.Pos, tx *world.Tx) {
 	}
 }
 
+// OpenTrade opens a villager-style trading window with trader. onTrade runs
+// for each completed trade (offer index, times traded); returning false
+// refuses it. See session.Session.OpenTrade.
+func (p *Player) OpenTrade(trader world.Entity, name string, offers []session.TradeOffer, onTrade func(index, times int) bool) {
+	if s := p.session(); s != session.Nop {
+		s.OpenTrade(p.tx, trader, name, offers, onTrade)
+	}
+}
+
+// UpdateTradeOffers replaces the offers of the player's open trading window.
+func (p *Player) UpdateTradeOffers(offers []session.TradeOffer) {
+	if s := p.session(); s != session.Nop {
+		s.UpdateTradeOffers(offers)
+	}
+}
+
 // HideEntity hides a world.Entity from the Player so that it can under no circumstance see it. Hidden entities can be
 // made visible again through a call to ShowEntity.
 func (p *Player) HideEntity(e world.Entity) {

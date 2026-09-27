@@ -67,6 +67,11 @@ func (s *Session) StartShowingEntity(e world.Entity) {
 
 // closeCurrentContainer closes the container the player might currently have open.
 func (s *Session) closeCurrentContainer(tx *world.Tx, clientRequested bool) {
+	if s.closeTrade() {
+		// A trading window has no block behind it.
+		s.closeWindow(clientRequested)
+		return
+	}
 	if !s.closeWindow(clientRequested) {
 		return
 	}
@@ -292,6 +297,12 @@ type smelter interface {
 // invByID attempts to return an inventory by the ID passed. If found, the inventory is returned and the bool
 // returned is true.
 func (s *Session) invByID(id int32, tx *world.Tx) (*inventory.Inventory, bool) {
+	if id >= 0 && id < 256 && isTradeContainer(byte(id)) {
+		if s.trade.Load() != nil {
+			return s.ui, true
+		}
+		return nil, false
+	}
 	switch id {
 	case protocol.ContainerCraftingInput, protocol.ContainerCreatedOutput, protocol.ContainerCursor:
 		// UI inventory.

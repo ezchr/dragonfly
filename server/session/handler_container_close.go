@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
@@ -31,6 +32,11 @@ func (h *ContainerCloseHandler) Handle(p packet.Packet, s *Session, tx *world.Tx
 		return nil
 	default:
 		containerType = pk.ContainerType
+		// A trading window closed under a window id we did not expect must
+		// still end the trade, or the trader stays busy for this client.
+		if pk.ContainerType == protocol.ContainerTypeTrade && s.trade.Load() != nil {
+			s.closeCurrentContainer(tx, true)
+		}
 	}
 	s.writePacket(&packet.ContainerClose{
 		WindowID:      pk.WindowID,
