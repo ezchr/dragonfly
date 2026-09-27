@@ -557,8 +557,7 @@ func (s *Session) SendAbilities(c Controllable) {
 	if mode.AllowsInteraction() {
 		abilities |= protocol.AbilityDoorsAndSwitches | protocol.AbilityOpenContainers | protocol.AbilityAttackPlayers | protocol.AbilityAttackMobs
 	}
-	// Operators get the permissions PowerNukkitX and vanilla give them: the
-	// client only suggests target selector arguments at these levels.
+	// Operators get the permissions BDS and PowerNukkitX give them.
 	playerPerms, commandPerms := uint8(packet.PermissionLevelMember), uint8(protocol.CommandPermissionLevelAny)
 	if c.Operator() {
 		playerPerms, commandPerms = packet.PermissionLevelOperator, protocol.CommandPermissionLevelGameDirectors

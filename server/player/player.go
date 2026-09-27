@@ -504,10 +504,10 @@ func (p *Player) SetFlightSpeed(flightSpeed float64) {
 	p.session().SendAbilities(p)
 }
 
-// SetOperator sets whether the client treats the player as an operator. It
-// only changes what the client offers: it suggests target selector arguments
-// (@e[type=...,c=...]) to operators alone. Commands still decide for
-// themselves who may run them.
+// SetOperator sets whether the client treats the player as an operator: it
+// shows the player as one and receives commands at the operator level. It
+// only changes what the client shows; commands still decide for themselves
+// who may run them.
 func (p *Player) SetOperator(op bool) {
 	p.operator = op
 	p.session().SendAbilities(p)
