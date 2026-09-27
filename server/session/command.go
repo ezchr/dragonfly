@@ -65,6 +65,13 @@ func BuildAvailableCommands(
 
 	suffixIndices := map[string]uint32{}
 
+	// Operators get commands at the operator level, as BDS sends them.
+	// Everyone else keeps seeing every command.
+	permissionLevel := protocol.CommandPermissionLevelAny
+	if o, ok := src.(interface{ Operator() bool }); ok && o.Operator() {
+		permissionLevel = protocol.CommandPermissionLevelGameDirectors
+	}
+
 	for alias, c := range commands {
 		if c.Name() != alias {
 			// Don't add duplicate entries for aliases.
@@ -136,7 +143,7 @@ func BuildAvailableCommands(
 			Name:            c.Name(),
 			Description:     c.Description(),
 			AliasesOffset:   aliasesIndex,
-			PermissionLevel: protocol.CommandPermissionLevelAny,
+			PermissionLevel: byte(permissionLevel),
 			Overloads:       overloads,
 		})
 	}
