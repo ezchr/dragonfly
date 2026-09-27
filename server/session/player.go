@@ -381,6 +381,7 @@ func (s *Session) Disconnect(message string) {
 			Message:                 message,
 		})
 		_ = s.conn.Flush()
+		s.disconnectSent.Store(true)
 	}
 }
 

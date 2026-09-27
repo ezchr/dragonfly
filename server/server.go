@@ -322,10 +322,17 @@ func (srv *Server) close() {
 	srv.conf.Log.Info("Server closing...")
 
 	srv.conf.Log.Debug("Disconnecting players...")
+	disconnected := 0
 	for p := range srv.Players(nil) {
 		p.Disconnect(srv.conf.ShutdownMessage.Resolve(p.Locale()))
+		disconnected++
 	}
 	srv.pwg.Wait()
+	if disconnected > 0 {
+		// Connections close session.DisconnectGrace after their Disconnect
+		// packet; keep the listeners and process alive until then.
+		time.Sleep(session.DisconnectGrace + 250*time.Millisecond)
+	}
 
 	srv.conf.Log.Debug("Closing player provider...")
 	if err := srv.conf.PlayerProvider.Close(); err != nil {

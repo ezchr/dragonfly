@@ -107,6 +107,8 @@ type Session struct {
 	inputLocks   uint32
 
 	closeBackground chan struct{}
+	// disconnectSent is set once a Disconnect packet was written, see CloseConnection.
+	disconnectSent atomic.Bool
 
 	br world.BlockRegistry
 }
@@ -350,10 +352,21 @@ func (s *Session) close(tx *world.Tx, c Controllable) {
 // eventually.
 func (s *Session) CloseConnection() {
 	s.connOnce.Do(func() {
-		_ = s.conn.Close()
+		if s.disconnectSent.Load() {
+			// Closing a NetherNet connection drops data still in flight, so the
+			// client would never see the Disconnect message and show a generic
+			// "Disconnected" screen instead. Give the packet time to arrive.
+			time.AfterFunc(DisconnectGrace, func() { _ = s.conn.Close() })
+		} else {
+			_ = s.conn.Close()
+		}
 		close(s.closeBackground)
 	})
 }
+
+// DisconnectGrace is how long a connection is kept open after a Disconnect
+// packet was sent, so the client receives its message before the close.
+const DisconnectGrace = time.Second
 
 // Addr returns the net.Addr of the client.
 func (s *Session) Addr() net.Addr {
