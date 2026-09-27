@@ -5,10 +5,8 @@ import (
 	"github.com/df-mc/dragonfly/server/internal/sliceutil"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
-	"math/rand/v2"
 	"reflect"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -268,48 +266,43 @@ func (p parser) targets(line *Line, v reflect.Value, tx *world.Tx) error {
 	return nil
 }
 
-// parseTargets parses one or more Targets from the Line passed.
+// parseTargets parses one or more Targets from the Line passed: a player
+// name, or a selector (@p, @a, @e, @s, @r) with optional arguments such as
+// @e[type=zid:gubby,r=10,c=1].
 func (p parser) parseTargets(line *Line, tx *world.Tx) ([]Target, error) {
-	entities, players := targets(tx)
 	first, ok := line.Next()
 	if !ok {
 		return nil, line.UsageError()
 	}
-	if strings.HasPrefix(first, "@") && tx == nil {
-		return nil, MessageNoTargets.F()
-	}
-	switch first[:min(len(first), 2)] {
-	case "@p":
-		pos := line.src.Position()
-		playerDistances := make([]float64, len(players))
-		for i, p := range players {
-			playerDistances[i] = p.Position().Sub(pos).Len()
-		}
-		sort.Slice(players, func(i, j int) bool {
-			return playerDistances[i] < playerDistances[j]
-		})
-		if len(players) == 0 {
-			return nil, nil
-		}
-		return sliceutil.Convert[Target](players[0:1]), nil
-	case "@e":
-		return entities, nil
-	case "@a":
-		return sliceutil.Convert[Target](players), nil
-	case "@s":
-		return []Target{line.src}, nil
-	case "@r":
-		if len(players) == 0 {
-			return nil, nil
-		}
-		return []Target{players[rand.IntN(len(players))]}, nil
-	default:
+	if !strings.HasPrefix(first, "@") {
+		_, players := targets(tx)
 		target, err := p.parsePlayer(first, players)
 		if err != nil {
 			return nil, err
 		}
 		return []Target{target}, nil
 	}
+	if tx == nil {
+		return nil, MessageNoTargets.F()
+	}
+	first = joinSelector(line)
+	kind, sel, err := parseSelector(first, line.src.Position())
+	if err != nil {
+		return nil, MessageParameterInvalid.F(first + " (" + err.Error() + ")")
+	}
+	entities, players := targets(tx)
+	var pool []Target
+	switch kind {
+	case "@p", "@a", "@r":
+		pool = sliceutil.Convert[Target](players)
+	case "@e":
+		pool = entities
+	case "@s":
+		pool = []Target{line.src}
+	default:
+		return nil, MessagePlayerNotFound.F()
+	}
+	return sel.selectTargets(kind, pool), nil
 }
 
 // parsePlayer attempts to find a target whose name matches the name passed.
