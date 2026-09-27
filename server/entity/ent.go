@@ -42,6 +42,19 @@ func (e *Ent) Behaviour() Behaviour {
 	return e.data.Data.(Behaviour)
 }
 
+// Tx returns the transaction the Ent was opened in.
+func (e *Ent) Tx() *world.Tx {
+	return e.tx
+}
+
+// ApplyMovement moves the Ent to the position, velocity and rotation of a
+// Movement from MovementComputer.TickMovement. Behaviours outside this package
+// use it the way PassiveBehaviour sets them directly; the Movement is still
+// returned from Tick for Ent to send to viewers.
+func (e *Ent) ApplyMovement(m *Movement) {
+	e.data.Pos, e.data.Vel, e.data.Rot = m.pos, m.vel, m.rot
+}
+
 // ent allows entity types embedding an Ent to be handled like one.
 func (e *Ent) ent() *Ent {
 	return e
