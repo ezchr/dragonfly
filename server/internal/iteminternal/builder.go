@@ -9,6 +9,7 @@ import (
 type ComponentBuilder struct {
 	name       string
 	identifier string
+	icon       string
 	category   category.Category
 
 	properties map[string]any
@@ -20,11 +21,17 @@ func NewComponentBuilder(name, identifier string, category category.Category) *C
 	return &ComponentBuilder{
 		name:       name,
 		identifier: identifier,
+		icon:       identifier,
 		category:   category,
 
 		properties: make(map[string]any),
 		components: make(map[string]any),
 	}
+}
+
+// SetIcon sets the item_texture.json key the item is drawn with, which is the item's identifier unless set.
+func (builder *ComponentBuilder) SetIcon(icon string) {
+	builder.icon = icon
 }
 
 // AddProperty adds the provided property to the builder.
@@ -52,7 +59,7 @@ func (builder *ComponentBuilder) Construct() map[string]any {
 func (builder *ComponentBuilder) applyDefaultProperties(x map[string]any) {
 	x["minecraft:icon"] = map[string]any{
 		"textures": map[string]any{
-			"default": builder.identifier,
+			"default": builder.icon,
 		},
 	}
 	x["creative_group"] = builder.category.Group()

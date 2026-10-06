@@ -182,6 +182,14 @@ func (s Spear) ReleaseCharge(Releaser, *world.Tx, *UseContext) bool {
 	return false
 }
 
+// CanCharge always returns true: holding use with a spear always starts a
+// charge. Without it the spear is not a Chargeable (the interface gained
+// CanCharge with the crossbow fix), so using it never set the player as
+// using an item and the charge attack could never happen.
+func (s Spear) CanCharge(Releaser, *world.Tx, *UseContext) bool {
+	return true
+}
+
 // EncodeItem ...
 func (s Spear) EncodeItem() (name string, meta int16) {
 	return "minecraft:" + s.Tier.Name + "_spear", 0

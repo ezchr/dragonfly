@@ -14,6 +14,9 @@ func Components(it world.CustomItem) map[string]any {
 	name := strings.Split(identifier, ":")[1]
 
 	builder := NewComponentBuilder(it.Name(), identifier, category)
+	if x, ok := it.(world.PackTexturedItem); ok {
+		builder.SetIcon(x.Icon())
+	}
 
 	if x, ok := it.(item.Armour); ok {
 		builder.AddComponent("minecraft:armor", map[string]any{
@@ -80,6 +83,15 @@ func Components(it world.CustomItem) map[string]any {
 	}
 	if x, ok := it.(item.HandEquipped); ok {
 		builder.AddProperty("hand_equipped", x.HandEquipped())
+	}
+	if x, ok := it.(world.ComponentItem); ok {
+		properties, components := x.ItemComponents()
+		for k, v := range properties {
+			builder.AddProperty(k, v)
+		}
+		for k, v := range components {
+			builder.AddComponent(k, v)
+		}
 	}
 	return builder.Construct()
 }

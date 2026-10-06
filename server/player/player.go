@@ -3,6 +3,7 @@ package player
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 	"math/rand/v2"
 	"net"
@@ -2002,7 +2003,7 @@ func (p *Player) UseItemOnEntity(e world.Entity) bool {
 func (p *Player) UseItemAsAttack() bool {
 	if held, _ := p.HeldItems(); !held.Empty() {
 		if _, ok := held.Item().(item.Spear); ok {
-			return p.attackWithSpear()
+			return p.attackWithSpear(nil)
 		}
 	}
 	p.PunchAir()
@@ -2017,7 +2018,7 @@ func (p *Player) UseItemAsAttack() bool {
 func (p *Player) AttackEntity(e world.Entity) bool {
 	if held, _ := p.HeldItems(); !held.Empty() {
 		if _, ok := held.Item().(item.Spear); ok {
-			return p.attackWithSpear()
+			return p.attackWithSpear(e)
 		}
 	}
 	if !p.canReach(e.Position()) {
@@ -2035,21 +2036,44 @@ func (p *Player) AttackEntity(e world.Entity) bool {
 	return true
 }
 
-func (p *Player) attackWithSpear() bool {
+// spearCooldownGrace is how early a jab may arrive before the server's copy
+// of the spear cooldown ends: network jitter makes a client that waited out
+// its own cooldown land a tick or two early, which would otherwise drop the
+// jab (and its Lunge) entirely.
+const spearCooldownGrace = 100 * time.Millisecond
+
+// spearLagAllowance is how much further than the spear's reach an entity the
+// client says it jabbed may be on the server: where the server has a target
+// lags behind where the attacking client saw it.
+const spearLagAllowance = 1.0
+
+// attackWithSpear performs a jab. named is the entity the client reported
+// hitting, or nil for a jab at the air.
+func (p *Player) attackWithSpear(named world.Entity) bool {
 	held, _ := p.HeldItems()
 	spear, ok := held.Item().(item.Spear)
-	if !ok || p.HasCooldown(held.Item()) || p.Dead() || !p.GameMode().AllowsInteraction() {
+	if !ok || p.spearOnCooldown(held.Item()) || p.Dead() || !p.GameMode().AllowsInteraction() {
 		return false
 	}
 	p.SwingArm()
 	p.SetCooldown(held.Item(), spear.Cooldown())
 
 	hits := 0
-	for _, target := range p.spearJabTargets(spear) {
+	targets := p.spearJabTargets(spear)
+	// The server's trace uses where targets are now, the client what it saw a
+	// moment ago: also hit the entity the client names if it is within reach
+	// give or take that lag.
+	if named != nil && named.H() != p.H() && p.spearReachesNamed(spear, named) &&
+		!slices.ContainsFunc(targets, func(t spearTarget) bool { return t.e.H() == named.H() }) {
+		targets = append(targets, spearTarget{e: named})
+	}
+	for _, target := range targets {
 		if valid, hit := p.attackEntity(target.e, false); valid && hit {
 			hits++
 		}
 	}
+	slog.Info("spear jab", "player", p.Name(), "targets", len(targets), "hits", hits) // TEMP
+	p.logSpearJab(spear, len(targets), hits)                                          // TEMP: diagnosing missed jabs
 	if hits > 0 {
 		p.damageHeldItem()
 	}
@@ -2067,15 +2091,19 @@ func (p *Player) triggerSpearLunge() {
 		return
 	}
 	if p.Gliding() || p.insideOfWater() {
+		slog.Info("spear lunge skipped", "player", p.Name(), "reason", "gliding or in water") // TEMP
 		return
 	}
 	if _, riding := p.RidingEntity(p.tx); riding {
+		slog.Info("spear lunge skipped", "player", p.Name(), "reason", "riding") // TEMP
 		return
 	}
 	level := l.Level()
 	if p.Food() < enchantment.Lunge.MinimumFood() {
+		slog.Info("spear lunge skipped", "player", p.Name(), "reason", "hunger", "food", p.Food()) // TEMP
 		return
 	}
+	slog.Info("spear lunge", "player", p.Name(), "level", level, "speed", enchantment.Lunge.Speed(level)) // TEMP
 
 	p.Exhaust(enchantment.Lunge.ExhaustionCost(level))
 	p.AddFood(-enchantment.Lunge.FoodCost(level))
@@ -2231,6 +2259,52 @@ func (p *Player) spearJabTargets(spear item.Spear) []spearTarget {
 		}
 	})
 	return targets
+}
+
+// logSpearJab is a TEMPORARY diagnostic: for every other player within 10
+// blocks it logs how far along and how far off the jab's line they were.
+func (p *Player) logSpearJab(spear item.Spear, targets, hits int) {
+	start := entity.EyePosition(p)
+	dir := p.Rotation().Vec3()
+	minRange, maxRange := spear.AttackRange(p.GameMode().CreativeInventory())
+	for e := range p.tx.EntitiesWithin(cube.Box(start[0]-10, start[1]-10, start[2]-10, start[0]+10, start[1]+10, start[2]+10)) {
+		other, ok := e.(*Player)
+		if !ok || other == p {
+			continue
+		}
+		centre := other.Position().Add(mgl64.Vec3{0, 0.9})
+		rel := centre.Sub(start)
+		along := rel.Dot(dir)
+		off := rel.Sub(dir.Mul(along)).Len()
+		slog.Info("spear jab", "attacker", p.Name(), "target", other.Name(),
+			"distance", fmt.Sprintf("%.2f", rel.Len()), "along", fmt.Sprintf("%.2f", along), "offLine", fmt.Sprintf("%.2f", off),
+			"range", fmt.Sprintf("%.1f-%.1f", minRange, maxRange), "targetsFound", targets, "hits", hits)
+	}
+}
+
+// spearOnCooldown reports whether the spear's jab cooldown still has more
+// than spearCooldownGrace left.
+func (p *Player) spearOnCooldown(it world.Item) bool {
+	until, ok := p.cooldowns[cooldownKey(it)]
+	return ok && time.Until(until) > spearCooldownGrace
+}
+
+// spearReachesNamed reports whether an entity the client says it jabbed is
+// within the spear's reach of the eyes, plus spearLagAllowance. The closest
+// point of its hitbox counts, as for the jab trace.
+func (p *Player) spearReachesNamed(spear item.Spear, e world.Entity) bool {
+	if living, ok := e.(entity.Living); ok && living.Dead() {
+		return false
+	}
+	eye := entity.EyePosition(p)
+	bb := e.H().Type().BBox(e).Translate(e.Position()).Grow(spear.HitboxMargin())
+	closest := mgl64.Vec3{
+		math.Max(bb.Min()[0], math.Min(eye[0], bb.Max()[0])),
+		math.Max(bb.Min()[1], math.Min(eye[1], bb.Max()[1])),
+		math.Max(bb.Min()[2], math.Min(eye[2], bb.Max()[2])),
+	}
+	_, maxRange := spear.AttackRange(p.GameMode().CreativeInventory())
+	return closest.Sub(eye).Len() <= maxRange+spearLagAllowance
 }
 
 func (p *Player) spearJabBlockDistance(start, end mgl64.Vec3) (float64, bool) {

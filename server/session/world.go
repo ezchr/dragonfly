@@ -105,7 +105,9 @@ func (s *Session) ViewEntity(e world.Entity) {
 			Yaw:             float32(yaw),
 			BuildPlatform:   int32(protocol.DeviceUnknown),
 			AbilityData: protocol.AbilityData{
-				EntityUniqueID: int64(runtimeID),
+				EntityUniqueID:     int64(runtimeID),
+				PlayerPermissions:  playerPermissions(v),
+				CommandPermissions: commandPermissions(v),
 				Layers: []protocol.AbilityLayer{{
 					Type:      protocol.AbilityLayerTypeBase,
 					Abilities: protocol.AbilityCount - 1,

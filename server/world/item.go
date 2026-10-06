@@ -28,6 +28,25 @@ type CustomItem interface {
 	Category() category.Category
 }
 
+// PackTexturedItem is a CustomItem drawn by a resource pack the server supplies itself, rather than by the
+// pack Dragonfly builds from Texture: Icon is the item's key in that pack's item_texture.json. The built pack
+// leaves such an item out entirely, so its Texture is never read and may return nil. This lets an existing
+// addon's resource pack be served unchanged.
+type PackTexturedItem interface {
+	CustomItem
+	// Icon returns the item_texture.json key the client draws the item with.
+	Icon() string
+}
+
+// ComponentItem is a CustomItem that sends item data of its own on top of what Dragonfly derives from the
+// interfaces it implements - for example enchantable_slot/enchantable_value, minecraft:tags or
+// minecraft:repairable, none of which Dragonfly derives. An entry replaces a derived one of the same name.
+type ComponentItem interface {
+	CustomItem
+	// ItemComponents returns extra item_properties and extra components. Either may be nil.
+	ItemComponents() (properties, components map[string]any)
+}
+
 // RegisterItem registers an item with the ID and meta passed. Once registered, items may be obtained from an
 // ID and metadata value using itemByID().
 // If an item with the ID and meta passed already exists, RegisterItem panics.
