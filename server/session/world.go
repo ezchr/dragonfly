@@ -796,6 +796,10 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 		pk.SoundType = packet.SoundEventFallSmall
 	case sound.Burp:
 		pk.SoundType = packet.SoundEventBurp
+	case sound.Eat:
+		pk.SoundType = packet.SoundEventEat
+	case sound.Drink:
+		pk.SoundType = packet.SoundEventDrink
 	case sound.CushionPlace:
 		pk.SoundType, pk.EntityType = packet.SoundEventSpawn, "minecraft:cushion"
 	case sound.CushionSit:

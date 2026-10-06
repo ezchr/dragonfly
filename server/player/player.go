@@ -3290,6 +3290,9 @@ func (p *Player) Tick(tx *world.Tx, current int64) {
 			for _, v := range p.viewers() {
 				v.ViewEntityAction(p, entity.EatAction{})
 			}
+			// So does the eating (or drinking) sound, which the server plays, as in vanilla: the
+			// client does not play it for itself.
+			p.tx.PlaySound(p.Position().Add(mgl64.Vec3{0, 1.5}), consumeSound(held.Item()))
 		}
 	}
 
@@ -4516,4 +4519,18 @@ func (p *Player) resendNearbyBlock(pos cube.Pos) {
 // end, which is typically used for sending messages, popups and tips.
 func format(a []any) string {
 	return strings.TrimSuffix(strings.TrimSuffix(fmt.Sprintln(a...), "\n"), "\n")
+}
+
+// consumeSound is the sound played while the item passed is being consumed: drinking for potions,
+// honey and milk, eating for everything else.
+func consumeSound(it world.Item) world.Sound {
+	switch it := it.(type) {
+	case item.Potion, item.HoneyBottle:
+		return sound.Drink{}
+	case item.Bucket:
+		if it.Content == item.MilkBucketContent() {
+			return sound.Drink{}
+		}
+	}
+	return sound.Eat{}
 }
