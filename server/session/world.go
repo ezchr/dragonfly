@@ -172,6 +172,12 @@ func (s *Session) ViewEntityGameMode(e world.Entity) {
 	if s.entityHidden(e) {
 		return
 	}
+	if s.entityRuntimeID(e) == selfEntityRuntimeID {
+		// The player's own game mode went out with SendGameMode, followed by its abilities. An
+		// UpdatePlayerGameType for itself after them makes the client reset its abilities to the
+		// game type's defaults, which drops a custom mode's MayFly (survival flight).
+		return
+	}
 	c, ok := e.(Controllable)
 	if !ok {
 		return
