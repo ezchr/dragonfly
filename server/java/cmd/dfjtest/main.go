@@ -16,11 +16,11 @@ import (
 	"github.com/df-mc/dragonfly/server/entity"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/java/javasession"
+	jserver "github.com/df-mc/dragonfly/server/java/protocol/server"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/biome"
 	"github.com/df-mc/dragonfly/server/world/generator"
-	jserver "github.com/ezchr/go-mcjava/server"
 	"github.com/go-gl/mathgl/mgl64"
 )
 

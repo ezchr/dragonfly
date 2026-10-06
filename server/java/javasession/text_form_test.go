@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/df-mc/dragonfly/server/cmd"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 	"github.com/df-mc/dragonfly/server/player/form"
 	"github.com/df-mc/dragonfly/server/world"
-	"github.com/ezchr/go-mcjava/wire"
 )
 
 type testCustom struct {

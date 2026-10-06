@@ -8,9 +8,9 @@ import (
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
+	jitem "github.com/df-mc/dragonfly/server/java/protocol/item"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
-	jitem "github.com/ezchr/go-mcjava/item"
 )
 
 // The enchanting table: Dragonfly's option logic (session/handler_enchanting.go, deterministic for

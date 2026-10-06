@@ -7,9 +7,9 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/potion"
 	"github.com/df-mc/dragonfly/server/java/javamap"
+	jitem "github.com/df-mc/dragonfly/server/java/protocol/item"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/world"
-	jitem "github.com/ezchr/go-mcjava/item"
-	v777 "github.com/ezchr/go-mcjava/v777"
 )
 
 // Java item ids the conversion needs.

@@ -8,7 +8,6 @@ require (
 	github.com/df-mc/go-nethernet v1.0.20
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/df-mc/worldupgrader v1.0.22
-	github.com/ezchr/go-mcjava v0.0.0-20261006200644-0694e2ad5d66
 	github.com/go-gl/mathgl v1.2.0
 	github.com/google/uuid v1.6.0
 	github.com/pelletier/go-toml v1.9.5

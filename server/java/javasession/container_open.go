@@ -7,11 +7,11 @@ import (
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/java/protocol/version"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
-	v777 "github.com/ezchr/go-mcjava/v777"
-	"github.com/ezchr/go-mcjava/version"
-	"github.com/ezchr/go-mcjava/wire"
 )
 
 // menu returns the open window (the player's inventory if no block window is open).

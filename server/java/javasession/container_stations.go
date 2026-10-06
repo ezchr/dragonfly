@@ -11,12 +11,12 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/recipe"
 	"github.com/df-mc/dragonfly/server/java/javamap"
+	jitem "github.com/df-mc/dragonfly/server/java/protocol/item"
+	"github.com/df-mc/dragonfly/server/java/protocol/text"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/sound"
-	jitem "github.com/ezchr/go-mcjava/item"
-	"github.com/ezchr/go-mcjava/text"
-	v777 "github.com/ezchr/go-mcjava/v777"
 )
 
 // Results of the windows that make something: the crafting grids and the work stations. Java

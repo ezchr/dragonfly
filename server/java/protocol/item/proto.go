@@ -4,10 +4,10 @@ import (
 	"math/bits"
 	"sync"
 
-	v776 "github.com/ezchr/go-mcjava/v776"
-	v777 "github.com/ezchr/go-mcjava/v777"
-	"github.com/ezchr/go-mcjava/version"
-	"github.com/ezchr/go-mcjava/wire"
+	v776 "github.com/df-mc/dragonfly/server/java/protocol/v776"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/java/protocol/version"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // Proto is the item side of a protocol version older than the newest (26.3): its ids of items, data

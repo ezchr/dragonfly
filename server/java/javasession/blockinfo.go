@@ -4,10 +4,10 @@ import (
 	"sync"
 
 	"github.com/df-mc/dragonfly/server/java/javamap"
+	jchunk "github.com/df-mc/dragonfly/server/java/protocol/chunk"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/java/protocol/version"
 	"github.com/df-mc/dragonfly/server/world"
-	jchunk "github.com/ezchr/go-mcjava/chunk"
-	v777 "github.com/ezchr/go-mcjava/v777"
-	"github.com/ezchr/go-mcjava/version"
 )
 
 // buildBlockInfo builds the per-runtime-id tables chunk encoding uses, from the default block

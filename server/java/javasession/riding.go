@@ -5,9 +5,9 @@ import (
 
 	"github.com/df-mc/dragonfly/server/entity"
 	"github.com/df-mc/dragonfly/server/item"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/world"
-	v777 "github.com/ezchr/go-mcjava/v777"
 )
 
 // Riding: Java clients learn who rides what from set_passengers (the vehicle's whole passenger

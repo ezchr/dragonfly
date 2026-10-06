@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	v777 "github.com/ezchr/go-mcjava/v777"
-	"github.com/ezchr/go-mcjava/wire"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // DefaultSessionServer is Mojang's session server.

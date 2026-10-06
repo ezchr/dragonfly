@@ -11,7 +11,11 @@ Bedrock players share one world and see each other.
 > a Java session needs (a player session interface, `Server.LoadPlayer`/`AddPlayer`, and listing
 > Java players in the Bedrock player list) and the Java session itself, in this folder.
 
-The Java protocol itself lives in [go-mcjava](https://github.com/ezchr/go-mcjava).
+Everything is in this branch: the hooks in Dragonfly's own packages, the Java session in
+`server/java/javasession`, and the Java protocol in `server/java/protocol`. Switching your server to
+the branch is all it takes. The session and the protocol are also mirrored to their own repos,
+[ezchr/dfjava](https://github.com/ezchr/dfjava) and [ezchr/go-mcjava](https://github.com/ezchr/go-mcjava)
+(the protocol works on its own there, for proxies or bots); this branch is where they are developed.
 
 ## Versions
 
@@ -33,7 +37,7 @@ import (
 	"log/slog"
 
 	"github.com/df-mc/dragonfly/server/java/javasession"
-	jserver "github.com/ezchr/go-mcjava/server"
+	jserver "github.com/df-mc/dragonfly/server/java/protocol/server"
 )
 
 srv := conf.New()

@@ -5,10 +5,10 @@ import (
 	"sync"
 
 	"github.com/df-mc/dragonfly/server/block/cube"
+	jchunk "github.com/df-mc/dragonfly/server/java/protocol/chunk"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/chunk"
-	jchunk "github.com/ezchr/go-mcjava/chunk"
-	v777 "github.com/ezchr/go-mcjava/v777"
 )
 
 // blockInfo is what chunk encoding needs per Dragonfly block runtime id.

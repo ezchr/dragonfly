@@ -1,9 +1,9 @@
 package javasession
 
 import (
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
-	v777 "github.com/ezchr/go-mcjava/v777"
 )
 
 // dimSections is how many chunk sections a Java client expects in a dimension (its dimension

@@ -15,9 +15,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/ezchr/go-mcjava/text"
-	v777 "github.com/ezchr/go-mcjava/v777"
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/text"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 func listen(t *testing.T, cfg Config) *Listener {

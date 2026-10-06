@@ -4,7 +4,7 @@ import (
 	"errors"
 	"unicode/utf8"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // NBT tag types.

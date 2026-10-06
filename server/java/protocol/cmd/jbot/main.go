@@ -14,9 +14,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ezchr/go-mcjava/server"
-	v777 "github.com/ezchr/go-mcjava/v777"
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/server"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 var command = flag.String("cmd", "", "run this command (without /) 3 s after spawning and log the replies")

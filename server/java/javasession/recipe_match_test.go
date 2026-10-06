@@ -10,11 +10,11 @@ import (
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/enchantment"
+	jitem "github.com/df-mc/dragonfly/server/java/protocol/item"
+	v776 "github.com/df-mc/dragonfly/server/java/protocol/v776"
+	"github.com/df-mc/dragonfly/server/java/protocol/version"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 	"github.com/df-mc/dragonfly/server/world"
-	jitem "github.com/ezchr/go-mcjava/item"
-	v776 "github.com/ezchr/go-mcjava/v776"
-	"github.com/ezchr/go-mcjava/version"
-	"github.com/ezchr/go-mcjava/wire"
 )
 
 // Dragonfly registers its recipes when a server is made.

@@ -1,7 +1,7 @@
 package javasession
 
 import (
-	v777 "github.com/ezchr/go-mcjava/v777"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 )
 
 // ViewTime sets the time of day. 26.3 keeps time in world clocks: set_time carries the game time

@@ -3,8 +3,8 @@ package version
 import (
 	"testing"
 
-	"github.com/ezchr/go-mcjava/v776"
-	"github.com/ezchr/go-mcjava/v777"
+	v776 "github.com/df-mc/dragonfly/server/java/protocol/v776"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 )
 
 func TestV776Packets(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // Vanilla 26.3 ids used by the superflat captures.

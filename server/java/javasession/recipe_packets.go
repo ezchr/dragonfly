@@ -4,10 +4,10 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/recipe"
 	"github.com/df-mc/dragonfly/server/java/javamap"
+	jitem "github.com/df-mc/dragonfly/server/java/protocol/item"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 	"github.com/df-mc/dragonfly/server/world"
-	jitem "github.com/ezchr/go-mcjava/item"
-	v777 "github.com/ezchr/go-mcjava/v777"
-	"github.com/ezchr/go-mcjava/wire"
 )
 
 // update_recipes gives the client what it decides on its own: which items each furnace, smithing

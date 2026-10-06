@@ -9,8 +9,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/ezchr/go-mcjava/chunk"
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/chunk"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 func load(path string) *chunk.Column {

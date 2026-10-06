@@ -15,7 +15,7 @@ package text
 import (
 	"strconv"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // Flag is a style flag that a component either sets, clears or inherits from its parent.

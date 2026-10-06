@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // Encoder writes level_chunk_with_light bodies. It keeps scratch tables sized to the registries,

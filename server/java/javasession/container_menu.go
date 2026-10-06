@@ -9,9 +9,9 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/inventory"
 	"github.com/df-mc/dragonfly/server/item/recipe"
+	"github.com/df-mc/dragonfly/server/java/protocol/text"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/world"
-	"github.com/ezchr/go-mcjava/text"
-	v777 "github.com/ezchr/go-mcjava/v777"
 )
 
 // A menu is a Java container window: the player's own inventory (window 0) or a block's window.

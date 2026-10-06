@@ -3,7 +3,7 @@ package chunk
 import (
 	"fmt"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 const (

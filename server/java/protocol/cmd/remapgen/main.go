@@ -74,12 +74,12 @@ func fallback(registry, name string) []string {
 	switch base {
 	case "minecraft:concrete_slab", "minecraft:wool_slab":
 		if registry == "minecraft:item" {
-			add("minecraft:"+col+"_"+strings.TrimSuffix(strings.TrimPrefix(base, "minecraft:"), "_slab"))
+			add("minecraft:" + col + "_" + strings.TrimSuffix(strings.TrimPrefix(base, "minecraft:"), "_slab"))
 		}
 		add("minecraft:smooth_stone_slab")
 	case "minecraft:concrete_stairs", "minecraft:wool_stairs":
 		if registry == "minecraft:item" {
-			add("minecraft:"+col+"_"+strings.TrimSuffix(strings.TrimPrefix(base, "minecraft:"), "_stairs"))
+			add("minecraft:" + col + "_" + strings.TrimSuffix(strings.TrimPrefix(base, "minecraft:"), "_stairs"))
 		}
 		add("minecraft:stone_stairs")
 	case "minecraft:shrub":

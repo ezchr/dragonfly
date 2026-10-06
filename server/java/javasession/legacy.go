@@ -1,9 +1,9 @@
 package javasession
 
 import (
+	v776 "github.com/df-mc/dragonfly/server/java/protocol/v776"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
-	v776 "github.com/ezchr/go-mcjava/v776"
 )
 
 // handleLegacy handles a packet of an older client version that the newest version (whose ids

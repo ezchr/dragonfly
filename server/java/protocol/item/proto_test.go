@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/ezchr/go-mcjava/version"
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/version"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // container_set_slot bodies a vanilla 26.2 server sent for the /give commands of vanillaSetSlot, in

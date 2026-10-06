@@ -3,7 +3,7 @@ package javasession
 import (
 	"sync"
 
-	jserver "github.com/ezchr/go-mcjava/server"
+	jserver "github.com/df-mc/dragonfly/server/java/protocol/server"
 	"github.com/google/uuid"
 )
 

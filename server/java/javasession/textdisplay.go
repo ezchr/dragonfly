@@ -2,9 +2,9 @@ package javasession
 
 import (
 	"github.com/df-mc/dragonfly/server/entity"
+	"github.com/df-mc/dragonfly/server/java/protocol/text"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/world"
-	"github.com/ezchr/go-mcjava/text"
-	v777 "github.com/ezchr/go-mcjava/v777"
 )
 
 // Dragonfly's floating text entity (entity.NewText: "dragonfly:text", a name tag with no body) is

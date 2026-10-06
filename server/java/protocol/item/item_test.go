@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // container_set_slot bodies a vanilla 26.3 server sent for /give commands (tools/capture/items-vanilla):

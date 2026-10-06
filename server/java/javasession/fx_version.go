@@ -1,7 +1,7 @@
 package javasession
 
 import (
-	"github.com/ezchr/go-mcjava/version"
+	"github.com/df-mc/dragonfly/server/java/protocol/version"
 )
 
 // The entity, fx, effect and text code computes 26.3 (v777) ids. For a client of an older version

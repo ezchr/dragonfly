@@ -13,7 +13,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/ezchr/go-mcjava/internal/cfb8"
+	"github.com/df-mc/dragonfly/server/java/protocol/internal/cfb8"
 )
 
 // Limits the vanilla server uses.

@@ -25,7 +25,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 func camel(name string) string {

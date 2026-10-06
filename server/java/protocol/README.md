@@ -1,13 +1,8 @@
-# go-mcjava
+# Java protocol (server/java/protocol)
 
-The Minecraft Java Edition protocol in Go, written for **crossplay**: it is the protocol half of the
-[Java crossplay in ezchr/dragonfly](https://github.com/ezchr/dragonfly/tree/crossplay/server/java), which lets Java Edition players join a
-[Dragonfly](https://github.com/df-mc/dragonfly) (Bedrock) server natively, with no ViaProxy or
-Geyser in between.
-
-> **Crossplay note.** The packages here have no Dragonfly dependency and can be used on their own.
-> The Dragonfly integration that uses them **does not work with normal Dragonfly**: it lives on
-> the `crossplay` branch of [ezchr/dragonfly](https://github.com/ezchr/dragonfly/tree/crossplay/server/java), next to the hooks it needs.
+The Minecraft Java Edition protocol in Go: the protocol half of the Java crossplay on this branch.
+It has no Dragonfly dependency. It is mirrored, with its own import path, to
+[ezchr/go-mcjava](https://github.com/ezchr/go-mcjava) for use outside Dragonfly.
 
 Java **26.3** (protocol 777) and **26.2** (protocol 776) clients are supported. A server is written
 against 26.3; the `version` package converts its ids for 26.2 clients.

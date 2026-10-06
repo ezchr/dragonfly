@@ -16,8 +16,8 @@ import (
 	"sync"
 	"time"
 
+	jserver "github.com/df-mc/dragonfly/server/java/protocol/server"
 	"github.com/df-mc/dragonfly/server/player/skin"
-	jserver "github.com/ezchr/go-mcjava/server"
 	"github.com/google/uuid"
 )
 

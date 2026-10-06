@@ -5,7 +5,7 @@ import (
 	"math/bits"
 	"slices"
 
-	"github.com/ezchr/go-mcjava/wire"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // Decoder reads level_chunk_with_light bodies the way the 26.3 client does, but strictly: every

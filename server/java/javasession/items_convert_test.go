@@ -9,9 +9,9 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/enchantment"
 	"github.com/df-mc/dragonfly/server/item/potion"
-	jitem "github.com/ezchr/go-mcjava/item"
-	"github.com/ezchr/go-mcjava/version"
-	"github.com/ezchr/go-mcjava/wire"
+	jitem "github.com/df-mc/dragonfly/server/java/protocol/item"
+	"github.com/df-mc/dragonfly/server/java/protocol/version"
+	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
 // Dragonfly stacks whose Java form must be byte-identical to what vanilla 26.3 sent for the /give
