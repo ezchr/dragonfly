@@ -11,6 +11,7 @@ import (
 	"log"
 	"math"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"github.com/ezchr/go-mc/java/server"
@@ -22,13 +23,15 @@ func main() {
 	addr := flag.String("addr", "127.0.0.1:25620", "server")
 	name := flag.String("name", "Bot", "player name")
 	secs := flag.Int("secs", 20, "seconds to stay")
+	attack := flag.Bool("attack", false, "stand still and attack the first player seen every 600 ms")
+	still := flag.Bool("still", false, "stand still")
 	flag.Parse()
-	if err := run(*addr, *name, time.Duration(*secs)*time.Second); err != nil {
+	if err := run(*addr, *name, time.Duration(*secs)*time.Second, *attack, *still); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(addr, name string, stay time.Duration) error {
+func run(addr, name string, stay time.Duration, attack, still bool) error {
 	nc, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err
@@ -107,13 +110,8 @@ func run(addr, name string, stay time.Duration) error {
 	log.Printf("%s: in play", name)
 
 	// Play: read in the background, walk in the foreground.
-	type state struct {
-		x, y, z   float64
-		teleports int
-		chunks    int
-		lastTpID  int32
-	}
 	pos := make(chan [3]float64, 16)
+	var target atomic.Int32 // Java entity id of the first player seen
 	errc := make(chan error, 1)
 	stats := map[string]int{}
 	var tpCount, chunkCount int
@@ -146,6 +144,22 @@ func run(addr, name string, stay time.Duration) error {
 			case v777.ClientboundPlayDisconnect:
 				errc <- fmt.Errorf("kicked")
 				return
+			case v777.ClientboundPlayAddEntity:
+				eid := r.VarInt()
+				r.UUID()
+				if r.VarInt() == 159 { // player
+					target.CompareAndSwap(0, eid)
+					log.Printf("%s: sees player entity %d", name, eid)
+				}
+			case v777.ClientboundPlaySetHealth:
+				log.Printf("%s: health %.1f food %d", name, r.Float32(), r.VarInt())
+			case v777.ClientboundPlaySetEntityMotion:
+				if eid := r.VarInt(); eid == 1 {
+					x, y, z := r.LpVec3()
+					log.Printf("%s: knockback %.3f %.3f %.3f", name, x, y, z)
+				}
+			case v777.ClientboundPlayRespawn:
+				log.Printf("%s: respawned", name)
 			default:
 				stats[fmt.Sprintf("%#x", id)]++
 			}
@@ -173,6 +187,16 @@ func run(addr, name string, stay time.Duration) error {
 			log.Printf("%s: corrected to %.2f %.2f %.2f", name, p[0], p[1], p[2])
 			cur = p
 		case <-t.C:
+			if attack || still {
+				step++
+				if attack && step%12 == 0 && target.Load() != 0 {
+					w.Reset()
+					w.VarInt(target.Load())
+					c.Send(v777.ServerboundPlayAttack, w.B)
+				}
+				c.Send(v777.ServerboundPlayClientTickEnd, nil)
+				continue
+			}
 			d := dirs[(step/40)%4] // 2 s per side
 			step++
 			cur[0] += d[0] * speed
