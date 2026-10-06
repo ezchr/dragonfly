@@ -23,6 +23,7 @@ import (
 
 	"github.com/ezchr/go-mcjava/text"
 	v777 "github.com/ezchr/go-mcjava/v777"
+	"github.com/ezchr/go-mcjava/version"
 	"github.com/ezchr/go-mcjava/wire"
 )
 
@@ -114,7 +115,9 @@ type Player struct {
 	Profile  Profile
 	Info     ClientInfo
 	Protocol int32
-	Address  string // what the client typed to connect (host)
+	// Version is the client's protocol version: the server writes v777 ids and remaps them with it.
+	Version *version.Version
+	Address string // what the client typed to connect (host)
 }
 
 // Listener accepts Java clients.
@@ -281,30 +284,43 @@ func (l *Listener) negotiate(c *wire.Conn, ip string, deadline time.Time) (*Play
 		l.loginDisconnect(c, "Too many login attempts from your address. Please wait a minute.")
 		return nil, errors.New("too many login attempts from " + ip)
 	}
-	if protocol != ProtocolVersion {
-		msg := fmt.Sprintf("This server runs Minecraft %s. Please use %s.", GameVersion, GameVersion)
-		if protocol < ProtocolVersion {
-			msg = fmt.Sprintf("Outdated client! Please use %s.", GameVersion)
+	ver := version.ByProtocol(protocol)
+	if ver == nil {
+		msg := fmt.Sprintf("This server runs Minecraft %s. Please use %s.", versionNames(), versionNames())
+		if protocol < version.All[len(version.All)-1].Protocol {
+			msg = fmt.Sprintf("Outdated client! Please use %s.", versionNames())
 		}
 		l.loginDisconnect(c, msg)
-		return nil, fmt.Errorf("protocol %d, want %d", protocol, ProtocolVersion)
+		return nil, fmt.Errorf("protocol %d not supported", protocol)
 	}
 	prof, err := l.login(c, deadline)
 	if err != nil {
 		return nil, err
 	}
-	info, err := l.configure(c)
+	info, err := l.configure(c, ver)
 	if err != nil {
 		return nil, err
 	}
-	return &Player{Conn: c, Profile: prof, Info: info, Protocol: protocol, Address: host}, nil
+	return &Player{Conn: c, Profile: prof, Info: info, Protocol: protocol, Version: ver, Address: host}, nil
 }
 
-// Versions this package speaks.
+// The newest version this package speaks; version.All lists every version clients may join with.
 const (
 	ProtocolVersion = 777
 	GameVersion     = "26.3"
 )
+
+// versionNames is the supported versions for messages: "26.2 or 26.3".
+func versionNames() string {
+	s := ""
+	for i := len(version.All) - 1; i >= 0; i-- {
+		if s != "" {
+			s += " or "
+		}
+		s += version.All[i].Name
+	}
+	return s
+}
 
 // status answers the server list: one status_request, then a ping (vanilla's
 // ServerStatusPacketListenerImpl). A second status_request or a malformed ping ends the connection.
@@ -323,7 +339,7 @@ func (l *Listener) status(c *wire.Conn, protocol int32) error {
 			answered = true
 			st := l.cfg.Status()
 			resp := map[string]any{
-				"version":     map[string]any{"name": GameVersion, "protocol": ProtocolVersion},
+				"version":     statusVersion(protocol),
 				"players":     map[string]any{"max": st.MaxPlayers, "online": st.Online},
 				"description": map[string]any{"text": st.MOTD},
 				// Chat is not signed (login says enforces_secure_chat false): say so up front.
@@ -448,16 +464,18 @@ func writeProfile(w *wire.Writer, p Profile) {
 }
 
 // configure runs the configuration phase and returns what the client said about itself.
-func (l *Listener) configure(c *wire.Conn) (ClientInfo, error) {
+func (l *Listener) configure(c *wire.Conn, ver *version.Version) (ClientInfo, error) {
 	var info ClientInfo
 	var w wire.Writer
 	w.String("minecraft:brand")
 	w.String(l.cfg.Brand)
-	c.WritePacket(v777.ClientboundConfigurationCustomPayload, w.B)
+	c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationCustomPayload), w.B)
 	// Feature flags and the known-packs offer go first; the client answers with the packs it has.
-	pk := v777.VanillaConfiguration()
+	// The vanilla packets already have the version's own ids.
+	pk := ver.Configuration()
+	registryData := ver.ClientboundConfig(v777.ClientboundConfigurationRegistryData)
 	i := 0
-	for ; i < len(pk) && pk[i].ID != v777.ClientboundConfigurationRegistryData; i++ {
+	for ; i < len(pk) && pk[i].ID != registryData; i++ {
 		c.WritePacket(pk[i].ID, pk[i].Body)
 	}
 	if err := c.Flush(); err != nil {
@@ -470,7 +488,7 @@ func (l *Listener) configure(c *wire.Conn) (ClientInfo, error) {
 			return info, err
 		}
 		r := wire.NewReader(body)
-		switch id {
+		switch ver.ServerboundConfig(id) {
 		case v777.ServerboundConfigurationClientInformation:
 			info = ClientInfo{
 				Locale: r.String(16), ViewDistance: r.Int8(), ChatMode: r.VarInt(), ChatColours: r.Bool(),
@@ -492,8 +510,8 @@ func (l *Listener) configure(c *wire.Conn) (ClientInfo, error) {
 			}
 			core := false
 			for j := 0; j < n && r.Err == nil; j++ {
-				ns, pid, ver := r.String(32767), r.String(32767), r.String(32767)
-				if ns == "minecraft" && pid == "core" && ver == GameVersion {
+				ns, pid, pv := r.String(32767), r.String(32767), r.String(32767)
+				if ns == "minecraft" && pid == "core" && pv == ver.Name {
 					core = true
 				}
 			}
@@ -501,13 +519,13 @@ func (l *Listener) configure(c *wire.Conn) (ClientInfo, error) {
 				return info, fmt.Errorf("select_known_packs: %w", r.Err)
 			}
 			if !core {
-				disconnect(c, v777.ClientboundConfigurationDisconnect, "Your client doesn't have the vanilla "+GameVersion+" data.")
+				disconnect(c, ver.ClientboundConfig(v777.ClientboundConfigurationDisconnect), "Your client doesn't have the vanilla "+ver.Name+" data.")
 				return info, errors.New("client lacks the vanilla core pack")
 			}
 			for ; i < len(pk); i++ {
 				c.WritePacket(pk[i].ID, pk[i].Body)
 			}
-			c.WritePacket(v777.ClientboundConfigurationFinishConfiguration, nil)
+			c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationFinishConfiguration), nil)
 			if err := c.Flush(); err != nil {
 				return info, err
 			}
@@ -560,4 +578,13 @@ func orDefault(v, def int) int {
 		return def
 	}
 	return v
+}
+
+// statusVersion is the version a status reply announces: the client's own when it can join, so
+// the server list shows it as compatible.
+func statusVersion(protocol int32) map[string]any {
+	if v := version.ByProtocol(protocol); v != nil {
+		return map[string]any{"name": v.Name, "protocol": v.Protocol}
+	}
+	return map[string]any{"name": versionNames(), "protocol": ProtocolVersion}
 }
