@@ -179,27 +179,66 @@ func hasMUTF8Escapes(b []byte) bool {
 
 // PlainText returns the plain text of a chat component in network NBT: a string tag, or a compound's
 // "text" (or "translate" key) followed by its "extra" components'. Styles are dropped.
+//
+// It reads the input once, so its cost is linear in the size however deeply the components nest
+// (skipping "extra" and parsing it again at every level was quadratic): a compound's text gets a
+// slot before its "extra" is read in place, so the text comes first whatever the key order.
 func PlainText(nbt []byte) string {
-	r := wire.Reader{B: nbt}
+	p := plainReader{r: wire.Reader{B: nbt}}
+	p.value(p.r.Byte(), 0)
+	n := 0
+	for _, s := range p.spans {
+		n += int(s.n)
+	}
 	var sb strings.Builder
-	plainText(&r, r.Byte(), &sb, 0)
+	sb.Grow(n)
+	for _, s := range p.spans {
+		if s.n > 0 {
+			sb.WriteString(mutf8(nbt[s.off : s.off+s.n]))
+		}
+	}
 	return sb.String()
 }
 
-func plainText(r *wire.Reader, typ byte, sb *strings.Builder, depth int) {
+// span is a string of the input (modified UTF-8), 8 bytes however short the string.
+type span struct{ off, n uint32 }
+
+type plainReader struct {
+	r     wire.Reader
+	spans []span
+}
+
+// str reads a string payload as a span.
+func (p *plainReader) str() span {
+	n := int(p.r.Uint16())
+	off := p.r.Off
+	if take(&p.r, n) == nil && n > 0 {
+		return span{}
+	}
+	return span{uint32(off), uint32(n)}
+}
+
+func (p *plainReader) value(typ byte, depth int) {
+	r := &p.r
+	if depth > maxNBTDepth {
+		fail(r, fmt.Errorf("%w: NBT nested too deep", ErrInvalid))
+		return
+	}
 	switch typ {
 	case nbtString:
-		sb.WriteString(readMUTF8(r))
+		if s := p.str(); s.n > 0 {
+			p.spans = append(p.spans, s)
+		}
 	case nbtList:
 		et := r.Byte()
 		n := nbtLen(r, 0)
 		for i := 0; i < n && r.Err == nil; i++ {
-			plainText(r, et, sb, depth+1)
+			p.value(et, depth+1)
 		}
 	case nbtCompound:
-		var extra []byte
-		var extraType byte
-		for r.Err == nil && depth < maxNBTDepth {
+		text := len(p.spans)
+		p.spans = append(p.spans, span{}) // the compound's own text, before its extra
+		for r.Err == nil {
 			t := r.Byte()
 			if t == nbtEnd {
 				break
@@ -207,17 +246,15 @@ func plainText(r *wire.Reader, typ byte, sb *strings.Builder, depth int) {
 			name := take(r, int(r.Uint16()))
 			switch {
 			case t == nbtString && (string(name) == "text" || string(name) == "translate" || string(name) == ""):
-				sb.WriteString(readMUTF8(r))
+				p.spans[text] = p.str() // a repeated key: the last wins, like CompoundTag
 			case string(name) == "extra":
-				start := r.Off
-				skipPayload(r, t, depth+1)
-				extra, extraType = r.B[start:r.Off], t
+				p.value(t, depth+1)
 			default:
 				skipPayload(r, t, depth+1)
 			}
 		}
-		if extra != nil {
-			plainText(&wire.Reader{B: extra}, extraType, sb, depth+1)
+		if p.spans[text].n == 0 && len(p.spans) == text+1 {
+			p.spans = p.spans[:text] // nothing in it: no slot kept
 		}
 	default:
 		skipPayload(r, typ, depth)

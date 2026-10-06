@@ -3,7 +3,10 @@ package item
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/ezchr/go-mc/java/wire"
 )
@@ -285,5 +288,102 @@ func BenchmarkDecodeEnchantedSword(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		s.Decode(wire.NewReader(data))
+	}
+}
+
+// nbtTag writes a named tag of a compound.
+func nbtTag(b []byte, typ byte, name string) []byte {
+	b = append(b, typ, byte(len(name)>>8), byte(len(name)))
+	return append(b, name...)
+}
+
+func nbtStr(b []byte, s string) []byte {
+	b = append(b, byte(len(s)>>8), byte(len(s)))
+	return append(b, s...)
+}
+
+// textTree is a component nested depth levels deep through "extra", with junk bytes of padding in
+// the innermost one. Odd levels put their text before "extra", even levels after it.
+func textTree(depth, junk int) []byte {
+	b := []byte{nbtCompound}
+	text := func(level int) { b = nbtStr(nbtTag(b, nbtString, "text"), fmt.Sprint(level, ";")) }
+	for level := 0; level < depth; level++ {
+		if level%2 == 1 {
+			text(level)
+		}
+		b = nbtTag(b, nbtList, "extra")
+		b = append(b, nbtCompound, 0, 0, 0, 1)
+	}
+	if depth%2 == 1 {
+		text(depth)
+	}
+	b = nbtTag(b, nbtList, "junk")
+	b = append(b, nbtByte, byte(junk>>24), byte(junk>>16), byte(junk>>8), byte(junk))
+	b = append(b, make([]byte, junk)...)
+	for level := depth; level >= 0; level-- {
+		if level%2 == 0 {
+			text(level)
+		}
+		b = append(b, nbtEnd)
+	}
+	return b
+}
+
+func TestPlainTextOrder(t *testing.T) {
+	var want strings.Builder
+	for i := range 6 {
+		fmt.Fprint(&want, i, ";")
+	}
+	if got := PlainText(textTree(5, 3)); got != want.String() {
+		t.Errorf("got %q, want %q", got, want.String())
+	}
+	// A string, a list of strings and an empty compound.
+	if got := PlainText(nbtStr([]byte{nbtString}, "plain")); got != "plain" {
+		t.Errorf("string: %q", got)
+	}
+	list := append([]byte{nbtList, nbtString, 0, 0, 0, 2}, nbtStr(nbtStr(nil, "a"), "b")...)
+	if got := PlainText(list); got != "ab" {
+		t.Errorf("list: %q", got)
+	}
+	if got := PlainText([]byte{nbtCompound, nbtEnd}); got != "" {
+		t.Errorf("empty: %q", got)
+	}
+}
+
+// A 2 MB component nested 250 levels deep used to cost seconds of CPU (every level skipped its
+// extra, then parsed it again): it is one pass now, so it costs about what a flat one does.
+func TestPlainTextLinear(t *testing.T) {
+	timed := func(b []byte) (string, time.Duration) {
+		start := time.Now()
+		s := PlainText(b)
+		return s, time.Since(start)
+	}
+	_, flat := timed(textTree(1, 2<<20))
+	deep := textTree(250, 2<<20)
+	got, d := timed(deep)
+	if !strings.HasPrefix(got, "0;1;2;") || !strings.HasSuffix(got, "250;") {
+		t.Errorf("text %.40q...", got)
+	}
+	if d > 10*flat+20*time.Millisecond {
+		t.Errorf("PlainText of a 2 MB component: %v 250 deep, %v flat", d, flat)
+	}
+	// The same through a creative stack's custom name.
+	var w wire.Writer
+	w.VarInt(1)
+	w.VarInt(1) // stone
+	w.VarInt(1)
+	w.VarInt(0)
+	w.VarInt(CompCustomName)
+	w.VarInt(int32(len(deep)))
+	w.B = append(w.B, deep...)
+	var s Stack
+	r := wire.NewReader(w.B)
+	start := time.Now()
+	s.DecodeUntrusted(r)
+	if r.Err != nil || !strings.HasPrefix(s.CustomName.Text, "0;1;") {
+		t.Fatalf("decode: %v %.20q", r.Err, s.CustomName.Text)
+	}
+	if d := time.Since(start); d > 20*flat+40*time.Millisecond {
+		t.Errorf("decoding took %v (flat PlainText %v)", d, flat)
 	}
 }
