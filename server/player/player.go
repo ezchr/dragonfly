@@ -3267,7 +3267,7 @@ func (p *Player) Tick(tx *world.Tx, current int64) {
 	// them on their own, but Java clients keep showing an expired effect (at 0 seconds) until told.
 	for _, e := range before {
 		if _, ok := p.effects.Effect(e.Type()); !ok {
-			p.session().SendEffectRemoval(e.Type())
+			p.conn().SendEffectRemoval(e.Type())
 		}
 	}
 
