@@ -3261,7 +3261,15 @@ func (p *Player) Tick(tx *world.Tx, current int64) {
 	p.onGround = p.checkOnGround(mgl64.Vec3{})
 	p.checkEntitySteppers()
 
+	before := p.effects.Effects()
 	p.effects.Tick(p, p.tx)
+	// Tell the client about effects that ran out, as vanilla servers do. Bedrock clients drop
+	// them on their own, but Java clients keep showing an expired effect (at 0 seconds) until told.
+	for _, e := range before {
+		if _, ok := p.effects.Effect(e.Type()); !ok {
+			p.session().SendEffectRemoval(e.Type())
+		}
+	}
 
 	p.tickFood()
 	p.tickAirSupply()
