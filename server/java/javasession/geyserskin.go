@@ -9,6 +9,7 @@ import (
 	"time"
 
 	jserver "github.com/df-mc/dragonfly/server/java/protocol/server"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/world"
 )
@@ -32,6 +33,9 @@ type geyserSkin struct {
 	started time.Time
 	props   []jserver.Property // nil: no skin (not uploaded, or the lookup failed)
 	at      time.Time          // when the lookup finished
+	// uploaded: props came from this server's own upload (ApplyBedrockSkin), which is newer
+	// than the database copy a lookup returns.
+	uploaded bool
 }
 
 var (
@@ -71,7 +75,7 @@ func PrefetchBedrockSkin(xuid string) {
 	go func() {
 		props := fetchGeyserSkin(xuid)
 		bedrockSkinMu.Lock()
-		if props != nil || sk.props == nil {
+		if !sk.uploaded && (props != nil || sk.props == nil) {
 			sk.props = props
 		}
 		sk.at = time.Now()
@@ -88,6 +92,10 @@ func bedrockSkinProps(xuid string) (props []jserver.Property, settled bool) {
 	}
 	bedrockSkinMu.Lock()
 	sk, ok := bedrockSkins[xuid]
+	if ok && sk.uploaded {
+		defer bedrockSkinMu.Unlock()
+		return sk.props, true
+	}
 	bedrockSkinMu.Unlock()
 	if !ok {
 		PrefetchBedrockSkin(xuid)
@@ -189,4 +197,82 @@ func (s *Session) deferForSkin(p *player.Player) bool {
 		})
 	}()
 	return true
+}
+
+// ApplyBedrockSkin sets a Bedrock player's skin to a signed Java texture from a fresh upload to
+// GeyserMC's global API (as Geyser uploads on join), which beats the database copy: that one is
+// only whatever skin a Floodgate server uploaded last. Java clients that already drew the player
+// with another skin are shown them again. h is the player's handle.
+func ApplyBedrockSkin(h *world.EntityHandle, xuid, value, signature string) {
+	if xuid == "" || value == "" || signature == "" {
+		return
+	}
+	props := []jserver.Property{{Name: "textures", Value: value, Signature: signature}}
+	bedrockSkinMu.Lock()
+	sk, ok := bedrockSkins[xuid]
+	if !ok {
+		sk = &geyserSkin{done: make(chan struct{}), started: time.Now()}
+		close(sk.done)
+		bedrockSkins[xuid] = sk
+	}
+	changed := propsSig(sk.props) != propsSig(props)
+	sk.props, sk.at, sk.uploaded = props, time.Now(), true
+	bedrockSkinMu.Unlock()
+	if !changed || h == nil {
+		return
+	}
+	javaSessions.Range(func(_, v any) bool {
+		v.(*Session).reskinPlayer(h)
+		return true
+	})
+}
+
+// propsSig identifies a skin property list (its texture signature).
+func propsSig(props []jserver.Property) string {
+	for _, p := range props {
+		if p.Name == "textures" {
+			return p.Signature
+		}
+	}
+	return ""
+}
+
+// reskinPlayer shows a player again whose skin changed: a Java client keeps the skin it first drew
+// a player with, so the player info is replaced and the entity spawned anew. Players the client
+// only has in the tab list are refreshed by the next tab sync.
+func (s *Session) reskinPlayer(h *world.EntityHandle) {
+	s.entMu.Lock()
+	_, shown := s.entityIDs[h]
+	s.entMu.Unlock()
+	if !shown {
+		return
+	}
+	go func() {
+		_, _ = world.CallRef(context.Background(), world.NewEntityRef[world.Entity](h), func(tx *world.Tx, e world.Entity) (struct{}, error) {
+			p, ok := e.(*player.Player)
+			if !ok {
+				return struct{}{}, nil
+			}
+			s.entMu.Lock()
+			_, still := s.entityIDs[h]
+			s.entMu.Unlock()
+			if !still {
+				return struct{}{}, nil
+			}
+			s.HideEntity(e)
+			s.tab.mu.Lock()
+			delete(s.tab.shown, p.UUID())
+			s.tab.mu.Unlock()
+			w := s.packet()
+			w.VarInt(1)
+			w.UUID(p.UUID())
+			s.queue(v777.ClientboundPlayPlayerInfoRemove, w)
+			// What the world sends a viewer for an entity coming into view (world.showEntity).
+			s.ViewEntity(e)
+			s.ViewEntityItems(e)
+			s.ViewEntityArmour(e)
+			s.ViewEntityState(e)
+			return struct{}{}, nil
+		})
+	}()
 }

@@ -66,8 +66,9 @@ type tabState struct {
 type tabShown struct {
 	listed   bool
 	gameMode int32
-	// skinless: a Bedrock player shown without a skin; re-added once the skin is found.
-	skinless bool
+	// sig is the skin signature the info was sent with ("" for none): a Bedrock player whose skin
+	// is found or changes later is re-added with the new one.
+	sig string
 }
 
 func newTabList(srv *server.Server) *tabList {
@@ -167,12 +168,12 @@ func (s *Session) syncTab(snap map[uuid.UUID]tabEntry) {
 			continue // the client has itself under selfID (showSelfTab)
 		}
 		sh, ok := s.tab.shown[id]
-		if e.xuid != "" && (!ok || sh.skinless) {
+		if e.xuid != "" {
 			props, settled := bedrockSkinProps(e.xuid)
 			if !ok && !settled {
 				continue // hold a new Bedrock player back a moment, so they show with their skin
 			}
-			if ok && sh.skinless && props != nil {
+			if ok && props != nil && propsSig(props) != sh.sig {
 				// The client keeps the first profile it gets: remove and add again.
 				reskin = append(reskin, id)
 				continue
@@ -199,7 +200,7 @@ func (s *Session) syncTab(snap map[uuid.UUID]tabEntry) {
 		for _, id := range add {
 			e := snap[id]
 			writeTabAdd(w, id, e, true)
-			s.tab.shown[id] = tabShown{listed: true, gameMode: e.gameMode, skinless: e.xuid != "" && e.props(id) == nil}
+			s.tab.shown[id] = tabShown{listed: true, gameMode: e.gameMode, sig: propsSig(e.props(id))}
 		}
 		s.queue(v777.ClientboundPlayPlayerInfoUpdate, w)
 	}
@@ -252,7 +253,7 @@ func (s *Session) showTabFor(p *player.Player) {
 	w.VarInt(1)
 	writeTabAdd(w, id, e, false)
 	s.queue(v777.ClientboundPlayPlayerInfoUpdate, w)
-	s.tab.shown[id] = tabShown{gameMode: e.gameMode, skinless: e.xuid != "" && e.props(id) == nil}
+	s.tab.shown[id] = tabShown{gameMode: e.gameMode, sig: propsSig(e.props(id))}
 }
 
 // hideTabFor drops p's info when p's entity leaves view, unless p is listed as online.
