@@ -18,8 +18,9 @@ import (
 var sessions = new(sessionList)
 
 type sessionList struct {
-	mu sync.Mutex
-	s  []*Session
+	mu    sync.Mutex
+	s     []*Session
+	peers []*Peer // players without a Bedrock session (see AddPeer)
 }
 
 func (l *sessionList) Add(s *Session) {
@@ -34,6 +35,9 @@ func (l *sessionList) Add(s *Session) {
 	}
 	// Show the new session to itself.
 	l.sendSessionTo(s, s)
+	for _, p := range l.peers {
+		l.sendPeerTo(p, s)
+	}
 	l.s = append(l.s, s)
 }
 

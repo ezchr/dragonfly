@@ -83,6 +83,9 @@ func (s *Session) ViewEntity(e world.Entity) {
 	case Controllable:
 		_, actualPlayer := sessions.Lookup(v.UUID())
 		if !actualPlayer {
+			actualPlayer = sessions.isPeer(v.UUID())
+		}
+		if !actualPlayer {
 			s.writePacket(&packet.PlayerList{Entries: []protocol.PlayerListEntry{{
 				ActionType:     protocol.PlayerListActionAdd,
 				UUID:           v.UUID(),
