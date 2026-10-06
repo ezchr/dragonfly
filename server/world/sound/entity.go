@@ -30,7 +30,12 @@ type Burp struct{ sound }
 type Eat struct{ sound }
 
 // Drink is a sound played every few ticks while a player drinks an item, such as a potion.
-type Drink struct{ sound }
+type Drink struct {
+	// Honey is true for a honey bottle, which has its own drinking sound.
+	Honey bool
+
+	sound
+}
 
 // Pop is a sound played when a chicken lays an egg.
 type Pop struct{ sound }
