@@ -1801,6 +1801,12 @@ func (p *Player) UseItem() {
 		useCtx.CountSub, useCtx.NewItem = 1, usable.Consume(p.tx, p)
 		p.handleUseContext(useCtx)
 		p.tx.PlaySound(p.Position().Add(mgl64.Vec3{0, 1.5}), sound.Burp{})
+		// Stop using the item, as vanilla does when an item is consumed. A client still holding the
+		// use button starts the next one itself. Left in use, the player kept showing eating
+		// particles forever, and the next tap (a start) was taken for a finish and consumed an
+		// item at once, without eating time or sound.
+		p.usingItem = false
+		p.updateState()
 	}
 }
 
