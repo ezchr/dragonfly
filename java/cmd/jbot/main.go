@@ -115,7 +115,8 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 
 	// Play: read in the background, walk in the foreground.
 	pos := make(chan [3]float64, 16)
-	var target atomic.Int32 // Java entity id of the first player seen
+	var target atomic.Int32            // Java entity id of the first player seen
+	tracked := map[int32]*[3]float64{} // other entities' positions as the client would compute them
 	errc := make(chan error, 1)
 	stats := map[string]int{}
 	var tpCount, chunkCount int
@@ -151,9 +152,26 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 			case v777.ClientboundPlayAddEntity:
 				eid := r.VarInt()
 				r.UUID()
-				if r.VarInt() == 159 { // player
+				typ := r.VarInt()
+				if typ == 159 { // player
 					target.CompareAndSwap(0, eid)
 					log.Printf("%s: sees player entity %d", name, eid)
+				}
+				tracked[eid] = &[3]float64{r.Float64(), r.Float64(), r.Float64()}
+			case v777.ClientboundPlayEntityPositionSync:
+				eid := r.VarInt()
+				r.VarInt() // path type: linear
+				tracked[eid] = &[3]float64{r.Float64(), r.Float64(), r.Float64()}
+			case v777.ClientboundPlayMoveEntityPos, v777.ClientboundPlayMoveEntityPosRot:
+				// Apply the delta like the client's VecDeltaCodec.
+				eid := r.VarInt()
+				r.VarInt() // properties
+				if p := tracked[eid]; p != nil {
+					for i := range p {
+						if d := int64(r.Int16()); d != 0 {
+							p[i] = float64(int64(math.Floor(p[i]*4096+0.5))+d) / 4096
+						}
+					}
 				}
 			case v777.ClientboundPlaySetHealth:
 				log.Printf("%s: health %.1f food %d", name, r.Float32(), r.VarInt())
@@ -231,7 +249,12 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 			c.Send(v777.ServerboundPlayClientTickEnd, nil)
 		}
 	}
-	log.Printf("%s: done: %d teleports (1 = just the spawn), %d chunks, end %.2f %.2f %.2f, other packets %v",
+	log.Printf("%s: done: %d teleports (1 = just the spawn), %d chunks, end %.4f %.4f %.4f, other packets %v",
 		name, tpCount, chunkCount, cur[0], cur[1], cur[2], stats)
+	if t := target.Load(); t != 0 {
+		if p := tracked[t]; p != nil {
+			log.Printf("%s: tracked player %d at %.4f %.4f %.4f", name, t, p[0], p[1], p[2])
+		}
+	}
 	return nil
 }
