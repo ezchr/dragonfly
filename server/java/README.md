@@ -21,6 +21,9 @@ the branch is all it takes. The session and the protocol are also mirrored to th
 
 Java **26.3** and **26.2** clients. Bedrock clients are whatever the fork supports (1.26.50).
 
+[UPDATING.md](UPDATING.md) is the runbook for a new Java version, a new Bedrock version or a newer
+Dragonfly.
+
 ## Setup
 
 Make your server use this branch instead of normal Dragonfly: one line in your `go.mod`, then
@@ -89,7 +92,8 @@ Not done: the recipe book, villager trades.
 
 ## Licence
 
-MIT, like Dragonfly. The Bedrock to Java tables are generated from
-[GeyserMC/mappings](https://github.com/GeyserMC/mappings) (MIT) and Mojang's data reports. The
+MIT, like Dragonfly. The Bedrock to Java tables were first generated from
+[GeyserMC/mappings](https://github.com/GeyserMC/mappings) (MIT) and are kept up to date from
+Mojang's data reports and Dragonfly's registries. The
 player model in `javasession/skins/geo.json` is from [Geyser](https://github.com/GeyserMC/Geyser)
 (MIT). `javasession/skins/steve.png` is Mojang's default skin.
