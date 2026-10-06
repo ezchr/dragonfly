@@ -37,6 +37,7 @@ func main() {
 	killTest := flag.Bool("killtest", false, "kill each joining player after 6 s")
 	kickTest := flag.Bool("kicktest", false, "kick each joining player after 20 s with a reason")
 	worldTest := flag.Bool("worldtest", false, "move each joining player to a second overworld world after 10 s")
+	nameTag := flag.Bool("nametag", false, "give each joining player a team and rank name tag after 3 s (tab list display names)")
 	hungry := flag.Bool("hungry", false, "start each player at food 10 with 5 bread in hand")
 	slimeFloor := flag.Bool("slimefloor", false, "top layer of slime (breaks instantly, for testing)")
 	survival := flag.Bool("survival", true, "new players start in survival (Dragonfly defaults to creative)")
@@ -106,6 +107,11 @@ func main() {
 				p.SetFood(10)
 				_ = p.Inventory().SetItem(0, item.NewStack(item.Bread{}, 5))
 				p.AddEffect(effect.New(effect.Speed, 1, 2*time.Second)) // runs out: tests the removal
+			})
+		}
+		if *nameTag {
+			later(p.H(), 3*time.Second, func(tx *world.Tx, p *player.Player) {
+				p.SetNameTag("§f[§cRed§r] §fAdmin§r §a" + p.Name())
 			})
 		}
 		if *killTest {

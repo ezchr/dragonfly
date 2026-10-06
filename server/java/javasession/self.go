@@ -118,6 +118,12 @@ func (s *Session) SendRespawn(pos mgl64.Vec3, c session.Controllable) {
 	s.resendLevelInfo()
 	s.resendInventory()
 	s.SendAbilities(c)
+	// The respawn makes the client a new player entity, without the entity data of the old one:
+	// the skin layers (else the own skin is drawn flat) and absorption are sent again.
+	s.sendSkinParts(selfEntityID, s.jp.Info.SkinParts)
+	s.vitalsMu.Lock()
+	s.vitals.absorptionSent = false
+	s.vitalsMu.Unlock()
 }
 
 // SendPlayerSpawn is the player's own spawn point; Java shows nothing for it.

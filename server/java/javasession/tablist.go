@@ -29,6 +29,9 @@ type tabEntry struct {
 	gameMode int32
 	latency  int32  // milliseconds
 	xuid     string // a Bedrock player's, for their skin; "" for Java players
+	// display is the name the tab list shows: the player's name tag (with the server's team and
+	// rank prefix and colours), "" for the plain name.
+	display string
 }
 
 // newTabEntry describes p for the tab list.
@@ -37,6 +40,7 @@ func newTabEntry(p *player.Player) tabEntry {
 		name:     tabName(p.Name()),
 		gameMode: gameModeID(p.GameMode()),
 		latency:  int32(min(p.Latency(), time.Minute) / time.Millisecond),
+		display:  p.NameTag(),
 	}
 	if !isJavaPlayer(p.UUID()) {
 		e.xuid = p.XUID()
@@ -68,7 +72,8 @@ type tabShown struct {
 	gameMode int32
 	// sig is the skin signature the info was sent with ("" for none): a Bedrock player whose skin
 	// is found or changes later is re-added with the new one.
-	sig string
+	sig     string
+	display string // the display name sent
 }
 
 func newTabList(srv *server.Server) *tabList {
@@ -133,7 +138,20 @@ const (
 	tabUpdateGameMode = 1 << 2
 	tabUpdateListed   = 1 << 3
 	tabUpdateLatency  = 1 << 4
+	tabUpdateDisplay  = 1 << 5
+
+	// tabAddAll is everything an added entry carries.
+	tabAddAll = tabAddPlayer | tabUpdateGameMode | tabUpdateListed | tabUpdateLatency | tabUpdateDisplay
 )
+
+// writeTabDisplay writes an optional display name (absent: the plain name).
+func writeTabDisplay(w *wire.Writer, display string) {
+	w.Bool(display != "")
+	if display != "" {
+		t := bedrockText(display)
+		t.Write(w)
+	}
+}
 
 // writeTabAdd writes one ADD_PLAYER|UPDATE_GAME_MODE|UPDATE_LISTED|UPDATE_LATENCY entry. Adding a
 // player the client already has only updates it (the client keeps the first profile).
@@ -155,6 +173,7 @@ func writeTabAdd(w *wire.Writer, id uuid.UUID, e tabEntry, listed bool) {
 	w.VarInt(e.gameMode)
 	w.Bool(listed)
 	w.VarInt(e.latency)
+	writeTabDisplay(w, e.display)
 }
 
 // syncTab applies a snapshot of the online players to the client's tab list.
@@ -162,12 +181,19 @@ func (s *Session) syncTab(snap map[uuid.UUID]tabEntry) {
 	s.tab.mu.Lock()
 	defer s.tab.mu.Unlock()
 
-	var add, reskin []uuid.UUID
+	var add, reskin, renamed []uuid.UUID
 	for id, e := range snap {
 		if id == s.id {
-			continue // the client has itself under selfID (showSelfTab)
+			// The client has itself under selfID (showSelfTab): only its name can change.
+			if sh, ok := s.tab.shown[s.selfID]; ok && sh.display != e.display {
+				renamed = append(renamed, id)
+			}
+			continue
 		}
 		sh, ok := s.tab.shown[id]
+		if ok && sh.listed && sh.display != e.display {
+			renamed = append(renamed, id)
+		}
 		if e.xuid != "" {
 			props, settled := bedrockSkinProps(e.xuid)
 			if !ok && !settled {
@@ -195,12 +221,29 @@ func (s *Session) syncTab(snap map[uuid.UUID]tabEntry) {
 	}
 	if len(add) > 0 {
 		w := s.packet()
-		w.Byte(tabAddPlayer | tabUpdateGameMode | tabUpdateListed | tabUpdateLatency)
+		w.Byte(tabAddAll)
 		w.VarInt(int32(len(add)))
 		for _, id := range add {
 			e := snap[id]
 			writeTabAdd(w, id, e, true)
-			s.tab.shown[id] = tabShown{listed: true, gameMode: e.gameMode, sig: propsSig(e.props(id))}
+			s.tab.shown[id] = tabShown{listed: true, gameMode: e.gameMode, sig: propsSig(e.props(id)), display: e.display}
+		}
+		s.queue(v777.ClientboundPlayPlayerInfoUpdate, w)
+	}
+	if len(renamed) > 0 {
+		w := s.packet()
+		w.Byte(tabUpdateDisplay)
+		w.VarInt(int32(len(renamed)))
+		for _, id := range renamed {
+			e, key := snap[id], id
+			if id == s.id {
+				key = s.selfID
+			}
+			w.UUID(key)
+			writeTabDisplay(w, e.display)
+			sh := s.tab.shown[key]
+			sh.display = e.display
+			s.tab.shown[key] = sh
 		}
 		s.queue(v777.ClientboundPlayPlayerInfoUpdate, w)
 	}
@@ -249,11 +292,11 @@ func (s *Session) showTabFor(p *player.Player) {
 	}
 	e := newTabEntry(p)
 	w := s.packet()
-	w.Byte(tabAddPlayer | tabUpdateGameMode | tabUpdateListed | tabUpdateLatency)
+	w.Byte(tabAddAll)
 	w.VarInt(1)
 	writeTabAdd(w, id, e, false)
 	s.queue(v777.ClientboundPlayPlayerInfoUpdate, w)
-	s.tab.shown[id] = tabShown{gameMode: e.gameMode, sig: propsSig(e.props(id))}
+	s.tab.shown[id] = tabShown{gameMode: e.gameMode, sig: propsSig(e.props(id)), display: e.display}
 }
 
 // hideTabFor drops p's info when p's entity leaves view, unless p is listed as online.
@@ -276,7 +319,7 @@ func (s *Session) showSelfTab(name string, gameMode int32) {
 	s.tab.mu.Lock()
 	defer s.tab.mu.Unlock()
 	w := s.packet()
-	w.Byte(tabAddPlayer | tabUpdateGameMode | tabUpdateListed | tabUpdateLatency)
+	w.Byte(tabAddAll)
 	w.VarInt(1)
 	writeTabAdd(w, s.selfID, tabEntry{name: tabName(name), gameMode: gameMode}, true)
 	s.queue(v777.ClientboundPlayPlayerInfoUpdate, w)
