@@ -96,6 +96,7 @@ func (s *Session) ViewEntity(e world.Entity) {
 	s.queue(v777.ClientboundPlayAddEntity, w)
 	s.setTrack(id, pos, rot)
 	s.viewPlayerNameTag(p)
+	s.sendSkinParts(id, skinPartsOf(u)) // else the outer skin layer is not drawn: a flat skin
 	s.noteRiding(e)
 }
 

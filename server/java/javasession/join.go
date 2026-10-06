@@ -91,6 +91,7 @@ func join(conf Config, tabs *tabList, jp *jserver.Player) {
 	s.xuid, s.skin = xuid, pc.Skin
 	registerProfile(id, jp.Profile.Properties)
 	registerProfile(jp.Profile.UUID, jp.Profile.Properties) // for the client's own tab entry
+	registerSkinParts(id, jp.Info.SkinParts)
 	s.sendLogin(pc, w)
 	if err := conf.Server.AddPlayer(s, pc, w); err != nil {
 		s.log.Info("join refused", "err", err)

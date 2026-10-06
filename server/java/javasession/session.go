@@ -326,6 +326,7 @@ func (s *Session) Spawn(c session.Controllable, tx *world.Tx) {
 	s.loader.Move(tx, pos)
 	s.sendCentre(pos)
 	s.showSelfTab(s.jp.Profile.Name, gameModeID(c.GameMode()))
+	s.sendSkinParts(selfEntityID, s.jp.Info.SkinParts) // own outer skin layer (F5, inventory)
 	if !s.joinMessage.Zero() {
 		chat.Global.Writet(s.joinMessage, s.jp.Profile.Name)
 	}
