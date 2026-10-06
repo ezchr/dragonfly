@@ -551,10 +551,9 @@ func (srv *Server) dimension(dimension world.Dimension) *world.World {
 // handleSessionClose handles the closing of a session. It removes the player
 // of the session from the server.
 func (srv *Server) handleSessionClose(tx *world.Tx, c session.Controllable) {
-	srv.pmu.Lock()
+	srv.pmu.RLock()
 	_, ok := srv.p[c.UUID()]
-	delete(srv.p, c.UUID())
-	srv.pmu.Unlock()
+	srv.pmu.RUnlock()
 	if !ok {
 		// When a player disconnects immediately after a session is started, it
 		// might not be added to the players map yet. This is expected, but we
@@ -569,6 +568,11 @@ func (srv *Server) handleSessionClose(tx *world.Tx, c session.Controllable) {
 	} else {
 		srv.conf.Log.Error("Save player data: player's worlds closed before teardown; data not saved", "uuid", c.UUID())
 	}
+	// Only release the UUID once the data is saved: a new login of the same player (a reconnect,
+	// or the Java door kicking a ghost session) must not load the old, unsaved data.
+	srv.pmu.Lock()
+	delete(srv.p, c.UUID())
+	srv.pmu.Unlock()
 	srv.pwg.Done()
 }
 

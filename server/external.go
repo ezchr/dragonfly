@@ -55,17 +55,41 @@ var ErrAlreadyOnline = errors.New("already logged in")
 // LoadPlayer with Name, XUID, UUID, Locale and Skin filled in. The player is
 // then handed out by Accept like players from Listeners, and Spawn is called
 // on the session.
-func (srv *Server) AddPlayer(s ExternalSession, conf player.Config, w *world.World) error {
-	if _, ok := srv.Player(conf.UUID); ok {
-		return ErrAlreadyOnline
-	}
-	srv.pwg.Add(1)
-	s.SetCloseHandler(srv.handleSessionClose)
+func (srv *Server) AddPlayer(s ExternalSession, conf player.Config, w *world.World) (err error) {
 	conf.Session = s
 	handle := world.EntitySpawnOpts{Position: conf.Position, ID: conf.UUID}.New(player.Type, conf)
+	op := &onlinePlayer{name: conf.Name, xuid: conf.XUID, handle: handle}
+
+	// Reserve the UUID in the same critical section as the check, so two logins of one player at
+	// the same time cannot both get in (and duplicate the player and its items).
+	srv.pmu.Lock()
+	if _, ok := srv.p[conf.UUID]; ok {
+		srv.pmu.Unlock()
+		_ = handle.Close()
+		return ErrAlreadyOnline
+	}
+	srv.p[conf.UUID] = op
+	srv.pmu.Unlock()
+	srv.pwg.Add(1)
+
+	defer func() {
+		// srv.incoming is closed once the server is shutting down.
+		if recover() != nil {
+			srv.pmu.Lock()
+			delete(srv.p, conf.UUID)
+			srv.pmu.Unlock()
+			srv.pwg.Done()
+			_ = handle.Close()
+			err = ErrServerClosed
+		}
+	}()
+	s.SetCloseHandler(srv.handleSessionClose)
 	// Like the Bedrock join: the session gets the handle before the player is in a world, so it
 	// can be listed (tab list) before anyone is shown the player entity.
 	s.SetHandle(handle, conf.Skin)
-	srv.incoming <- incoming{s: s, w: w, conf: conf, p: &onlinePlayer{name: conf.Name, xuid: conf.XUID, handle: handle}}
+	srv.incoming <- incoming{s: s, w: w, conf: conf, p: op}
 	return nil
 }
+
+// ErrServerClosed is returned by AddPlayer while the server is shutting down.
+var ErrServerClosed = errors.New("server closed")
