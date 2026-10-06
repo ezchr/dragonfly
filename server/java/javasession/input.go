@@ -296,6 +296,12 @@ func (s *Session) continueEating(c session.Controllable) {
 	s.input.eatStart = time.Time{}
 	c.UseItem() // the "finished" signal: Dragonfly consumes the item
 	c.ReleaseItem()
+	// Vanilla tells the client it finished (ServerPlayer.completeUsingItem); without it the client
+	// keeps eating: particles forever, and no new use_item while the key is held.
+	w := s.packet()
+	w.Int32(selfEntityID)
+	w.Byte(9) // EntityEvent.USE_ITEM_COMPLETE
+	s.queue(v777.ClientboundPlayEntityEvent, w)
 }
 
 // continueBreaking is called every tick while the client holds the break key.

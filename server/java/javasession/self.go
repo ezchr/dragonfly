@@ -13,15 +13,34 @@ import (
 type vitals struct {
 	health, saturation float64
 	food               int
+	absorption         float64 // last sent; golden hearts are entity data, not set_health
+	absorptionSent     bool
 }
+
+// Player entity data: absorption (Player.DATA_PLAYER_ABSORPTION_ID, a FLOAT), the golden hearts.
+const (
+	dataPlayerAbsorption = 17
+	dataTypeFloat        = 3
+)
 
 // SendHealth ...
 func (s *Session) SendHealth(health, max, absorption float64) {
 	s.vitalsMu.Lock()
 	s.vitals.health = health
 	v := s.vitals
+	sendAbs := !s.vitals.absorptionSent || s.vitals.absorption != absorption
+	s.vitals.absorption, s.vitals.absorptionSent = absorption, true
 	s.vitalsMu.Unlock()
 	s.sendVitals(v)
+	if sendAbs {
+		w := s.packet()
+		w.VarInt(selfEntityID)
+		w.Byte(dataPlayerAbsorption)
+		w.VarInt(dataTypeFloat)
+		w.Float32(float32(absorption))
+		w.Byte(0xff)
+		s.queue(v777.ClientboundPlaySetEntityData, w)
+	}
 }
 
 // SendFood ...
