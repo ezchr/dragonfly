@@ -10,7 +10,6 @@ import (
 	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/item/inventory"
 	"github.com/df-mc/dragonfly/server/player/skin"
-	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/google/uuid"
@@ -19,7 +18,7 @@ import (
 
 // Config holds options that a Player can be created with.
 type Config struct {
-	Session  *session.Session
+	Session  Session
 	Skin     skin.Skin
 	XUID     string
 	UUID     uuid.UUID

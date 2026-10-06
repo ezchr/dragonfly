@@ -52,7 +52,7 @@ type playerData struct {
 
 	gameMode world.GameMode
 	skin     skin.Skin
-	s        *session.Session
+	s        Session
 	h        Handler
 
 	inv, offHand, enderChest, ui *inventory.Inventory
@@ -4361,7 +4361,7 @@ func (p *Player) Data() Config {
 
 // session returns the network session of the player. If it has one, it is returned. If not, a no-op session
 // is returned.
-func (p *Player) session() *session.Session {
+func (p *Player) session() Session {
 	if s := p.s; s != nil {
 		return s
 	}

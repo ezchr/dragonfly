@@ -68,7 +68,7 @@ type Server struct {
 // incoming holds data of a player that is connecting to the server.
 type incoming struct {
 	conf player.Config
-	s    *session.Session
+	s    incomingSession
 	p    *onlinePlayer
 	w    *world.World
 }
