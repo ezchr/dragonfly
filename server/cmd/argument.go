@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/internal/sliceutil"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
+	"math"
 	"math/rand/v2"
 	"reflect"
 	"slices"
@@ -237,16 +239,94 @@ func (p parser) sub(line *Line, name string) error {
 }
 
 // vec3 ...
+//
+// Each coordinate is a number, relative to the source ("~", "~-2") or, for
+// all three at once, local to where the source looks ("^left ^up ^forward"),
+// as in vanilla. Relative coordinates may be typed without spaces: "~~1~".
 func (p parser) vec3(line *Line, v reflect.Value) error {
-	if err := p.float(line, v.Index(0)); err != nil {
-		return err
+	var parts [3]string
+	for i := range parts {
+		splitCoords(line)
+		arg, ok := line.Next()
+		if !ok {
+			return line.UsageError()
+		}
+		parts[i] = arg
+		if i < 2 {
+			line.RemoveNext()
+		}
 	}
-	line.RemoveNext()
-	if err := p.float(line, v.Index(1)); err != nil {
-		return err
+	var origin mgl64.Vec3
+	if line.src != nil {
+		origin = line.src.Position()
 	}
-	line.RemoveNext()
-	return p.float(line, v.Index(2))
+	local := strings.HasPrefix(parts[0], "^")
+	var vals [3]float64
+	for i, part := range parts {
+		if strings.HasPrefix(part, "^") != local {
+			// Vanilla does not allow mixing local and other coordinates.
+			return MessageParameterInvalid.F(part)
+		}
+		var err error
+		switch {
+		case local:
+			vals[i], err = offset(part[1:])
+		case strings.HasPrefix(part, "~"):
+			vals[i], err = offset(part[1:])
+			vals[i] += origin[i]
+		default:
+			vals[i], err = strconv.ParseFloat(part, 64)
+		}
+		if err != nil {
+			return MessageNumberInvalid.F(part)
+		}
+	}
+	if local {
+		var rot cube.Rotation
+		if r, ok := line.src.(interface{ Rotation() cube.Rotation }); ok {
+			rot = r.Rotation()
+		}
+		vals = localToWorld(origin, rot, vals)
+	}
+	for i, f := range vals {
+		v.Index(i).SetFloat(f)
+	}
+	return nil
+}
+
+// splitCoords splits the next argument of line when it holds several
+// relative coordinates typed without spaces, like "~~1~" or "^^^2".
+func splitCoords(line *Line) {
+	if len(line.args) == 0 {
+		return
+	}
+	a := line.args[0]
+	if a == "" || (a[0] != '~' && a[0] != '^') {
+		return
+	}
+	if i := strings.IndexAny(a[1:], "~^"); i >= 0 {
+		line.args = append([]string{a[:i+1], a[i+1:]}, line.args[1:]...)
+	}
+}
+
+// offset parses what follows a '~' or '^': nothing means 0.
+func offset(s string) (float64, error) {
+	if s == "" {
+		return 0, nil
+	}
+	return strconv.ParseFloat(s, 64)
+}
+
+// localToWorld turns local coordinates (left, up, forward) from origin, facing
+// rot, into a world position, the way vanilla handles "^ ^ ^".
+func localToWorld(origin mgl64.Vec3, rot cube.Rotation, l [3]float64) [3]float64 {
+	yaw, pitch := mgl64.DegToRad(rot.Yaw()+90), mgl64.DegToRad(-rot.Pitch())
+	up90 := mgl64.DegToRad(-rot.Pitch() + 90)
+	forward := mgl64.Vec3{math.Cos(yaw) * math.Cos(pitch), math.Sin(pitch), math.Sin(yaw) * math.Cos(pitch)}
+	up := mgl64.Vec3{math.Cos(yaw) * math.Cos(up90), math.Sin(up90), math.Sin(yaw) * math.Cos(up90)}
+	left := forward.Cross(up).Mul(-1)
+	pos := origin.Add(left.Mul(l[0])).Add(up.Mul(l[1])).Add(forward.Mul(l[2]))
+	return [3]float64{pos[0], pos[1], pos[2]}
 }
 
 // varargs ...

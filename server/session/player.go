@@ -67,6 +67,11 @@ func (s *Session) StartShowingEntity(e world.Entity) {
 
 // closeCurrentContainer closes the container the player might currently have open.
 func (s *Session) closeCurrentContainer(tx *world.Tx, clientRequested bool) {
+	if s.closeTrade() {
+		// A trading window has no block behind it.
+		s.closeWindow(clientRequested)
+		return
+	}
 	if !s.closeWindow(clientRequested) {
 		return
 	}
@@ -292,6 +297,12 @@ type smelter interface {
 // invByID attempts to return an inventory by the ID passed. If found, the inventory is returned and the bool
 // returned is true.
 func (s *Session) invByID(id int32, tx *world.Tx) (*inventory.Inventory, bool) {
+	if id >= 0 && id < 256 && isTradeContainer(byte(id)) {
+		if s.trade.Load() != nil {
+			return s.ui, true
+		}
+		return nil, false
+	}
 	switch id {
 	case protocol.ContainerCraftingInput, protocol.ContainerCreatedOutput, protocol.ContainerCursor:
 		// UI inventory.
@@ -370,6 +381,7 @@ func (s *Session) Disconnect(message string) {
 			Message:                 message,
 		})
 		_ = s.conn.Flush()
+		s.disconnectSent.Store(true)
 	}
 }
 
@@ -545,10 +557,15 @@ func (s *Session) SendAbilities(c Controllable) {
 	if mode.AllowsInteraction() {
 		abilities |= protocol.AbilityDoorsAndSwitches | protocol.AbilityOpenContainers | protocol.AbilityAttackPlayers | protocol.AbilityAttackMobs
 	}
+	// Operators get the permissions BDS and PowerNukkitX give them.
+	playerPerms, commandPerms := uint8(packet.PermissionLevelMember), uint8(protocol.CommandPermissionLevelAny)
+	if c.Operator() {
+		playerPerms, commandPerms = packet.PermissionLevelOperator, protocol.CommandPermissionLevelGameDirectors
+	}
 	s.writePacket(&packet.UpdateAbilities{AbilityData: protocol.AbilityData{
 		EntityUniqueID:     selfEntityRuntimeID,
-		PlayerPermissions:  packet.PermissionLevelMember,
-		CommandPermissions: protocol.CommandPermissionLevelAny,
+		PlayerPermissions:  playerPerms,
+		CommandPermissions: commandPerms,
 		Layers: []protocol.AbilityLayer{
 			{
 				Type:             protocol.AbilityLayerTypeBase,
@@ -1133,10 +1150,53 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 
 	s = skin.New(int(sk.SkinImageWidth), int(sk.SkinImageHeight))
 	s.Persona = sk.PersonaSkin
+	s.Premium = sk.PremiumSkin
+	s.CapeOnClassic = sk.PersonaCapeOnClassicSkin
+	s.PrimaryUser = sk.PrimaryUser
+	s.OverrideAppearance = sk.OverrideAppearance
 	s.Pix = sk.SkinData
 	s.Model = sk.SkinGeometry
 	s.PlayFabID = sk.PlayFabID
+	s.SkinID = sk.SkinID
+	s.CapeID = sk.CapeID
 	s.FullID = sk.FullID
+	s.GeometryVersion = string(sk.GeometryDataEngineVersion)
+	s.AnimationData = string(sk.AnimationData)
+	s.SkinColour = argbToString(sk.SkinColour)
+
+	// The marketplace content a persona is assembled from, carried through so this skin can be re-broadcast
+	// to other players as something they can actually build. PieceType arrives as a numeric type on the wire
+	// and is converted back to the persona_* name the skin package works in.
+	s.PersonaPieces = make([]skin.PersonaPiece, 0, len(sk.PersonaPieces))
+	for _, piece := range sk.PersonaPieces {
+		s.PersonaPieces = append(s.PersonaPieces, skin.PersonaPiece{
+			PieceID:   piece.PieceID,
+			PieceType: skin.PersonaPieceTypeName(piece.PieceType),
+			PackID:    piece.PackID.String(),
+			Default:   piece.Default,
+			ProductID: piece.ProductID,
+		})
+	}
+	s.PieceTintColours = make([]skin.PersonaPieceTintColour, 0, len(sk.PieceTintColours))
+	for _, tint := range sk.PieceTintColours {
+		t := skin.PersonaPieceTintColour{PieceType: tint.PieceType}
+		for i, colour := range tint.Colours {
+			t.Colours[i] = argbToString(colour)
+		}
+		s.PieceTintColours = append(s.PieceTintColours, t)
+	}
+	// ArmSize was never captured here either - the same gap fixed 2026-09-18 in parseSkin
+	// (server.go, the initial-login path) for the outgoing skin.Skin type, but this is a separate
+	// code path (a live in-game skin change via the PlayerSkin packet, handled by
+	// PlayerSkinHandler) that was never updated to match. protocol.Skin.ArmSize here is already
+	// the numeric ArmSizeWide/ArmSizeSlim constant (unlike login.ClientData.ArmSize, a plain
+	// "wide"/"slim" string) - converted to the same string representation skin.Skin.ArmSize uses
+	// everywhere else, so armSizeToProtocol (session_list.go) only ever needs to handle one format.
+	if sk.ArmSize == protocol.ArmSizeSlim {
+		s.ArmSize = "slim"
+	} else {
+		s.ArmSize = "wide"
+	}
 
 	s.Cape = skin.NewCape(int(sk.CapeImageWidth), int(sk.CapeImageHeight))
 	s.Cape.Pix = sk.CapeData
@@ -1160,7 +1220,13 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 		case protocol.SkinAnimationBody128x128:
 			t = skin.AnimationBody128x128
 		default:
-			return skin.Skin{}, fmt.Errorf("invalid animation type: %v", anim.AnimationType)
+			// Was: return skin.Skin{}, fmt.Errorf(...) - discarding the ENTIRE skin change over
+			// one unrecognized animation entry. gophertunnel only documents 3 animation type
+			// constants (Head/Body32x32/Body128x128), so a real client sending anything else -
+			// a newer type this pinned protocol version doesn't know about yet, for example -
+			// would silently fail the whole skin change rather than applying everything it does
+			// understand. Skipping just the one unrecognized entry is strictly safer.
+			continue
 		}
 
 		animation := skin.NewAnimation(int(anim.ImageWidth), int(anim.ImageHeight), int(anim.ExpressionType), t)
@@ -1170,6 +1236,12 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 		s.Animations = append(s.Animations, animation)
 	}
 	return
+}
+
+// argbToString formats a colour the way login data and the skin package spell one: hex with a leading '#',
+// alpha first. It is the inverse of parseARGB in session_list.go.
+func argbToString(c color.RGBA) string {
+	return fmt.Sprintf("#%02x%02x%02x%02x", c.A, c.R, c.G, c.B)
 }
 
 // shapeAttachedEntityRuntimeID returns the runtime ID of the entity attached to a debug shape.

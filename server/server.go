@@ -22,7 +22,6 @@ import (
 	"github.com/df-mc/dragonfly/server/internal/sliceutil"
 	_ "github.com/df-mc/dragonfly/server/item" // Imported for maintaining correct initialisation order.
 	"github.com/df-mc/dragonfly/server/player"
-	"github.com/df-mc/dragonfly/server/player/chat"
 	"github.com/df-mc/dragonfly/server/player/skin"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/df-mc/dragonfly/server/world"
@@ -323,10 +322,17 @@ func (srv *Server) close() {
 	srv.conf.Log.Info("Server closing...")
 
 	srv.conf.Log.Debug("Disconnecting players...")
+	disconnected := 0
 	for p := range srv.Players(nil) {
-		p.Disconnect(chat.MessageServerDisconnect.Resolve(p.Locale()))
+		p.Disconnect(srv.conf.ShutdownMessage.Resolve(p.Locale()))
+		disconnected++
 	}
 	srv.pwg.Wait()
+	if disconnected > 0 {
+		// Connections close session.DisconnectGrace after their Disconnect
+		// packet; keep the listeners and process alive until then.
+		time.Sleep(session.DisconnectGrace + 250*time.Millisecond)
+	}
 
 	srv.conf.Log.Debug("Closing player provider...")
 	if err := srv.conf.PlayerProvider.Close(); err != nil {
@@ -590,6 +596,12 @@ func (srv *Server) createPlayer(id uuid.UUID, conn session.Conn, conf player.Con
 
 	handle := world.EntitySpawnOpts{Position: conf.Position, ID: id}.New(player.Type, conf)
 	s.SetHandle(handle, conf.Skin)
+
+	// A skin built in the in-game character creator arrives as a list of
+	// marketplace content IDs rather than as pixels, so it cannot be shown to
+	// other players as sent. Rebuild it into an ordinary flat skin in the
+	// background; until that lands the player keeps the skin they joined with.
+	session.ResolvePersona(w, handle, conf.XUID, conf.Skin, srv.conf.Log)
 	return incoming{s: s, w: w, conf: conf, p: &onlinePlayer{name: conf.Name, xuid: conf.XUID, handle: handle}}
 }
 
@@ -636,11 +648,40 @@ func (srv *Server) parseSkin(data login.ClientData) skin.Skin {
 
 	playerSkin := skin.New(data.SkinImageWidth, data.SkinImageHeight)
 	playerSkin.Persona = data.PersonaSkin
+	playerSkin.Premium = data.PremiumSkin
+	playerSkin.CapeOnClassic = data.CapeOnClassicSkin
 	playerSkin.Pix, _ = base64.StdEncoding.DecodeString(data.SkinData)
 	playerSkin.Model, _ = base64.StdEncoding.DecodeString(data.SkinGeometry)
 	playerSkin.ModelConfig, _ = skin.DecodeModelConfig(skinResourcePatch)
 	playerSkin.PlayFabID = data.PlayFabID
+	playerSkin.SkinID = data.SkinID
+	playerSkin.CapeID = data.CapeID
 	playerSkin.FullID = data.SkinID
+	playerSkin.GeometryVersion = data.SkinGeometryVersion
+	playerSkin.ArmSize = data.ArmSize
+	playerSkin.SkinColour = data.SkinColour
+	playerSkin.AnimationData = data.SkinAnimationData
+
+	// A persona skin names the marketplace content it is built from instead of carrying pixels for it. These
+	// two lists are that content: without them a receiving client is told the skin is a persona but given
+	// nothing to assemble, and renders an incomplete model.
+	playerSkin.PersonaPieces = make([]skin.PersonaPiece, 0, len(data.PersonaPieces))
+	for _, piece := range data.PersonaPieces {
+		playerSkin.PersonaPieces = append(playerSkin.PersonaPieces, skin.PersonaPiece{
+			PieceID:   piece.PieceID,
+			PieceType: piece.PieceType,
+			PackID:    piece.PackID,
+			Default:   piece.Default,
+			ProductID: piece.ProductID,
+		})
+	}
+	playerSkin.PieceTintColours = make([]skin.PersonaPieceTintColour, 0, len(data.PieceTintColours))
+	for _, tint := range data.PieceTintColours {
+		playerSkin.PieceTintColours = append(playerSkin.PieceTintColours, skin.PersonaPieceTintColour{
+			PieceType: tint.PieceType,
+			Colours:   tint.Colours,
+		})
+	}
 
 	playerSkin.Cape = skin.NewCape(data.CapeImageWidth, data.CapeImageHeight)
 	playerSkin.Cape.Pix, _ = base64.StdEncoding.DecodeString(data.CapeData)

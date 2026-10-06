@@ -42,6 +42,32 @@ func (e *Ent) Behaviour() Behaviour {
 	return e.data.Data.(Behaviour)
 }
 
+// Tx returns the transaction the Ent was opened in.
+func (e *Ent) Tx() *world.Tx {
+	return e.tx
+}
+
+// ApplyMovement moves the Ent to the position, velocity and rotation of a
+// Movement from MovementComputer.TickMovement. Behaviours outside this package
+// use it the way PassiveBehaviour sets them directly; the Movement is still
+// returned from Tick for Ent to send to viewers.
+func (e *Ent) ApplyMovement(m *Movement) {
+	e.data.Pos, e.data.Vel, e.data.Rot = m.pos, m.vel, m.rot
+}
+
+// ent allows entity types embedding an Ent to be handled like one.
+func (e *Ent) ent() *Ent {
+	return e
+}
+
+// ProjectileOwner returns the entity that owns this Ent, if its behaviour exposes an owner.
+func (e *Ent) ProjectileOwner() *world.EntityHandle {
+	if owned, ok := e.Behaviour().(interface{ Owner() *world.EntityHandle }); ok {
+		return owned.Owner()
+	}
+	return nil
+}
+
 // Explode propagates the explosion behaviour of the underlying Behaviour.
 func (e *Ent) Explode(src world.ExplosionSource, impact float64) {
 	if expl, ok := e.Behaviour().(interface {
@@ -85,6 +111,26 @@ func (e *Ent) HeldItems() (mainHand, offHand item.Stack) {
 		return c.HeldItems()
 	}
 	return item.Stack{}, item.Stack{}
+}
+
+// invisibleBehaviour may be implemented by a Behaviour to make its Ent report itself invisible to
+// viewers, the same generic-hook pattern as heldItemsBehaviour just above (see its doc comment) -
+// session's own invisible-entity check (server/session/entity_metadata.go) already accepts any
+// world.Entity implementing Invisible() bool, previously only ever satisfied by *player.Player.
+// This lets a non-player entity (e.g. a block-hunt disguise's own sulfur-cube body, which should
+// never render - only the block it displays should) opt into the same mechanism.
+type invisibleBehaviour interface {
+	Invisible() bool
+}
+
+// Invisible reports whether the entity should be hidden from viewers, if its Behaviour implements
+// invisibleBehaviour. False otherwise - i.e. entities whose Behaviour does not opt in render
+// exactly as before this was added.
+func (e *Ent) Invisible() bool {
+	if i, ok := e.Behaviour().(invisibleBehaviour); ok {
+		return i.Invisible()
+	}
+	return false
 }
 
 // Teleport teleports the entity to the position given.
@@ -177,6 +223,10 @@ func (e *Ent) Tick(tx *world.Tx, current int64) {
 	e.SetOnFire(e.OnFireDuration() - time.Second/20)
 
 	m := e.Behaviour().Tick(e, tx)
+	if _, ok := e.handle.Entity(tx); !ok {
+		// Removed while ticking, such as a picked up item, so viewers no longer know the entity.
+		return
+	}
 	if e.finishPendingPortalTravel(tx) {
 		return
 	}

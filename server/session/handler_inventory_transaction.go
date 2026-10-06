@@ -3,6 +3,7 @@ package session
 import (
 	"fmt"
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/entity"
 	"github.com/df-mc/dragonfly/server/event"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/inventory"
@@ -48,7 +49,7 @@ func (h *InventoryTransactionHandler) Handle(p packet.Packet, s *Session, tx *wo
 		h.resendInventories(s)
 		// Always resend inventories with normal transactions. Most of the time we do not use these
 		// transactions, so we're best off making sure the client and server stay in sync.
-		if err := h.handleNormalTransaction(pk, s, c); err != nil {
+		if err := h.handleNormalTransaction(pk, s, tx, c); err != nil {
 			s.conf.Log.Debug("process packet: InventoryTransaction: verify Normal transaction actions: " + err.Error())
 		}
 		return
@@ -70,7 +71,7 @@ func (h *InventoryTransactionHandler) Handle(p packet.Packet, s *Session, tx *wo
 		if err = s.VerifyAndSetHeldSlot(int(data.HotBarSlot), stackToItem(s.br, data.HeldItem.Stack), c); err != nil {
 			return
 		}
-		return h.handleReleaseItemTransaction(c)
+		return h.handleReleaseItemTransaction(s, c)
 	}
 	return fmt.Errorf("unhandled inventory transaction type %T", pk.TransactionData)
 }
@@ -83,8 +84,8 @@ func (h *InventoryTransactionHandler) resendInventories(s *Session) {
 	s.sendInv(s.armour.Inventory(), protocol.WindowIDArmour)
 }
 
-// handleNormalTransaction ...
-func (h *InventoryTransactionHandler) handleNormalTransaction(pk *packet.InventoryTransaction, s *Session, c Controllable) error {
+// handleNormalTransaction validates and handles an item drop transaction, refreshing held item state if needed.
+func (h *InventoryTransactionHandler) handleNormalTransaction(pk *packet.InventoryTransaction, s *Session, tx *world.Tx, c Controllable) error {
 	if len(pk.Actions) != 2 {
 		return fmt.Errorf("expected two actions for dropping an item, got %d", len(pk.Actions))
 	}
@@ -133,11 +134,15 @@ func (h *InventoryTransactionHandler) handleNormalTransaction(pk *packet.Invento
 
 	n := c.Drop(res)
 	_ = s.inv.SetItem(slot, actual.Grow(-n))
+	if s.heldItemSlot(s.inv, slot) {
+		s.updateHeldItemState(tx)
+	}
 	return nil
 }
 
 // handleUseItemOnEntityTransaction ...
 func (h *InventoryTransactionHandler) handleUseItemOnEntityTransaction(data *protocol.UseItemOnEntityTransactionData, s *Session, tx *world.Tx, c Controllable) error {
+	s.clearShieldUsePending()
 	s.swingingArm.Store(true)
 	defer s.swingingArm.Store(false)
 
@@ -161,6 +166,19 @@ func (h *InventoryTransactionHandler) handleUseItemOnEntityTransaction(data *pro
 	switch data.ActionType {
 	case protocol.UseItemOnEntityActionInteract:
 		valid = c.UseItemOnEntity(e)
+		if rideable, ok := e.(entity.Rideable); ok {
+			if valid {
+				if nextSeatIndex, ok := rideable.NextFreeSeatIndex(vec32To64(data.ClickedPosition)); ok {
+					before := c.RidingEntityHandle()
+					c.MountEntity(tx, rideable, nextSeatIndex)
+					if after := c.RidingEntityHandle(); after == rideable.H() && before != after {
+						// The client does not swing its own arm when getting on an entity, so it is sent the swing too.
+						s.swingingArm.Store(false)
+						c.SwingArm()
+					}
+				}
+			}
+		}
 	case protocol.UseItemOnEntityActionAttack:
 		valid = c.AttackEntity(e)
 	default:
@@ -188,6 +206,8 @@ func (h *InventoryTransactionHandler) handleUseItemTransaction(data *protocol.Us
 	// Because of the new inventory system, the client will expect a transaction confirmation, but instead of doing that
 	// it's much easier to just resend the inventory.
 	h.resendInventories(s)
+	// Any UseItem transaction settles a shield use already handled through auth input.
+	shieldUseHandled := s.consumeShieldUsePending(c)
 
 	switch data.ActionType {
 	case protocol.UseItemActionBreakBlock:
@@ -195,7 +215,15 @@ func (h *InventoryTransactionHandler) handleUseItemTransaction(data *protocol.Us
 	case protocol.UseItemActionClickBlock:
 		c.UseItemOnBlock(pos, cube.Face(data.BlockFace), vec32To64(data.ClickedPosition))
 	case protocol.UseItemActionClickAir:
-		c.UseItem()
+		if !shieldUseHandled {
+			c.UseItem()
+		}
+	case protocol.UseItemActionUseAsAttack:
+		if !c.UseItemAsAttack() {
+			slot := int(*s.heldSlot)
+			it, _ := s.inv.Item(slot)
+			s.sendItem(it, slot, protocol.WindowIDInventory)
+		}
 	default:
 		return fmt.Errorf("unhandled UseItem ActionType %v", data.ActionType)
 	}
@@ -203,7 +231,8 @@ func (h *InventoryTransactionHandler) handleUseItemTransaction(data *protocol.Us
 }
 
 // handleReleaseItemTransaction ...
-func (h *InventoryTransactionHandler) handleReleaseItemTransaction(c Controllable) error {
+func (h *InventoryTransactionHandler) handleReleaseItemTransaction(s *Session, c Controllable) error {
+	s.clearShieldUsePending()
 	c.ReleaseItem()
 	return nil
 }

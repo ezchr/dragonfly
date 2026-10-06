@@ -24,8 +24,9 @@ type ItemStackRequestHandler struct {
 
 	pendingResults []item.Stack
 
-	current       time.Time
-	ignoreDestroy bool
+	current         time.Time
+	ignoreDestroy   bool
+	heldItemChanged bool
 }
 
 // responseChange represents a change in a specific item stack response. It holds the timestamp of the
@@ -66,9 +67,14 @@ func (h *ItemStackRequestHandler) handleRequest(req protocol.ItemStackRequest, s
 	defer func() {
 		if err != nil {
 			h.reject(req.RequestID, s, tx)
+			h.heldItemChanged = false
 			return
 		}
 		h.resolve(req.RequestID, s)
+		if h.heldItemChanged {
+			s.updateHeldItemState(tx)
+			h.heldItemChanged = false
+		}
 		h.ignoreDestroy = false
 	}()
 
@@ -87,6 +93,10 @@ func (h *ItemStackRequestHandler) handleRequest(req protocol.ItemStackRequest, s
 		case *protocol.BeaconPaymentStackRequestAction:
 			err = h.handleBeaconPayment(a, s, tx)
 		case *protocol.CraftRecipeStackRequestAction:
+			if s.trade.Load() != nil {
+				err = h.handleTrade(a.RecipeNetworkID, int(a.NumberOfCrafts), req, s, tx)
+				break
+			}
 			if s.containerOpened.Load() {
 				var special bool
 				switch tx.Block(*s.openedPos.Load()).(type) {
@@ -104,6 +114,10 @@ func (h *ItemStackRequestHandler) handleRequest(req protocol.ItemStackRequest, s
 			}
 			err = h.handleCraft(a, s, tx)
 		case *protocol.AutoCraftRecipeStackRequestAction:
+			if s.trade.Load() != nil {
+				err = h.handleTrade(a.RecipeNetworkID, int(a.NumberOfCrafts), req, s, tx)
+				break
+			}
 			err = h.handleAutoCraft(a, s, tx)
 		case *protocol.CraftRecipeOptionalStackRequestAction:
 			err = h.handleCraftRecipeOptional(a, s, req.FilterStrings, c, tx)
@@ -401,12 +415,7 @@ func (h *ItemStackRequestHandler) itemInSlot(slot protocol.StackRequestSlotInfo,
 		return item.Stack{}, fmt.Errorf("unable to find container with ID %v", slot.Container.ContainerID)
 	}
 
-	sl := int(slot.Slot)
-	if inv == s.offHand {
-		sl = 0
-	}
-
-	i, err := inv.Item(sl)
+	i, err := inv.Item(s.invSlot(inv, int(slot.Slot)))
 	if err != nil {
 		return i, err
 	}
@@ -416,14 +425,11 @@ func (h *ItemStackRequestHandler) itemInSlot(slot protocol.StackRequestSlotInfo,
 // setItemInSlot sets an item stack in the slot of a container present in the slot info.
 func (h *ItemStackRequestHandler) setItemInSlot(slot protocol.StackRequestSlotInfo, i item.Stack, s *Session, tx *world.Tx) {
 	inv, _ := s.invByID(int32(slot.Container.ContainerID), tx)
-
-	sl := int(slot.Slot)
-	if inv == s.offHand {
-		sl = 0
-	}
+	sl := s.invSlot(inv, int(slot.Slot))
 
 	before, _ := inv.Item(sl)
 	_ = inv.SetItem(sl, i)
+	h.heldItemChanged = h.heldItemChanged || s.heldItemSlot(inv, sl)
 
 	respSlot := protocol.StackResponseSlotInfo{
 		Slot:                 slot.Slot,
@@ -489,7 +495,7 @@ func (h *ItemStackRequestHandler) reject(id int32, s *Session, tx *world.Tx) {
 	for container, slots := range h.changes {
 		for slot, info := range slots {
 			inv, _ := s.invByID(int32(container), tx)
-			_ = inv.SetItem(int(slot), info.before)
+			_ = inv.SetItem(s.invSlot(inv, int(slot)), info.before)
 		}
 	}
 

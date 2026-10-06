@@ -3,6 +3,7 @@ package session
 import (
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/cmd"
+	"github.com/df-mc/dragonfly/server/entity"
 	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/inventory"
@@ -26,6 +27,7 @@ type Controllable interface {
 	Name() string
 	world.Entity
 	item.User
+	entity.Rider
 	dialogue.Submitter
 	form.Submitter
 	cmd.Source
@@ -44,6 +46,7 @@ type Controllable interface {
 	Speed() float64
 	FlightSpeed() float64
 	VerticalFlightSpeed() float64
+	Operator() bool
 
 	Sleep(pos cube.Pos)
 	Wake()
@@ -55,11 +58,13 @@ type Controllable interface {
 	Effects() []effect.Effect
 
 	UseItem()
+	UseItemAsAttack() bool
 	ReleaseItem()
 	UseItemOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3)
 	UseItemOnEntity(e world.Entity) bool
 	BreakBlock(pos cube.Pos)
 	PickBlock(pos cube.Pos)
+	PickEntity(e world.Entity)
 	AttackEntity(e world.Entity) bool
 	Drop(s item.Stack) (n int)
 	SwingArm()

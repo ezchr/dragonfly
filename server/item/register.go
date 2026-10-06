@@ -115,6 +115,7 @@ func init() {
 	world.RegisterItem(Salmon{})
 	world.RegisterItem(Scute{})
 	world.RegisterItem(Shears{})
+	world.RegisterItem(Shield{})
 	world.RegisterItem(ShulkerShell{})
 	world.RegisterItem(Slimeball{})
 	world.RegisterItem(Snowball{})
@@ -141,6 +142,7 @@ func init() {
 		world.RegisterItem(BannerPattern{Type: pattern})
 	}
 	for _, c := range Colours() {
+		world.RegisterItem(Cushion{Colour: c})
 		world.RegisterItem(Dye{Colour: c})
 		world.RegisterItem(FireworkStar{FireworkExplosion: FireworkExplosion{Colour: c}})
 	}
@@ -160,6 +162,7 @@ func init() {
 		world.RegisterItem(Axe{Tier: t})
 		world.RegisterItem(Shovel{Tier: t})
 		world.RegisterItem(Sword{Tier: t})
+		world.RegisterItem(Spear{Tier: t})
 		world.RegisterItem(Hoe{Tier: t})
 	}
 	for _, disc := range sound.MusicDiscs() {
