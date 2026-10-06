@@ -64,7 +64,7 @@ func signedHex(digest []byte) string {
 }
 
 // authenticate runs the encryption handshake and checks the login with the session server.
-func (l *Listener) authenticate(c *wire.Conn, name string) (Profile, error) {
+func (l *Listener) authenticate(c *wire.Conn, name string, deadline time.Time) (Profile, error) {
 	var token [4]byte
 	rand.Read(token[:])
 	var w wire.Writer
@@ -103,7 +103,11 @@ func (l *Listener) authenticate(c *wire.Conn, name string) (Profile, error) {
 	if l.cfg.PreventProxyConnections {
 		ip, _, _ = net.SplitHostPort(c.NetConn().RemoteAddr().String())
 	}
-	prof, err := l.hasJoined(name, ServerHash("", secret, l.key.pub), ip)
+	prof, err := l.limitedHasJoined(name, ServerHash("", secret, l.key.pub), ip, deadline)
+	if errors.Is(err, errAuthBusy) {
+		l.loginDisconnect(c, "The server is busy logging players in. Please try again in a minute.")
+		return Profile{}, err
+	}
 	if err != nil {
 		l.loginDisconnect(c, "Failed to verify username!")
 		return Profile{}, err
@@ -111,14 +115,37 @@ func (l *Listener) authenticate(c *wire.Conn, name string) (Profile, error) {
 	return prof, nil
 }
 
+var errAuthBusy = errors.New("login: session server request limit reached")
+
+// limitedHasJoined is hasJoined within the session server limits: at most MaxConcurrentAuth
+// requests at once (waiting for a slot until deadline) and AuthPerMinute per minute.
+func (l *Listener) limitedHasJoined(name, hash, ip string, deadline time.Time) (Profile, error) {
+	wait := time.NewTimer(time.Until(deadline))
+	defer wait.Stop()
+	select {
+	case l.authSem <- struct{}{}:
+	case <-wait.C:
+		return Profile{}, fmt.Errorf("%w: no free slot before the login deadline", errAuthBusy)
+	case <-l.ctx.Done():
+		return Profile{}, net.ErrClosed
+	}
+	defer func() { <-l.authSem }()
+	if !l.authLim.allow() {
+		return Profile{}, fmt.Errorf("%w: %d per minute", errAuthBusy, l.cfg.AuthPerMinute)
+	}
+	return l.hasJoined(name, hash, ip, deadline)
+}
+
 // hasJoined asks the session server whether name logged in to this server (hash).
-func (l *Listener) hasJoined(name, hash, ip string) (Profile, error) {
+func (l *Listener) hasJoined(name, hash, ip string, deadline time.Time) (Profile, error) {
 	q := url.Values{"username": {name}, "serverId": {hash}}
 	if ip != "" {
 		q.Set("ip", ip)
 	}
 	base := strings.TrimRight(l.cfg.SessionServer, "/")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(l.ctx, 10*time.Second)
+	defer cancel()
+	ctx, cancel = context.WithDeadline(ctx, deadline)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/session/minecraft/hasJoined?"+q.Encode(), nil)
 	if err != nil {

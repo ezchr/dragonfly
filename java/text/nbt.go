@@ -1,6 +1,9 @@
 package text
 
 import (
+	"errors"
+	"unicode/utf8"
+
 	"github.com/ezchr/go-mc/java/wire"
 )
 
@@ -157,4 +160,77 @@ func sortKeys(keys []uint8, bucket *[numKeys]uint8) {
 		}
 		keys[j] = k
 	}
+}
+
+// DecodeModifiedUTF8 decodes Java's modified UTF-8 (DataInput.readUTF): NUL as C0 80 and
+// supplementary characters as two 3-byte surrogates. A lone surrogate becomes U+FFFD, as it does
+// when Java turns such a string into UTF-8. It fails on bytes that are not modified UTF-8.
+func DecodeModifiedUTF8(b []byte) (string, error) {
+	ascii := true
+	for _, c := range b {
+		if c == 0 || c >= 0x80 {
+			ascii = false
+			break
+		}
+	}
+	if ascii {
+		return string(b), nil
+	}
+	out := make([]rune, 0, len(b))
+	for i := 0; i < len(b); {
+		c := b[i]
+		var r rune
+		switch {
+		case c < 0x80: // DataInput.readUTF also takes a raw NUL
+			r = rune(c)
+			i++
+		case c&0xe0 == 0xc0 && i+1 < len(b) && b[i+1]&0xc0 == 0x80:
+			r = rune(c&0x1f)<<6 | rune(b[i+1]&0x3f)
+			i += 2
+		case c&0xf0 == 0xe0 && i+2 < len(b) && b[i+1]&0xc0 == 0x80 && b[i+2]&0xc0 == 0x80:
+			r = rune(c&0x0f)<<12 | rune(b[i+1]&0x3f)<<6 | rune(b[i+2]&0x3f)
+			i += 3
+		default:
+			return "", errModifiedUTF8
+		}
+		out = append(out, r)
+	}
+	// Join surrogate pairs; lone surrogates become U+FFFD.
+	res := out[:0]
+	for i := 0; i < len(out); i++ {
+		r := out[i]
+		if r >= 0xd800 && r < 0xdc00 && i+1 < len(out) && out[i+1] >= 0xdc00 && out[i+1] < 0xe000 {
+			res = append(res, 0x10000+(r-0xd800)<<10+(out[i+1]-0xdc00))
+			i++
+			continue
+		}
+		if r >= 0xd800 && r < 0xe000 {
+			r = utf8.RuneError
+		}
+		res = append(res, r)
+	}
+	return string(res), nil
+}
+
+var errModifiedUTF8 = errors.New("text: string is not modified UTF-8")
+
+// ReadString reads an NBT string payload (u16 length, modified UTF-8) as a Go string.
+func ReadString(r *wire.Reader) string {
+	n := int(r.Uint16())
+	if r.Err != nil {
+		return ""
+	}
+	if n > r.Len() {
+		r.Err = wire.ErrShort
+		r.Off = len(r.B)
+		return ""
+	}
+	s, err := DecodeModifiedUTF8(r.B[r.Off : r.Off+n])
+	r.Off += n
+	if err != nil {
+		r.Err = err
+		r.Off = len(r.B)
+		return ""
+	}
+	return s
 }

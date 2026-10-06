@@ -19,7 +19,9 @@ import (
 	"net"
 	"net/http"
 	"time"
+	"unicode/utf8"
 
+	"github.com/ezchr/go-mc/java/text"
 	v777 "github.com/ezchr/go-mc/java/v777"
 	"github.com/ezchr/go-mc/java/wire"
 )
@@ -41,9 +43,26 @@ type Config struct {
 	CompressionThreshold int
 	// Brand is the server brand the F3 screen shows.
 	Brand string
-	// LoginTimeout bounds handshake to end of configuration.
+	// LoginTimeout bounds the whole of login and configuration, from accepting the connection to
+	// handing the player to the game (30 s if zero). It includes the session server check.
 	LoginTimeout time.Duration
-	Log          *slog.Logger
+	// HandshakeTimeout bounds the handshake and the whole status (server list) exchange (5 s if
+	// zero). A login then gets the rest of LoginTimeout.
+	HandshakeTimeout time.Duration
+	Log              *slog.Logger
+
+	// MaxPending caps the connections that have not finished login and configuration, server wide
+	// (256 if zero; negative: no cap). Connections over the cap are closed at once.
+	MaxPending int
+	// MaxPendingPerIP caps them per client address (an IPv6 /64 counts as one address; 8 if zero,
+	// negative: no cap).
+	MaxPendingPerIP int
+	// LoginsPerIPPerMinute caps the login attempts (handshakes with the login or transfer intent)
+	// per address in any minute (20 if zero, negative: no cap). Status pings do not count.
+	LoginsPerIPPerMinute int
+	// AcceptTransfers accepts clients sent here by another server's transfer packet (handshake
+	// intent 3), like vanilla's accepts-transfers. Off: they are refused, as vanilla does.
+	AcceptTransfers bool
 
 	// OnlineMode checks every login with the session server (Microsoft accounts only, encrypted
 	// connection, real UUIDs and signed skins). Off: anyone can join under any name.
@@ -53,6 +72,14 @@ type Config struct {
 	// PreventProxyConnections also sends the client's IP to the session server, which then
 	// refuses logins from a different address than the one the client authenticated from.
 	PreventProxyConnections bool
+	// MaxConcurrentAuth caps the session server requests in flight at once (8 if zero). Logins
+	// over it wait for a free slot, within their LoginTimeout.
+	MaxConcurrentAuth int
+	// AuthPerMinute caps the session server requests per minute, server wide (300 if zero,
+	// negative: no cap), so a flood of logins (no Mojang account is needed to reach this step)
+	// cannot get the server's address rate limited by the session server, which would lock real
+	// players out. Logins over it are refused with "try again".
+	AuthPerMinute int
 }
 
 // ClientInfo is what the client reports about itself in configuration.
@@ -99,6 +126,9 @@ type Listener struct {
 	cancel  context.CancelFunc
 	key     *authKey // online mode only
 	http    *http.Client
+	limits  *limiter
+	authSem chan struct{}  // MaxConcurrentAuth slots
+	authLim *windowCounter // AuthPerMinute
 }
 
 // Listen starts accepting on addr.
@@ -112,6 +142,15 @@ func Listen(addr string, cfg Config) (*Listener, error) {
 	if cfg.LoginTimeout == 0 {
 		cfg.LoginTimeout = 30 * time.Second
 	}
+	if cfg.HandshakeTimeout == 0 {
+		cfg.HandshakeTimeout = 5 * time.Second
+	}
+	cfg.HandshakeTimeout = min(cfg.HandshakeTimeout, cfg.LoginTimeout)
+	cfg.MaxPending = orDefault(cfg.MaxPending, 256)
+	cfg.MaxPendingPerIP = orDefault(cfg.MaxPendingPerIP, 8)
+	cfg.LoginsPerIPPerMinute = orDefault(cfg.LoginsPerIPPerMinute, 20)
+	cfg.MaxConcurrentAuth = orDefault(cfg.MaxConcurrentAuth, 8)
+	cfg.AuthPerMinute = orDefault(cfg.AuthPerMinute, 300)
 	if cfg.Log == nil {
 		cfg.Log = slog.Default()
 	}
@@ -131,7 +170,10 @@ func Listen(addr string, cfg Config) (*Listener, error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	l := &Listener{cfg: cfg, ln: ln, players: make(chan *Player), ctx: ctx, cancel: cancel, key: key,
-		http: &http.Client{Timeout: 15 * time.Second}}
+		http:    &http.Client{Timeout: 15 * time.Second},
+		limits:  newLimiter(cfg.MaxPending, cfg.MaxPendingPerIP, cfg.LoginsPerIPPerMinute),
+		authSem: make(chan struct{}, max(cfg.MaxConcurrentAuth, 1)),
+		authLim: newWindowCounter(cfg.AuthPerMinute, time.Minute)}
 	go l.acceptLoop()
 	return l, nil
 }
@@ -164,14 +206,24 @@ func (l *Listener) acceptLoop() {
 			}
 			return
 		}
-		go l.handle(nc)
+		ip := ipKey(nc.RemoteAddr())
+		if !l.limits.acquire(ip) {
+			// Over a pending cap: drop it before spending a goroutine or buffers on it.
+			nc.Close()
+			continue
+		}
+		go l.handle(nc, ip)
 	}
 }
 
-func (l *Listener) handle(nc net.Conn) {
-	nc.SetDeadline(time.Now().Add(l.cfg.LoginTimeout))
+func (l *Listener) handle(nc net.Conn, ip string) {
+	start := time.Now()
+	nc.SetDeadline(start.Add(l.cfg.HandshakeTimeout))
 	c := wire.NewConn(nc)
-	p, err := l.negotiate(c)
+	// Login and configuration packets are small; the play limits apply from the hand-off.
+	c.SetMaxPacket(maxPrePlayPacket)
+	p, err := l.negotiate(c, ip, start.Add(l.cfg.LoginTimeout))
+	l.limits.release(ip)
 	if err != nil {
 		if !errors.Is(err, errStatusDone) && !errors.Is(err, io.EOF) {
 			l.cfg.Log.Debug("java login failed", "addr", nc.RemoteAddr(), "err", err)
@@ -179,6 +231,7 @@ func (l *Listener) handle(nc net.Conn) {
 		c.Close()
 		return
 	}
+	c.SetMaxPacket(0)
 	nc.SetDeadline(time.Time{})
 	select {
 	case l.players <- p:
@@ -187,10 +240,14 @@ func (l *Listener) handle(nc net.Conn) {
 	}
 }
 
+// maxPrePlayPacket is the largest packet accepted before play. The largest a vanilla client sends
+// then is a custom_payload (32767 bytes of data).
+const maxPrePlayPacket = 1 << 16
+
 var errStatusDone = errors.New("status ping finished")
 
-// negotiate runs handshake, then status or login + configuration.
-func (l *Listener) negotiate(c *wire.Conn) (*Player, error) {
+// negotiate runs handshake, then status or login + configuration. deadline is the login deadline.
+func (l *Listener) negotiate(c *wire.Conn, ip string, deadline time.Time) (*Player, error) {
 	id, body, err := c.ReadPacket()
 	if err != nil {
 		return nil, err
@@ -209,9 +266,20 @@ func (l *Listener) negotiate(c *wire.Conn) (*Player, error) {
 	switch intent {
 	case 1:
 		return nil, l.status(c, protocol)
-	case 2, 3: // login, transfer
+	case 2: // login
+	case 3: // transfer
+		if !l.cfg.AcceptTransfers {
+			l.loginDisconnect(c, "Transfers are disabled on this server.")
+			return nil, errors.New("transfer refused: AcceptTransfers is off")
+		}
 	default:
 		return nil, fmt.Errorf("unknown intent %d", intent)
+	}
+	// Login and configuration share one deadline, counted from when the connection was accepted.
+	c.NetConn().SetDeadline(deadline)
+	if !l.limits.loginAttempt(ip) {
+		l.loginDisconnect(c, "Too many login attempts from your address. Please wait a minute.")
+		return nil, errors.New("too many login attempts from " + ip)
 	}
 	if protocol != ProtocolVersion {
 		msg := fmt.Sprintf("This server runs Minecraft %s. Please use %s.", GameVersion, GameVersion)
@@ -221,7 +289,7 @@ func (l *Listener) negotiate(c *wire.Conn) (*Player, error) {
 		l.loginDisconnect(c, msg)
 		return nil, fmt.Errorf("protocol %d, want %d", protocol, ProtocolVersion)
 	}
-	prof, err := l.login(c)
+	prof, err := l.login(c, deadline)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +306,10 @@ const (
 	GameVersion     = "26.3"
 )
 
+// status answers the server list: one status_request, then a ping (vanilla's
+// ServerStatusPacketListenerImpl). A second status_request or a malformed ping ends the connection.
 func (l *Listener) status(c *wire.Conn, protocol int32) error {
+	answered := false
 	for {
 		id, body, err := c.ReadPacket()
 		if err != nil {
@@ -246,11 +317,17 @@ func (l *Listener) status(c *wire.Conn, protocol int32) error {
 		}
 		switch id {
 		case v777.ServerboundStatusStatusRequest:
+			if answered || len(body) != 0 {
+				return errors.New("status: repeated or malformed status_request")
+			}
+			answered = true
 			st := l.cfg.Status()
 			resp := map[string]any{
 				"version":     map[string]any{"name": GameVersion, "protocol": ProtocolVersion},
 				"players":     map[string]any{"max": st.MaxPlayers, "online": st.Online},
 				"description": map[string]any{"text": st.MOTD},
+				// Chat is not signed (login says enforces_secure_chat false): say so up front.
+				"enforcesSecureChat": false,
 			}
 			if st.Favicon != "" {
 				resp["favicon"] = st.Favicon
@@ -262,6 +339,9 @@ func (l *Listener) status(c *wire.Conn, protocol int32) error {
 				return err
 			}
 		case v777.ServerboundStatusPingRequest:
+			if len(body) != 8 {
+				return fmt.Errorf("status: ping of %d bytes, want a long", len(body))
+			}
 			c.Send(v777.ClientboundStatusPongResponse, body) // echo the long
 			return errStatusDone
 		default:
@@ -270,8 +350,10 @@ func (l *Listener) status(c *wire.Conn, protocol int32) error {
 	}
 }
 
+// loginDisconnect sends a login disconnect with a plain text reason (cut to a length the client
+// accepts, on a character boundary).
 func (l *Listener) loginDisconnect(c *wire.Conn, msg string) {
-	js, _ := json.Marshal(map[string]string{"text": msg})
+	js, _ := json.Marshal(map[string]string{"text": truncateUTF8(msg, maxReasonBytes)})
 	var w wire.Writer
 	w.String(string(js))
 	c.Send(v777.ClientboundLoginLoginDisconnect, w.B)
@@ -285,7 +367,7 @@ func OfflineUUID(name string) [16]byte {
 	return u
 }
 
-func (l *Listener) login(c *wire.Conn) (Profile, error) {
+func (l *Listener) login(c *wire.Conn, deadline time.Time) (Profile, error) {
 	id, body, err := c.ReadPacket()
 	if err != nil {
 		return Profile{}, err
@@ -306,7 +388,7 @@ func (l *Listener) login(c *wire.Conn) (Profile, error) {
 	prof := Profile{UUID: OfflineUUID(name), Name: name}
 	if l.cfg.OnlineMode {
 		var err error
-		if prof, err = l.authenticate(c, name); err != nil {
+		if prof, err = l.authenticate(c, name, deadline); err != nil {
 			return Profile{}, err
 		}
 	}
@@ -399,7 +481,15 @@ func (l *Listener) configure(c *wire.Conn) (ClientInfo, error) {
 				return info, fmt.Errorf("client_information: %w", r.Err)
 			}
 		case v777.ServerboundConfigurationSelectKnownPacks:
+			if sentRegistries {
+				// Vanilla disconnects too: each answer would make us send (and compress) every
+				// registry again.
+				return info, errors.New("select_known_packs: sent twice")
+			}
 			n := int(r.VarInt())
+			if n < 0 || n > 64 { // vanilla's limit
+				return info, fmt.Errorf("select_known_packs: %d packs", n)
+			}
 			core := false
 			for j := 0; j < n && r.Err == nil; j++ {
 				ns, pid, ver := r.String(32767), r.String(32767), r.String(32767)
@@ -443,36 +533,31 @@ func disconnect(c *wire.Conn, id int32, msg string) {
 	c.Send(id, w.B)
 }
 
+// maxReasonBytes is how much of a login disconnect reason is sent: far more than a screen shows,
+// and well inside the client's limit (a 262144-character JSON string).
+const maxReasonBytes = 16384
+
 // TextComponent writes a plain text component in network NBT (a nameless string tag), the form
-// configuration and play packets use for chat components.
-func TextComponent(w *wire.Writer, text string) {
-	w.Byte(8) // TAG_String
-	writeModifiedUTF8(w, text)
+// configuration and play packets use for chat components. A text too long for an NBT string
+// (65535 bytes of modified UTF-8) is cut on a character boundary.
+func TextComponent(w *wire.Writer, s string) {
+	text.WriteString(w, s)
 }
 
-// writeModifiedUTF8 writes Java's DataOutput.writeUTF format: u16 length, then UTF-8 with NUL as
-// 0xC0 0x80 and supplementary characters as surrogate pairs.
-func writeModifiedUTF8(w *wire.Writer, s string) {
-	start := len(w.B)
-	w.Uint16(0)
-	for _, r := range s {
-		switch {
-		case r == 0:
-			w.B = append(w.B, 0xc0, 0x80)
-		case r < 0x80:
-			w.B = append(w.B, byte(r))
-		case r < 0x800:
-			w.B = append(w.B, 0xc0|byte(r>>6), 0x80|byte(r&0x3f))
-		case r < 0x10000:
-			w.B = append(w.B, 0xe0|byte(r>>12), 0x80|byte(r>>6&0x3f), 0x80|byte(r&0x3f))
-		default:
-			r -= 0x10000
-			for _, s := range []rune{0xd800 + r>>10, 0xdc00 + r&0x3ff} {
-				w.B = append(w.B, 0xe0|byte(s>>12), 0x80|byte(s>>6&0x3f), 0x80|byte(s&0x3f))
-			}
-		}
+// truncateUTF8 cuts s to at most n bytes without splitting a UTF-8 sequence.
+func truncateUTF8(s string, n int) string {
+	if len(s) <= n {
+		return s
 	}
-	n := len(w.B) - start - 2
-	w.B[start] = byte(n >> 8)
-	w.B[start+1] = byte(n)
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
+}
+
+func orDefault(v, def int) int {
+	if v == 0 {
+		return def
+	}
+	return v
 }

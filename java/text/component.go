@@ -13,6 +13,8 @@
 package text
 
 import (
+	"strconv"
+
 	"github.com/ezchr/go-mc/java/wire"
 )
 
@@ -51,9 +53,12 @@ type Component struct {
 
 // ClickEvent is what happens when a component is clicked.
 type ClickEvent struct {
-	// Action is one of ClickRunCommand, ClickSuggestCommand, ClickOpenURL, ClickCopy, ClickChangePage.
+	// Action is one of ClickRunCommand, ClickSuggestCommand, ClickOpenURL, ClickCopy,
+	// ClickChangePage or ClickCustom. A click event the client would reject (see Valid) is left out
+	// when the component is written.
 	Action string
-	// Value is the command (with its leading slash), URL, text to copy or page number.
+	// Value is the command (with its leading slash), http(s) URL, text to copy, page number (1 or
+	// more) or custom action id.
 	Value string
 }
 
@@ -77,7 +82,7 @@ func Translatable(key string, with ...Component) Component {
 // isString reports whether c is written as a bare string tag (vanilla's tryCollapseToString).
 func (c *Component) isString() bool {
 	return c.Translate == "" && c.Color == "" && c.Bold == 0 && c.Italic == 0 && c.Underlined == 0 &&
-		c.Strikethrough == 0 && c.Obfuscated == 0 && c.Insertion == "" && c.Click == nil &&
+		c.Strikethrough == 0 && c.Obfuscated == 0 && c.Insertion == "" && !c.Click.Valid() &&
 		c.Hover == nil && c.Font == "" && len(c.Extra) == 0
 }
 
@@ -165,7 +170,7 @@ func (c *Component) writeCompound(w *wire.Writer) {
 	add(kUnderlined, c.Underlined != 0)
 	add(kStrikethrough, c.Strikethrough != 0)
 	add(kObfuscated, c.Obfuscated != 0)
-	add(kClickEvent, c.Click != nil)
+	add(kClickEvent, c.Click.Valid())
 	add(kHoverEvent, c.Hover != nil)
 	add(kInsertion, c.Insertion != "")
 	add(kFont, c.Font != "")
@@ -241,20 +246,16 @@ func (e *ClickEvent) write(w *wire.Writer) {
 		field = "url"
 	case ClickChangePage:
 		field = "page"
+	case ClickCustom:
+		field = "id"
 	}
 	valueFirst := javaBucket(field, 16) < javaBucket("action", 16)
 	if !valueFirst {
 		StringTag(w, "action", e.Action)
 	}
 	if field == "page" {
-		n := int32(0)
-		for _, ch := range e.Value {
-			if ch < '0' || ch > '9' {
-				break
-			}
-			n = n*10 + int32(ch-'0')
-		}
-		IntTag(w, field, n)
+		n, _ := strconv.ParseInt(e.Value, 10, 32) // Valid checked it
+		IntTag(w, field, int32(n))
 	} else {
 		StringTag(w, field, e.Value)
 	}

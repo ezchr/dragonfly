@@ -98,9 +98,24 @@ func (w *Writer) Position(x, y, z int) {
 	w.Int64(int64(x&0x3FFFFFF)<<38 | int64(z&0x3FFFFFF)<<12 | int64(y&0xFFF))
 }
 
-// Angle writes an angle in degrees as 1/256 steps of a turn.
+// Angle writes an angle in degrees as 1/256 steps of a turn, rounded down like vanilla's
+// Mth.packDegrees (floor, so -0.5 degrees is step 255, not 0). Angles of any size wrap; NaN and
+// infinities are written as 0.
 func (w *Writer) Angle(deg float32) {
-	w.B = append(w.B, byte(int32(deg*256/360)))
+	w.B = append(w.B, AngleByte(deg))
+}
+
+// AngleByte is the byte Angle writes for deg.
+func AngleByte(deg float32) byte {
+	f := math.Floor(float64(deg * 256 / 360)) // the multiply and divide in float32, like vanilla
+	if math.IsNaN(f) || math.IsInf(f, 0) {
+		return 0
+	}
+	f = math.Mod(f, 256) // exact for any float64 integer; keeps huge angles meaningful
+	if f < 0 {
+		f += 256
+	}
+	return byte(int(f))
 }
 
 // BitSet writes a VarInt count of longs and the longs.
@@ -233,6 +248,8 @@ func (r *Reader) length(max, minElem int) int {
 }
 
 // String reads a string of at most maxChars characters (the protocol's limit for that field).
+// Characters are counted like Java's String.length(): in UTF-16 units, so a character outside the
+// Basic Multilingual Plane (an emoji) counts as 2.
 func (r *Reader) String(maxChars int) string {
 	n := r.length(maxChars*3, 1)
 	b := r.take(n)
@@ -243,11 +260,32 @@ func (r *Reader) String(maxChars int) string {
 		r.fail(ErrUTF8)
 		return ""
 	}
-	if utf8.RuneCount(b) > maxChars {
+	if UTF16Len(b) > maxChars {
 		r.fail(fmt.Errorf("%w: string longer than %d", ErrTooLarge, maxChars))
 		return ""
 	}
 	return string(b)
+}
+
+// UTF16Len is the length of the valid UTF-8 b in UTF-16 units (Java's String.length()).
+func UTF16Len(b []byte) int {
+	n := 0
+	for i := 0; i < len(b); {
+		c := b[i]
+		switch {
+		case c < 0x80:
+			i++
+		case c < 0xe0:
+			i += 2
+		case c < 0xf0:
+			i += 3
+		default: // 4-byte sequence: a supplementary character, a surrogate pair in UTF-16
+			i += 4
+			n++
+		}
+		n++
+	}
+	return n
 }
 
 // ByteArray reads a VarInt length and that many bytes (at most max). The result aliases the
