@@ -28,7 +28,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	ln, err := server.Listen(*addr, server.Config{
 		CompressionThreshold: 256,
-		Brand:                "zid-jflat",
+		Brand:                "go-mcjava-jflat",
 		Log:                  logger,
 		Status:               func() server.Status { return server.Status{MOTD: "jflat", MaxPlayers: 10} },
 	})

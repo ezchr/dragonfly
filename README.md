@@ -1,6 +1,16 @@
 # go-mcjava
 
-A Go library for the Minecraft Java Edition protocol, currently 26.3 (protocol 777).
+The Minecraft Java Edition protocol in Go, written for **crossplay**: it is the protocol half of
+[dfjava](https://github.com/ezchr/dfjava), which lets Java Edition players join a
+[Dragonfly](https://github.com/df-mc/dragonfly) (Bedrock) server natively, with no ViaProxy or
+Geyser in between.
+
+> **Crossplay note.** The packages here have no Dragonfly dependency and can be used on their own.
+> The Dragonfly integration that uses them, dfjava, **does not work with normal Dragonfly**: it
+> needs the hooks on the `java-native` branch of [ezchr/dragonfly](https://github.com/ezchr/dragonfly/tree/java-native).
+
+Java **26.3** (protocol 777) and **26.2** (protocol 776) clients are supported. A server is written
+against 26.3; the `version` package converts its ids for 26.2 clients.
 
 It is written for speed and to sit inside a server: framing does not allocate, buffers are
 bounds-checked, and the encoders are checked byte for byte against vanilla.
@@ -8,13 +18,16 @@ bounds-checked, and the encoders are checked byte for byte against vanilla.
 | Package | What it does |
 |---|---|
 | `wire` | Data types, packet framing, compression and encryption |
-| `v777` | Packet ids, registries and the configuration packets for 26.3, generated from Mojang's data reports |
+| `v777`, `v776` | Packet ids, registries and configuration packets per version, generated from Mojang's data reports and a vanilla join |
+| `version` | Maps the ids a 26.3 server writes to an older client's (packets, block states, registries) |
 | `server` | Handshake, status, offline and online (Microsoft) login, and configuration, with per-IP and auth limits |
 | `chunk` | `level_chunk_with_light` encoding and decoding |
-| `item` | Item stacks (slots) with data component patches |
+| `item` | Item stacks (slots) with data component patches, per version |
 | `text` | Network NBT text components and legacy colour codes |
-| `cmd/javagen` | Generates `v777` from Mojang's server.jar `--reports` |
+| `cmd/javagen`, `cmd/remapgen` | Generate the `vNNN` packages and the remap tables from Mojang's reports |
 | `cmd/jbot`, `cmd/jflat`, `cmd/chunkdiff` | A scripted test client, a flat test server, and a chunk comparison tool |
 
-The AES/CFB8 cipher in `internal/cfb8` comes from
-[Tnze/go-mc](https://github.com/Tnze/go-mc) (MIT).
+## Licence
+
+MIT. The AES/CFB8 cipher in `internal/cfb8` comes from [Tnze/go-mc](https://github.com/Tnze/go-mc)
+(MIT). Data in `v777` and `v776` is generated from Mojang's server reports.

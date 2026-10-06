@@ -1,0 +1,2 @@
+*.test
+/cmd/*/__debug*
