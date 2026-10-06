@@ -26,6 +26,12 @@ type Fall struct {
 // Burp is a sound played when a player finishes eating an item.
 type Burp struct{ sound }
 
+// Eat is a sound played every few ticks while a player eats an item.
+type Eat struct{ sound }
+
+// Drink is a sound played every few ticks while a player drinks an item, such as a potion.
+type Drink struct{ sound }
+
 // Pop is a sound played when a chicken lays an egg.
 type Pop struct{ sound }
 
