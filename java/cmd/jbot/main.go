@@ -25,11 +25,15 @@ func main() {
 	secs := flag.Int("secs", 20, "seconds to stay")
 	attack := flag.Bool("attack", false, "stand still and attack the first player seen every 600 ms")
 	still := flag.Bool("still", false, "stand still")
+	brk := flag.Bool("break", false, "stand still and break the block below once (creative: instant)")
 	flag.Parse()
-	if err := run(*addr, *name, time.Duration(*secs)*time.Second, *attack, *still); err != nil {
+	breakBelow = *brk
+	if err := run(*addr, *name, time.Duration(*secs)*time.Second, *attack, *still || *brk); err != nil {
 		log.Fatal(err)
 	}
 }
+
+var breakBelow bool
 
 func run(addr, name string, stay time.Duration, attack, still bool) error {
 	nc, err := net.Dial("tcp", addr)
@@ -160,6 +164,11 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 				}
 			case v777.ClientboundPlayRespawn:
 				log.Printf("%s: respawned", name)
+			case v777.ClientboundPlayBlockUpdate:
+				x, y, z := r.Position()
+				log.Printf("%s: block update %d %d %d -> state %d", name, x, y, z, r.VarInt())
+			case v777.ClientboundPlayBlockChangedAck:
+				log.Printf("%s: block ack sequence %d", name, r.VarInt())
 			default:
 				stats[fmt.Sprintf("%#x", id)]++
 			}
@@ -189,6 +198,15 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 		case <-t.C:
 			if attack || still {
 				step++
+				if breakBelow && step == 20 {
+					w.Reset()
+					w.VarInt(0) // START_DESTROY_BLOCK
+					w.Position(int(math.Floor(cur[0])), int(math.Floor(cur[1]))-1, int(math.Floor(cur[2])))
+					w.Byte(1) // up face
+					w.VarInt(7)
+					c.Send(v777.ServerboundPlayPlayerAction, w.B)
+					log.Printf("%s: start breaking below (sequence 7)", name)
+				}
 				if attack && step%12 == 0 && target.Load() != 0 {
 					w.Reset()
 					w.VarInt(target.Load())
