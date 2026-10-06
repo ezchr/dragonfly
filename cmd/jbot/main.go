@@ -19,6 +19,8 @@ import (
 	"github.com/ezchr/go-mcjava/wire"
 )
 
+var command = flag.String("cmd", "", "run this command (without /) 3 s after spawning and log the replies")
+
 func main() {
 	addr := flag.String("addr", "127.0.0.1:25620", "server")
 	name := flag.String("name", "Bot", "player name")
@@ -193,6 +195,8 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 				}
 			case v777.ClientboundPlayPlayerInfoRemove:
 				log.Printf("%s: player info remove %d", name, r.VarInt())
+			case v777.ClientboundPlaySystemChat:
+				log.Printf("%s: system chat %q", name, body)
 			case v777.ClientboundPlayForgetLevelChunk:
 				stats["forget"]++
 			case v777.ClientboundPlayPlayerInfoUpdate:
@@ -237,6 +241,13 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 			log.Printf("%s: corrected to %.2f %.2f %.2f", name, p[0], p[1], p[2])
 			cur = p
 		case <-t.C:
+			if *command != "" && time.Since(start) > 3*time.Second {
+				w.Reset()
+				w.String(*command)
+				c.Send(v777.ServerboundPlayChatCommand, w.B)
+				log.Printf("%s: sent /%s", name, *command)
+				*command = ""
+			}
 			if attack || still {
 				step++
 				if breakBelow && step == 20 {
