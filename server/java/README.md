@@ -1,12 +1,12 @@
 # Java Edition crossplay (server/java)
 
-**Java Edition crossplay for Dragonfly**, on the `java-native` branch of this fork. Java Edition players join a
+**Java Edition crossplay for Dragonfly**, on the `crossplay` branch of this fork. Java Edition players join a
 [Dragonfly](https://github.com/df-mc/dragonfly) (Bedrock) server directly: the Java protocol is
 spoken in Go inside the server, with no ViaProxy, ViaBedrock or Geyser in between. Java and
 Bedrock players share one world and see each other.
 
-> **Not in normal Dragonfly.** This exists only on the `java-native` branch of
-> [ezchr/dragonfly](https://github.com/ezchr/dragonfly/tree/java-native). Normal Dragonfly
+> **Not in normal Dragonfly.** This exists only on the `crossplay` branch of
+> [ezchr/dragonfly](https://github.com/ezchr/dragonfly/tree/crossplay). Normal Dragonfly
 > (df-mc/dragonfly) only accepts players that come with a Bedrock session; this branch adds the hooks
 > a Java session needs (a player session interface, `Server.LoadPlayer`/`AddPlayer`, and listing
 > Java players in the Bedrock player list) and the Java session itself, in this folder.
@@ -23,7 +23,7 @@ Make your server use this branch instead of normal Dragonfly: one line in your `
 `go mod tidy` (it turns the branch name into a version). Nothing else about your server changes.
 
 ```
-replace github.com/df-mc/dragonfly => github.com/ezchr/dragonfly java-native
+replace github.com/df-mc/dragonfly => github.com/ezchr/dragonfly crossplay
 ```
 
 Start the Java listener next to your Bedrock one:
