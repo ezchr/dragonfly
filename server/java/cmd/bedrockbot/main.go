@@ -74,6 +74,8 @@ func main() {
 			}
 		case *packet.ActorEvent:
 			log.Printf("%s: ActorEvent type %d data %d (entity %d)", *name, p.EventType, p.EventData, p.EntityRuntimeID)
+		case *packet.PlaySound:
+			log.Printf("%s: PlaySound %q volume %.2f pitch %.2f", *name, p.SoundName, p.Volume, p.Pitch)
 		case *packet.LevelSoundEvent:
 			log.Printf("%s: LevelSoundEvent %q extra %d entity %q", *name, p.SoundType, p.ExtraData, p.EntityType)
 		case *packet.UpdateAttributes:
