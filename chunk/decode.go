@@ -13,6 +13,9 @@ import (
 // and each light list must match its mask.
 type Decoder struct {
 	block, biome strategy
+
+	// LongMasks reads light masks as long arrays (see Encoder.LongMasks).
+	LongMasks bool
 }
 
 // NewDecoder returns a decoder for the given registry sizes (see NewEncoder).
@@ -88,10 +91,14 @@ func (d *Decoder) Decode(r *wire.Reader, c *Column) error {
 }
 
 func (d *Decoder) light(r *wire.Reader, c *Column) {
-	sky := r.ByteArray(r.Len())
-	block := r.ByteArray(r.Len())
-	emptySky := r.ByteArray(r.Len())
-	emptyBlock := r.ByteArray(r.Len())
+	read := func() []byte { return r.ByteArray(r.Len()) }
+	if d.LongMasks {
+		read = func() []byte { return readLongMask(r) }
+	}
+	sky := read()
+	block := read()
+	emptySky := read()
+	emptyBlock := read()
 	if r.Err != nil {
 		return
 	}
@@ -264,4 +271,24 @@ func resize[T any](s []T, n int) []T {
 		return s[:n]
 	}
 	return slices.Grow(s[:0], n)[:n]
+}
+
+// readLongMask reads a BitSet long array as the equivalent little-endian byte mask.
+func readLongMask(r *wire.Reader) []byte {
+	n := int(r.VarInt())
+	if n < 0 || n > r.Len()/8 {
+		fail(r, fmt.Errorf("%w: mask of %d longs", ErrLight, n))
+		return nil
+	}
+	b := make([]byte, 0, n*8)
+	for i := 0; i < n; i++ {
+		x := uint64(r.Int64())
+		for j := 0; j < 8; j++ {
+			b = append(b, byte(x>>(8*j)))
+		}
+	}
+	for len(b) > 0 && b[len(b)-1] == 0 {
+		b = b[:len(b)-1]
+	}
+	return b
 }

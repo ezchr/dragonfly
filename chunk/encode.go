@@ -19,6 +19,10 @@ type Encoder struct {
 	biomeSlot []uint16
 	pal       [256]uint32
 	idx       [SectionBlocks]uint16
+
+	// LongMasks writes the light masks as long arrays (VarInt count, then big-endian longs of
+	// BitSet.toLongArray()), the form before 26.3 (protocol 776 and older).
+	LongMasks bool
 }
 
 // NewEncoder returns an encoder for a block state registry of blockStates entries and a biome
@@ -88,7 +92,7 @@ func (e *Encoder) Encode(w *wire.Writer, c *Column) (err error) {
 		w.Raw(be.NBT)
 	}
 
-	return writeLight(w, c.SkyLight, c.BlockLight)
+	return writeLight(w, c.SkyLight, c.BlockLight, e.LongMasks)
 }
 
 // EncodeSection appends one section (block count, fluid count, block and biome containers) as it
@@ -329,7 +333,7 @@ func packIDs(w *wire.Writer, vals []uint32, b uint8, limit uint32) error {
 // writeLight writes ClientboundLightUpdatePacketData: four BitSets (each a VarInt byte count and
 // BitSet.toByteArray(), little-endian bytes with trailing zero bytes trimmed), then the sky and
 // block nibble arrays, each list a VarInt count of VarInt-length-prefixed 2048-byte arrays.
-func writeLight(w *wire.Writer, sky, block []Light) error {
+func writeLight(w *wire.Writer, sky, block []Light, long bool) error {
 	for _, ls := range [2][]Light{sky, block} {
 		for i := range ls {
 			switch ls[i].State {
@@ -343,13 +347,45 @@ func writeLight(w *wire.Writer, sky, block []Light) error {
 			}
 		}
 	}
-	writeMask(w, sky, LightData)
-	writeMask(w, block, LightData)
-	writeMask(w, sky, LightEmpty)
-	writeMask(w, block, LightEmpty)
+	if long {
+		writeLongMask(w, sky, LightData)
+		writeLongMask(w, block, LightData)
+		writeLongMask(w, sky, LightEmpty)
+		writeLongMask(w, block, LightEmpty)
+	} else {
+		writeMask(w, sky, LightData)
+		writeMask(w, block, LightData)
+		writeMask(w, sky, LightEmpty)
+		writeMask(w, block, LightEmpty)
+	}
 	writeArrays(w, sky)
 	writeArrays(w, block)
 	return nil
+}
+
+// writeLongMask writes the sections in state st as a BitSet long array (see Encoder.LongMasks).
+func writeLongMask(w *wire.Writer, ls []Light, st LightState) {
+	hi := -1
+	for i := len(ls) - 1; i >= 0; i-- {
+		if ls[i].State == st {
+			hi = i
+			break
+		}
+	}
+	n := 0
+	if hi >= 0 {
+		n = hi/64 + 1
+	}
+	w.VarInt(int32(n))
+	for l := 0; l < n; l++ {
+		var x uint64
+		for j := 0; j < 64; j++ {
+			if i := l*64 + j; i <= hi && ls[i].State == st {
+				x |= 1 << j
+			}
+		}
+		w.Int64(int64(x))
+	}
 }
 
 func writeMask(w *wire.Writer, ls []Light, st LightState) {
