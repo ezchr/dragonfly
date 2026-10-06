@@ -24,6 +24,10 @@ func buildItems(dir string) (count int, lang []string) {
 
 	textureData := make(map[string]any)
 	for _, item := range world.CustomItems() {
+		if _, ok := item.(world.PackTexturedItem); ok {
+			// Drawn by a resource pack of the server's own, which also names it.
+			continue
+		}
 		identifier, _ := item.EncodeItem()
 		lang = append(lang, fmt.Sprintf("item.%s.name=%s", identifier, item.Name()))
 

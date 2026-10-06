@@ -54,9 +54,14 @@ func (m Material) WithoutAmbientOcclusion() Material {
 // Encode returns the material encoded as a map that can be sent over the network to the client.
 func (m Material) Encode() map[string]any {
 	return map[string]any{
-		"texture":           m.texture,
-		"render_method":     m.renderMethod.String(),
+		"texture":       m.texture,
+		"render_method": m.renderMethod.String(),
+		// Current clients read face dimming from bit 0 of packed_bools and ignore face_dimming,
+		// which made every custom block (and its inventory icon) evenly lit. face_dimming is kept
+		// for older clients. The other bits stay 0, as GeyserMC sends them.
+		"packed_bools":      m.faceDimming,
 		"face_dimming":      m.faceDimming,
+		"isotropic":         false,
 		"ambient_occlusion": m.ambientOcclusion,
 	}
 }

@@ -529,6 +529,26 @@ func (s *Session) SendGameMode(c Controllable) {
 	s.SendAbilities(c)
 }
 
+// playerPermissions is the permission level c shows with, to itself and to
+// other players: Member, or Operator for an operator, as BDS and
+// PowerNukkitX send it. Left at zero, the client shows the player as a
+// Visitor.
+func playerPermissions(c Controllable) uint8 {
+	if c.Operator() {
+		return packet.PermissionLevelOperator
+	}
+	return packet.PermissionLevelMember
+}
+
+// commandPermissions is the command permission level of c: Any, or
+// GameDirectors for an operator.
+func commandPermissions(c Controllable) uint8 {
+	if c.Operator() {
+		return protocol.CommandPermissionLevelGameDirectors
+	}
+	return protocol.CommandPermissionLevelAny
+}
+
 // SendAbilities sends the abilities of the Controllable entity of the session to the client.
 func (s *Session) SendAbilities(c Controllable) {
 	mode, abilities := c.GameMode(), uint32(0)
@@ -557,15 +577,10 @@ func (s *Session) SendAbilities(c Controllable) {
 	if mode.AllowsInteraction() {
 		abilities |= protocol.AbilityDoorsAndSwitches | protocol.AbilityOpenContainers | protocol.AbilityAttackPlayers | protocol.AbilityAttackMobs
 	}
-	// Operators get the permissions BDS and PowerNukkitX give them.
-	playerPerms, commandPerms := uint8(packet.PermissionLevelMember), uint8(protocol.CommandPermissionLevelAny)
-	if c.Operator() {
-		playerPerms, commandPerms = packet.PermissionLevelOperator, protocol.CommandPermissionLevelGameDirectors
-	}
 	s.writePacket(&packet.UpdateAbilities{AbilityData: protocol.AbilityData{
 		EntityUniqueID:     selfEntityRuntimeID,
-		PlayerPermissions:  playerPerms,
-		CommandPermissions: commandPerms,
+		PlayerPermissions:  playerPermissions(c),
+		CommandPermissions: commandPermissions(c),
 		Layers: []protocol.AbilityLayer{
 			{
 				Type:             protocol.AbilityLayerTypeBase,
