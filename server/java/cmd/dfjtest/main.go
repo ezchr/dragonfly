@@ -36,6 +36,7 @@ func main() {
 	killTest := flag.Bool("killtest", false, "kill each joining player after 6 s")
 	kickTest := flag.Bool("kicktest", false, "kick each joining player after 20 s with a reason")
 	worldTest := flag.Bool("worldtest", false, "move each joining player to a second overworld world after 10 s")
+	hungry := flag.Bool("hungry", false, "start each player at food 10 with 5 bread in hand")
 	slimeFloor := flag.Bool("slimefloor", false, "top layer of slime (breaks instantly, for testing)")
 	survival := flag.Bool("survival", true, "new players start in survival (Dragonfly defaults to creative)")
 	flag.Parse()
@@ -99,6 +100,12 @@ func main() {
 	}
 	for p := range srv.Accept() {
 		log.Info("player in world", "name", p.Name(), "pos", p.Position())
+		if *hungry {
+			later(p.H(), time.Second, func(tx *world.Tx, p *player.Player) {
+				p.SetFood(10)
+				_ = p.Inventory().SetItem(0, item.NewStack(item.Bread{}, 5))
+			})
+		}
 		if *killTest {
 			later(p.H(), 6*time.Second, func(tx *world.Tx, p *player.Player) {
 				p.Hurt(1000, entity.VoidDamageSource{})

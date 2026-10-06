@@ -5,6 +5,7 @@ import (
 
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/entity"
+	"github.com/df-mc/dragonfly/server/item"
 	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
 	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 	"github.com/df-mc/dragonfly/server/session"
@@ -19,6 +20,9 @@ type inputState struct {
 	breaking  bool
 	breakFace cube.Face
 	breakPos  cube.Pos
+	// eatStart is when the player started eating or drinking (zero when not): Java clients never
+	// say they finished, so the server finishes it, as vanilla does (continueEating).
+	eatStart time.Time
 }
 
 // validFace reports whether a face from the client is one of the six.
@@ -147,7 +151,12 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 		}
 		if hand == 0 {
 			s.fxUsedItem()
-			s.do(func(tx *world.Tx, c session.Controllable) { c.UseItem() })
+			s.do(func(tx *world.Tx, c session.Controllable) {
+				c.UseItem()
+				if held, _ := c.HeldItems(); c.UsingItem() && isConsumable(held) {
+					s.input.eatStart = time.Now()
+				}
+			})
 		}
 		s.ackBlock(seq)
 	case v777.ServerboundPlayAttack:
@@ -259,6 +268,34 @@ func (s *Session) ackBlock(seq int32) {
 	w := s.packet()
 	w.VarInt(seq)
 	s.queue(v777.ClientboundPlayBlockChangedAck, w)
+}
+
+// isConsumable reports whether a stack is food or a drink.
+func isConsumable(s item.Stack) bool {
+	_, ok := s.Item().(item.Consumable)
+	return ok
+}
+
+// continueEating finishes eating or drinking once it took long enough. A Bedrock client says when
+// it finished (a second UseItem, which Dragonfly waits for); a Java client does not, because a
+// vanilla server finishes it by itself. The player then stops eating; if the client still holds
+// the use key it starts the next one with a new use_item, as on vanilla.
+func (s *Session) continueEating(c session.Controllable) {
+	if s.input.eatStart.IsZero() {
+		return
+	}
+	held, _ := c.HeldItems()
+	cons, ok := held.Item().(item.Consumable)
+	if !ok || !c.UsingItem() {
+		s.input.eatStart = time.Time{}
+		return
+	}
+	if time.Since(s.input.eatStart) < cons.ConsumeDuration() {
+		return
+	}
+	s.input.eatStart = time.Time{}
+	c.UseItem() // the "finished" signal: Dragonfly consumes the item
+	c.ReleaseItem()
 }
 
 // continueBreaking is called every tick while the client holds the break key.

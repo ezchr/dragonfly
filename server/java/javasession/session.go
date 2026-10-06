@@ -395,6 +395,7 @@ func (s *Session) tickLoop() {
 				s.sendCentre(pos)
 				s.sendChunkBatch(tx)
 				s.continueBreaking(c)
+				s.continueEating(c)
 			})
 			if err != nil {
 				if !stopped(err) {
