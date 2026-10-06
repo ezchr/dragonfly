@@ -6,6 +6,9 @@
 // custom model data, ...) as typed fields; others are kept as raw bytes when their length can be told
 // (see RawComponent). Encoding appends to a wire.Writer and does not allocate. Decoding reuses the
 // Stack's slices, so a Stack decoded into again and again allocates only for strings.
+//
+// Stacks always hold 26.3 ids. The *For methods write and read them for an older protocol (Java 26.2,
+// protocol 776) with that version's ids; see Proto.
 package item
 
 import (
@@ -181,15 +184,25 @@ func (s *Stack) Reset() {
 func WriteEmpty(w *wire.Writer) { w.Byte(0) }
 
 // Encode writes the stack the way servers send it (ItemStack.OPTIONAL_STREAM_CODEC).
-func (s *Stack) Encode(w *wire.Writer) { s.encode(w, false) }
+func (s *Stack) Encode(w *wire.Writer) { s.encode(w, false, nil) }
 
 // EncodeUntrusted writes the stack in the client-to-server form (set_creative_mode_slot), where each
 // component value is prefixed with its length.
-func (s *Stack) EncodeUntrusted(w *wire.Writer) { s.encode(w, true) }
+func (s *Stack) EncodeUntrusted(w *wire.Writer) { s.encode(w, true, nil) }
 
-func (s *Stack) encode(w *wire.Writer, delimited bool) {
+// EncodeFor is Encode for the protocol version of p (nil: the newest, the same as Encode).
+func (s *Stack) EncodeFor(w *wire.Writer, p *Proto) { s.encode(w, false, p) }
+
+// EncodeUntrustedFor is EncodeUntrusted for the protocol version of p.
+func (s *Stack) EncodeUntrustedFor(w *wire.Writer, p *Proto) { s.encode(w, true, p) }
+
+func (s *Stack) encode(w *wire.Writer, delimited bool, p *Proto) {
 	if s.Count <= 0 {
 		w.Byte(0)
+		return
+	}
+	if p != nil {
+		s.encodeOld(w, delimited, p)
 		return
 	}
 	w.VarInt(s.Count)
@@ -257,9 +270,14 @@ func (s *Stack) component(w *wire.Writer, t int32, delimited bool) {
 		s.value(w, t)
 		return
 	}
-	// Length prefix: write the value, then move it right to make room for its length.
 	start := len(w.B)
 	s.value(w, t)
+	lengthPrefix(w, start)
+}
+
+// lengthPrefix prefixes what was written since start with its length: it moves it right to make
+// room for the length.
+func lengthPrefix(w *wire.Writer, start int) {
 	n := len(w.B) - start
 	size := wire.VarIntSize(int32(n))
 	for range size {
@@ -383,13 +401,20 @@ func writeText(w *wire.Writer, t *Text) {
 
 // Decode reads a stack the way servers send it (ItemStack.OPTIONAL_STREAM_CODEC). Errors are left in
 // r.Err.
-func (s *Stack) Decode(r *wire.Reader) { s.decode(r, false) }
+func (s *Stack) Decode(r *wire.Reader) { s.decode(r, false, nil) }
 
 // DecodeUntrusted reads a stack in the client-to-server form (set_creative_mode_slot): every component
 // is length-prefixed, so components this package does not model are kept in Raw.
-func (s *Stack) DecodeUntrusted(r *wire.Reader) { s.decode(r, true) }
+func (s *Stack) DecodeUntrusted(r *wire.Reader) { s.decode(r, true, nil) }
 
-func (s *Stack) decode(r *wire.Reader, delimited bool) {
+// DecodeFor is Decode for the protocol version of p (nil: the newest, the same as Decode). The stack
+// gets newest ids; what the newest version has no place for is left out (see Proto).
+func (s *Stack) DecodeFor(r *wire.Reader, p *Proto) { s.decode(r, false, p) }
+
+// DecodeUntrustedFor is DecodeUntrusted for the protocol version of p.
+func (s *Stack) DecodeUntrustedFor(r *wire.Reader, p *Proto) { s.decode(r, true, p) }
+
+func (s *Stack) decode(r *wire.Reader, delimited bool, p *Proto) {
 	s.Reset()
 	count := r.VarInt()
 	if r.Err != nil || count <= 0 {
@@ -397,6 +422,13 @@ func (s *Stack) decode(r *wire.Reader, delimited bool) {
 	}
 	s.Count = count
 	s.ID = r.VarInt()
+	if p != nil && r.Err == nil {
+		if id := mapID(p.itemsIn, s.ID); id >= 0 {
+			s.ID = id
+		} else {
+			s.ID = -1
+		}
+	}
 	if uint32(s.ID) >= Items {
 		fail(r, fmt.Errorf("%w: item id %d", ErrInvalid, s.ID))
 		return
@@ -408,13 +440,31 @@ func (s *Stack) decode(r *wire.Reader, delimited bool) {
 	}
 	for range pos {
 		t := r.VarInt()
+		if p != nil && r.Err == nil {
+			ot := t
+			if uint32(ot) >= uint32(len(p.compsIn)) {
+				fail(r, fmt.Errorf("%w: component type %d", ErrInvalid, ot))
+				return
+			}
+			if t = p.compsIn[ot]; t < 0 {
+				// A component the newest version lacks: skipped.
+				if delimited {
+					take(r, int(r.VarInt()))
+				} else if !p.skipOld(r, ot) {
+					fail(r, fmt.Errorf("%w: old component type %d", ErrUnknownComponent, ot))
+				}
+				if r.Err != nil {
+					return
+				}
+				continue
+			}
+		}
 		if r.Err == nil && uint32(t) >= ComponentTypes {
 			fail(r, fmt.Errorf("%w: component type %d", ErrInvalid, t))
 		}
 		if r.Err != nil {
 			return
 		}
-		s.Order = append(s.Order, t)
 		if delimited {
 			b := take(r, int(r.VarInt()))
 			if r.Err != nil {
@@ -427,15 +477,25 @@ func (s *Stack) decode(r *wire.Reader, delimited bool) {
 					fail(r, sub.Err)
 					return
 				}
+				if p != nil {
+					s.fromOld(t, p)
+				}
 				s.Added.Add(t)
+			} else if p != nil && rawKinds[t] == kindNone {
+				continue // its wire form may differ in the newest version
 			} else {
 				s.Raw = append(s.Raw, RawComponent{t, append([]byte(nil), b...)})
 			}
+			s.Order = append(s.Order, t)
 			continue
 		}
 		if Modeled.Has(t) {
 			s.readValue(r, t)
+			if p != nil {
+				s.fromOld(t, p)
+			}
 			s.Added.Add(t)
+			s.Order = append(s.Order, t)
 			continue
 		}
 		start := r.Off
@@ -447,9 +507,19 @@ func (s *Stack) decode(r *wire.Reader, delimited bool) {
 			return
 		}
 		s.Raw = append(s.Raw, RawComponent{t, append([]byte(nil), r.B[start:r.Off]...)})
+		s.Order = append(s.Order, t)
 	}
 	for range neg {
 		t := r.VarInt()
+		if p != nil && r.Err == nil {
+			if uint32(t) >= uint32(len(p.compsIn)) {
+				fail(r, fmt.Errorf("%w: component type %d", ErrInvalid, t))
+				return
+			}
+			if t = p.compsIn[t]; t < 0 {
+				continue
+			}
+		}
 		if r.Err == nil && uint32(t) >= ComponentTypes {
 			fail(r, fmt.Errorf("%w: component type %d", ErrInvalid, t))
 		}
@@ -490,15 +560,21 @@ const (
 	kindString
 	kindUnit
 	kindNBT
+	kindInt32
 )
 
 // skipRaw skips the value of a component Stack does not model, if its wire form is known.
-func skipRaw(r *wire.Reader, t int32) bool {
-	switch rawKinds[t] {
+func skipRaw(r *wire.Reader, t int32) bool { return skipKind(r, rawKinds[t]) }
+
+// skipKind skips a value of wire form kind (false: kindNone, not known).
+func skipKind(r *wire.Reader, kind uint8) bool {
+	switch kind {
 	case kindVarInt:
 		r.VarInt()
 	case kindFloat:
 		r.Float32()
+	case kindInt32:
+		r.Int32()
 	case kindBool:
 		r.Bool()
 	case kindString:
@@ -673,12 +749,19 @@ type HashedStack struct {
 }
 
 // Decode reads a hashed stack.
-func (h *HashedStack) Decode(r *wire.Reader) {
+func (h *HashedStack) Decode(r *wire.Reader) { h.DecodeFor(r, nil) }
+
+// DecodeFor reads a hashed stack sent by a client of p's version (nil: the newest): ID is the
+// newest id, -1 if the newest version has no such item.
+func (h *HashedStack) DecodeFor(r *wire.Reader, p *Proto) {
 	*h = HashedStack{}
 	if !r.Bool() {
 		return
 	}
 	h.ID = r.VarInt()
+	if p != nil {
+		h.ID = mapID(p.itemsIn, h.ID)
+	}
 	h.Count = r.VarInt()
 	n := length(r, 256, 5)
 	for range n {
