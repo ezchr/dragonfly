@@ -2494,6 +2494,10 @@ func (p *Player) StartBreaking(pos cube.Pos, face cube.Face) {
 
 // breakTime returns the time needed to break a block at the position passed, taking into account the item
 // held, if the player is on the ground/underwater and if the player has any effects.
+// BreakTime returns how long breaking the block at pos takes this player with what it holds, given its
+// effects and situation.
+func (p *Player) BreakTime(pos cube.Pos) time.Duration { return p.breakTime(pos) }
+
 func (p *Player) breakTime(pos cube.Pos) time.Duration {
 	held, _ := p.HeldItems()
 	return block.BreakDuration(p.tx.Block(pos), held, p.breakContext())
