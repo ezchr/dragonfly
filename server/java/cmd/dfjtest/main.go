@@ -14,6 +14,7 @@ import (
 	"github.com/df-mc/dragonfly/server"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/entity"
+	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/java/javasession"
 	jserver "github.com/df-mc/dragonfly/server/java/protocol/server"
@@ -104,6 +105,7 @@ func main() {
 			later(p.H(), time.Second, func(tx *world.Tx, p *player.Player) {
 				p.SetFood(10)
 				_ = p.Inventory().SetItem(0, item.NewStack(item.Bread{}, 5))
+				p.AddEffect(effect.New(effect.Speed, 1, 2*time.Second)) // runs out: tests the removal
 			})
 		}
 		if *killTest {
