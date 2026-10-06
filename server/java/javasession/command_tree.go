@@ -256,6 +256,9 @@ func argumentOf(p cmd.ParamInfo, last bool) cmdNode {
 		}
 		if t == targetType || t.Implements(targetType) {
 			n.parser, n.prop = parserEntity, 1 // single
+			if m, ok := p.Value.(interface{ MultipleTargets() bool }); ok && m.MultipleTargets() {
+				n.prop = 0 // a cmd.Parameter that may select several players, such as /tp's target
+			}
 			return n
 		}
 	}
