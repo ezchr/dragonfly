@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/ezchr/go-mc/java/server"
-	"github.com/ezchr/go-mc/java/v777"
+	v777 "github.com/ezchr/go-mc/java/v777"
 	"github.com/ezchr/go-mc/java/wire"
 )
 
@@ -147,8 +147,12 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 				rw.Float32(20)
 				c.Send(v777.ServerboundPlayChunkBatchReceived, rw.B)
 			case v777.ClientboundPlayDisconnect:
-				errc <- fmt.Errorf("kicked")
+				errc <- fmt.Errorf("kicked: %q", body)
 				return
+			case v777.ClientboundPlayGameEvent:
+				if ev := r.Byte(); ev == 13 {
+					log.Printf("%s: level chunks load start", name)
+				}
 			case v777.ClientboundPlayAddEntity:
 				eid := r.VarInt()
 				r.UUID()
@@ -174,7 +178,26 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 					}
 				}
 			case v777.ClientboundPlaySetHealth:
-				log.Printf("%s: health %.1f food %d", name, r.Float32(), r.VarInt())
+				health := r.Float32()
+				log.Printf("%s: health %.1f food %d", name, health, r.VarInt())
+				if health <= 0 {
+					rw.Reset()
+					rw.VarInt(0) // perform respawn
+					c.Send(v777.ServerboundPlayClientCommand, rw.B)
+					log.Printf("%s: died, asked to respawn", name)
+				}
+			case v777.ClientboundPlayRemoveEntities:
+				n := r.VarInt()
+				for i := int32(0); i < n; i++ {
+					log.Printf("%s: removed entity %d", name, r.VarInt())
+				}
+			case v777.ClientboundPlayPlayerInfoRemove:
+				log.Printf("%s: player info remove %d", name, r.VarInt())
+			case v777.ClientboundPlayForgetLevelChunk:
+				stats["forget"]++
+			case v777.ClientboundPlayPlayerInfoUpdate:
+				actions := r.Byte()
+				log.Printf("%s: player info update actions %#x entries %d", name, actions, r.VarInt())
 			case v777.ClientboundPlaySetEntityMotion:
 				if eid := r.VarInt(); eid == 1 {
 					x, y, z := r.LpVec3()
