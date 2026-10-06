@@ -15,6 +15,9 @@ import (
 // damageGeneric is minecraft:generic in the damage_type registry.
 var damageGeneric = v777.RegistryID("minecraft:damage_type", "minecraft:generic")
 
+// LivingEntity.DATA_HEALTH_ID, a FLOAT.
+const dataLivingHealth = 9
+
 // Java entity type ids (minecraft:entity_type protocol ids in Mojang's registries.json).
 const entityTypePlayer = 159
 
@@ -348,6 +351,23 @@ func (s *Session) ViewEntityAction(e world.Entity, a world.EntityAction) {
 		return
 	}
 	switch a.(type) {
+	case entity.DeathAction:
+		if id == selfEntityID {
+			return // the client has its own death screen
+		}
+		// Health 0 makes the client play the death animation (falling over, turning red); the
+		// DEATH entity event plays the death sound. The entity is spawned anew on respawn.
+		w := s.packet()
+		w.VarInt(id)
+		w.Byte(dataLivingHealth)
+		w.VarInt(dataTypeFloat)
+		w.Float32(0)
+		w.Byte(0xff)
+		s.queue(v777.ClientboundPlaySetEntityData, w)
+		w = s.packet()
+		w.Int32(id)
+		w.Byte(3) // EntityEvent.DEATH
+		s.queue(v777.ClientboundPlayEntityEvent, w)
 	case entity.SwingArmAction:
 		if id == selfEntityID {
 			return // the client already swung
