@@ -17,9 +17,10 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"net/http"
 	"time"
 
-	"github.com/ezchr/go-mc/java/v777"
+	v777 "github.com/ezchr/go-mc/java/v777"
 	"github.com/ezchr/go-mc/java/wire"
 )
 
@@ -43,6 +44,15 @@ type Config struct {
 	// LoginTimeout bounds handshake to end of configuration.
 	LoginTimeout time.Duration
 	Log          *slog.Logger
+
+	// OnlineMode checks every login with the session server (Microsoft accounts only, encrypted
+	// connection, real UUIDs and signed skins). Off: anyone can join under any name.
+	OnlineMode bool
+	// SessionServer is the session server's base URL (DefaultSessionServer if empty).
+	SessionServer string
+	// PreventProxyConnections also sends the client's IP to the session server, which then
+	// refuses logins from a different address than the one the client authenticated from.
+	PreventProxyConnections bool
 }
 
 // ClientInfo is what the client reports about itself in configuration.
@@ -87,6 +97,8 @@ type Listener struct {
 	players chan *Player
 	ctx     context.Context
 	cancel  context.CancelFunc
+	key     *authKey // online mode only
+	http    *http.Client
 }
 
 // Listen starts accepting on addr.
@@ -103,12 +115,23 @@ func Listen(addr string, cfg Config) (*Listener, error) {
 	if cfg.Log == nil {
 		cfg.Log = slog.Default()
 	}
+	if cfg.SessionServer == "" {
+		cfg.SessionServer = DefaultSessionServer
+	}
+	var key *authKey
+	if cfg.OnlineMode {
+		var err error
+		if key, err = newAuthKey(); err != nil {
+			return nil, err
+		}
+	}
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	l := &Listener{cfg: cfg, ln: ln, players: make(chan *Player), ctx: ctx, cancel: cancel}
+	l := &Listener{cfg: cfg, ln: ln, players: make(chan *Player), ctx: ctx, cancel: cancel, key: key,
+		http: &http.Client{Timeout: 15 * time.Second}}
 	go l.acceptLoop()
 	return l, nil
 }
@@ -280,8 +303,13 @@ func (l *Listener) login(c *wire.Conn) (Profile, error) {
 		l.loginDisconnect(c, "Invalid player name")
 		return Profile{}, fmt.Errorf("login: invalid name %q", name)
 	}
-	// TODO: online mode (encryption request + Mojang session server check).
 	prof := Profile{UUID: OfflineUUID(name), Name: name}
+	if l.cfg.OnlineMode {
+		var err error
+		if prof, err = l.authenticate(c, name); err != nil {
+			return Profile{}, err
+		}
+	}
 
 	if t := l.cfg.CompressionThreshold; t >= 0 {
 		var w wire.Writer
