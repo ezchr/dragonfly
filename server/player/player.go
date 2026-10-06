@@ -4525,8 +4525,10 @@ func format(a []any) string {
 // honey and milk, eating for everything else.
 func consumeSound(it world.Item) world.Sound {
 	switch it := it.(type) {
-	case item.Potion, item.HoneyBottle:
+	case item.Potion:
 		return sound.Drink{}
+	case item.HoneyBottle:
+		return sound.Drink{Honey: true}
 	case item.Bucket:
 		if it.Content == item.MilkBucketContent() {
 			return sound.Drink{}

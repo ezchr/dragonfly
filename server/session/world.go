@@ -797,9 +797,16 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 	case sound.Burp:
 		pk.SoundType = packet.SoundEventBurp
 	case sound.Eat:
-		pk.SoundType = packet.SoundEventEat
+		// Played by name: Bedrock clients ignore the "eat" sound event without the item it is for.
+		s.playNamedSound(pos, "random.eat", 0.5+0.5*rand.Float32(), 1+(rand.Float32()-rand.Float32())*0.2)
+		return
 	case sound.Drink:
-		pk.SoundType = packet.SoundEventDrink
+		name := "random.drink"
+		if so.Honey {
+			name = "random.drink_honey"
+		}
+		s.playNamedSound(pos, name, 0.5, 0.9+0.1*rand.Float32())
+		return
 	case sound.CushionPlace:
 		pk.SoundType, pk.EntityType = packet.SoundEventSpawn, "minecraft:cushion"
 	case sound.CushionSit:
@@ -1587,4 +1594,9 @@ func abs(a int) int {
 		return -a
 	}
 	return a
+}
+
+// playNamedSound plays a sound by its resource pack name, as /playsound does.
+func (s *Session) playNamedSound(pos mgl64.Vec3, name string, volume, pitch float32) {
+	s.writePacket(&packet.PlaySound{SoundName: name, Position: vec64To32(pos), Volume: volume, Pitch: pitch})
 }
