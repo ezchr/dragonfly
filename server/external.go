@@ -63,6 +63,9 @@ func (srv *Server) AddPlayer(s ExternalSession, conf player.Config, w *world.Wor
 	s.SetCloseHandler(srv.handleSessionClose)
 	conf.Session = s
 	handle := world.EntitySpawnOpts{Position: conf.Position, ID: conf.UUID}.New(player.Type, conf)
+	// Like the Bedrock join: the session gets the handle before the player is in a world, so it
+	// can be listed (tab list) before anyone is shown the player entity.
+	s.SetHandle(handle, conf.Skin)
 	srv.incoming <- incoming{s: s, w: w, conf: conf, p: &onlinePlayer{name: conf.Name, xuid: conf.XUID, handle: handle}}
 	return nil
 }
