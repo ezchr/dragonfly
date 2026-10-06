@@ -18,6 +18,12 @@ type ExternalSession interface {
 	// player entity is added. The session starts sending the world and
 	// reading the client's input from here.
 	Spawn(c session.Controllable, tx *world.Tx)
+	// SetCloseHandler is called by AddPlayer before the player is added. The
+	// session must call f exactly once when the player leaves (from its
+	// Close method, in the player's world transaction, or with a nil tx if
+	// the world is already closed): f saves the player's data and removes
+	// them from the server.
+	SetCloseHandler(f func(tx *world.Tx, c session.Controllable))
 }
 
 // incomingSession is what Accept needs from a joining player's session.
@@ -49,17 +55,14 @@ var ErrAlreadyOnline = errors.New("already logged in")
 // LoadPlayer with Name, XUID, UUID, Locale and Skin filled in. The player is
 // then handed out by Accept like players from Listeners, and Spawn is called
 // on the session.
-//
-// The session must call the returned function exactly once when the player
-// leaves, in the player's world transaction (nil tx if the world is already
-// closed): it saves the player's data and removes them from the server.
-func (srv *Server) AddPlayer(s ExternalSession, conf player.Config, w *world.World) (onClose func(tx *world.Tx, c session.Controllable), err error) {
+func (srv *Server) AddPlayer(s ExternalSession, conf player.Config, w *world.World) error {
 	if _, ok := srv.Player(conf.UUID); ok {
-		return nil, ErrAlreadyOnline
+		return ErrAlreadyOnline
 	}
 	srv.pwg.Add(1)
+	s.SetCloseHandler(srv.handleSessionClose)
 	conf.Session = s
 	handle := world.EntitySpawnOpts{Position: conf.Position, ID: conf.UUID}.New(player.Type, conf)
 	srv.incoming <- incoming{s: s, w: w, conf: conf, p: &onlinePlayer{name: conf.Name, xuid: conf.XUID, handle: handle}}
-	return srv.handleSessionClose, nil
+	return nil
 }
