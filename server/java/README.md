@@ -1,16 +1,15 @@
-# dfjava
+# Java Edition crossplay (server/java)
 
-**Java Edition crossplay for Dragonfly.** Java Edition players join a
+**Java Edition crossplay for Dragonfly**, on the `java-native` branch of this fork. Java Edition players join a
 [Dragonfly](https://github.com/df-mc/dragonfly) (Bedrock) server directly: the Java protocol is
 spoken in Go inside the server, with no ViaProxy, ViaBedrock or Geyser in between. Java and
 Bedrock players share one world and see each other.
 
-> **Only works with the ezchr/dragonfly fork.** dfjava does **not** work with normal Dragonfly
-> (df-mc/dragonfly). Normal Dragonfly only accepts players that come with a Bedrock session; dfjava
-> needs the hooks on the
-> [`java-native` branch of ezchr/dragonfly](https://github.com/ezchr/dragonfly/tree/java-native)
-> (a player session interface, `Server.LoadPlayer`/`AddPlayer`, and listing Java players in the
-> Bedrock player list). Build your server against that branch.
+> **Not in normal Dragonfly.** This exists only on the `java-native` branch of
+> [ezchr/dragonfly](https://github.com/ezchr/dragonfly/tree/java-native). Normal Dragonfly
+> (df-mc/dragonfly) only accepts players that come with a Bedrock session; this branch adds the hooks
+> a Java session needs (a player session interface, `Server.LoadPlayer`/`AddPlayer`, and listing
+> Java players in the Bedrock player list) and the Java session itself, in this folder.
 
 The Java protocol itself lives in [go-mcjava](https://github.com/ezchr/go-mcjava).
 
@@ -20,15 +19,11 @@ Java **26.3** and **26.2** clients. Bedrock clients are whatever the fork suppor
 
 ## Setup
 
-In your server's `go.mod`, use the fork in place of Dragonfly (`go mod tidy` turns the branch into a
-version), then add dfjava:
+Make your server use this branch instead of normal Dragonfly: one line in your `go.mod`, then
+`go mod tidy` (it turns the branch name into a version). Nothing else about your server changes.
 
 ```
 replace github.com/df-mc/dragonfly => github.com/ezchr/dragonfly java-native
-```
-
-```
-go get github.com/ezchr/dfjava@latest
 ```
 
 Start the Java listener next to your Bedrock one:
@@ -37,7 +32,7 @@ Start the Java listener next to your Bedrock one:
 import (
 	"log/slog"
 
-	"github.com/ezchr/dfjava/javasession"
+	"github.com/df-mc/dragonfly/server/java/javasession"
 	jserver "github.com/ezchr/go-mcjava/server"
 )
 
@@ -67,7 +62,7 @@ for p := range srv.Accept() {
 }
 ```
 
-`cmd/dfjtest` is a complete test server.
+`server/java/cmd/dfjtest` is a complete test server.
 
 ## What works
 
@@ -90,7 +85,7 @@ Not done: the recipe book, villager trades.
 
 ## Licence
 
-MIT. dfjava's Bedrock to Java tables are generated from
+MIT, like Dragonfly. The Bedrock to Java tables are generated from
 [GeyserMC/mappings](https://github.com/GeyserMC/mappings) (MIT) and Mojang's data reports. The
 player model in `javasession/skins/geo.json` is from [Geyser](https://github.com/GeyserMC/Geyser)
 (MIT). `javasession/skins/steve.png` is Mojang's default skin.

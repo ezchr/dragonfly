@@ -3,8 +3,8 @@ package javasession
 import (
 	"sync"
 
+	"github.com/df-mc/dragonfly/server/java/javamap"
 	"github.com/df-mc/dragonfly/server/world"
-	"github.com/ezchr/dfjava/javamap"
 	jchunk "github.com/ezchr/go-mcjava/chunk"
 	v777 "github.com/ezchr/go-mcjava/v777"
 	"github.com/ezchr/go-mcjava/version"
