@@ -68,6 +68,11 @@ type Config struct {
 	// OnlineMode checks every login with the session server (Microsoft accounts only, encrypted
 	// connection, real UUIDs and signed skins). Off: anyone can join under any name.
 	OnlineMode bool
+	// VelocitySecret, when set, takes each player's profile and address from a Velocity proxy's
+	// modern forwarding (signed with this secret, Velocity's forwarding.secret) instead of the client:
+	// the proxy authenticated them. OnlineMode must be off, and only the proxy may reach the
+	// listener.
+	VelocitySecret []byte
 	// SessionServer is the session server's base URL (DefaultSessionServer if empty).
 	SessionServer string
 	// PreventProxyConnections also sends the client's IP to the session server, which then
@@ -118,6 +123,8 @@ type Player struct {
 	// Version is the client's protocol version: the server writes v777 ids and remaps them with it.
 	Version *version.Version
 	Address string // what the client typed to connect (host)
+	// ForwardedIP is the client's address as a Velocity proxy forwarded it, "" without one.
+	ForwardedIP string
 }
 
 // Listener accepts Java clients.
@@ -293,7 +300,7 @@ func (l *Listener) negotiate(c *wire.Conn, ip string, deadline time.Time) (*Play
 		l.loginDisconnect(c, msg)
 		return nil, fmt.Errorf("protocol %d not supported", protocol)
 	}
-	prof, err := l.login(c, deadline)
+	prof, fwdIP, err := l.login(c, deadline)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +308,7 @@ func (l *Listener) negotiate(c *wire.Conn, ip string, deadline time.Time) (*Play
 	if err != nil {
 		return nil, err
 	}
-	return &Player{Conn: c, Profile: prof, Info: info, Protocol: protocol, Version: ver, Address: host}, nil
+	return &Player{Conn: c, Profile: prof, Info: info, Protocol: protocol, Version: ver, Address: host, ForwardedIP: fwdIP}, nil
 }
 
 // The newest version this package speaks; version.All lists every version clients may join with.
@@ -383,29 +390,34 @@ func OfflineUUID(name string) [16]byte {
 	return u
 }
 
-func (l *Listener) login(c *wire.Conn, deadline time.Time) (Profile, error) {
+func (l *Listener) login(c *wire.Conn, deadline time.Time) (Profile, string, error) {
 	id, body, err := c.ReadPacket()
 	if err != nil {
-		return Profile{}, err
+		return Profile{}, "", err
 	}
 	if id != v777.ServerboundLoginHello {
-		return Profile{}, fmt.Errorf("login: expected hello, got %#x", id)
+		return Profile{}, "", fmt.Errorf("login: expected hello, got %#x", id)
 	}
 	r := wire.NewReader(body)
 	name := r.String(16)
 	r.UUID()
 	if r.Err != nil {
-		return Profile{}, r.Err
+		return Profile{}, "", r.Err
 	}
 	if !validName(name) {
 		l.loginDisconnect(c, "Invalid player name")
-		return Profile{}, fmt.Errorf("login: invalid name %q", name)
+		return Profile{}, "", fmt.Errorf("login: invalid name %q", name)
 	}
 	prof := Profile{UUID: OfflineUUID(name), Name: name}
-	if l.cfg.OnlineMode {
-		var err error
+	var fwdIP string
+	switch {
+	case len(l.cfg.VelocitySecret) > 0:
+		if prof, fwdIP, err = l.velocityForward(c, deadline); err != nil {
+			return Profile{}, "", err
+		}
+	case l.cfg.OnlineMode:
 		if prof, err = l.authenticate(c, name, deadline); err != nil {
-			return Profile{}, err
+			return Profile{}, "", err
 		}
 	}
 
@@ -413,7 +425,7 @@ func (l *Listener) login(c *wire.Conn, deadline time.Time) (Profile, error) {
 		var w wire.Writer
 		w.VarInt(int32(t))
 		if err := c.Send(v777.ClientboundLoginLoginCompression, w.B); err != nil {
-			return Profile{}, err
+			return Profile{}, "", err
 		}
 		c.SetThreshold(t)
 	}
@@ -425,16 +437,16 @@ func (l *Listener) login(c *wire.Conn, deadline time.Time) (Profile, error) {
 	session[8] = session[8]&0x3f | 0x80
 	w.UUID(session)
 	if err := c.Send(v777.ClientboundLoginLoginFinished, w.B); err != nil {
-		return Profile{}, err
+		return Profile{}, "", err
 	}
 	id, _, err = c.ReadPacket()
 	if err != nil {
-		return Profile{}, err
+		return Profile{}, "", err
 	}
 	if id != v777.ServerboundLoginLoginAcknowledged {
-		return Profile{}, fmt.Errorf("login: expected login_acknowledged, got %#x", id)
+		return Profile{}, "", fmt.Errorf("login: expected login_acknowledged, got %#x", id)
 	}
-	return prof, nil
+	return prof, fwdIP, nil
 }
 
 func validName(n string) bool {

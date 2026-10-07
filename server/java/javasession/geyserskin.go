@@ -227,6 +227,17 @@ func ApplyBedrockSkin(h *world.EntityHandle, xuid, value, signature string) {
 	})
 }
 
+// RefreshBedrockSkin looks a Bedrock player's skin up again and applies it like an upload if the
+// database has a newer one. For players whose login this server could not upload (a relay re-signs
+// it): the relay uploads the real one, and this picks it up. h is the player's handle.
+func RefreshBedrockSkin(h *world.EntityHandle, xuid string) {
+	props := fetchGeyserSkin(xuid)
+	if len(props) == 0 {
+		return
+	}
+	ApplyBedrockSkin(h, xuid, props[0].Value, props[0].Signature)
+}
+
 // propsSig identifies a skin property list (its texture signature).
 func propsSig(props []jserver.Property) string {
 	for _, p := range props {
