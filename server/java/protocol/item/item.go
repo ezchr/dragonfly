@@ -59,7 +59,7 @@ var Modeled = func() Set {
 	for _, t := range []int32{CompCustomData, CompMaxStackSize, CompMaxDamage, CompDamage, CompUnbreakable,
 		CompCustomName, CompItemName, CompItemModel, CompLore, CompEnchantments, CompCustomModelData,
 		CompTooltipDisplay, CompRepairCost, CompEnchantmentGlintOverride, CompStoredEnchantments,
-		CompDyedColor, CompPotionContents} {
+		CompDyedColor, CompPotionContents, CompEquippable} {
 		s.Add(t)
 	}
 	return s
@@ -136,15 +136,17 @@ type Stack struct {
 	MaxStackSize, MaxDamage, Damage, RepairCost int32
 	CustomName, ItemName                        Text
 	ItemModel                                   string
-	Lore                                        []Text
-	Enchantments, StoredEnchantments            []Enchantment
-	CustomModelData                             CustomModelData
-	TooltipDisplay                              TooltipDisplay
-	EnchantmentGlintOverride                    bool
-	DyedColor                                   int32 // RGB
-	PotionContents                              PotionContents
-	CustomData                                  []byte // network NBT compound; empty writes an empty one
-	Raw                                         []RawComponent
+	// Equippable is the minecraft:equippable component (nil: none).
+	Equippable                       *Equippable
+	Lore                             []Text
+	Enchantments, StoredEnchantments []Enchantment
+	CustomModelData                  CustomModelData
+	TooltipDisplay                   TooltipDisplay
+	EnchantmentGlintOverride         bool
+	DyedColor                        int32 // RGB
+	PotionContents                   PotionContents
+	CustomData                       []byte // network NBT compound; empty writes an empty one
+	Raw                              []RawComponent
 }
 
 // Empty reports whether the stack is the empty slot.
@@ -311,6 +313,8 @@ func (s *Stack) value(w *wire.Writer, t int32) {
 		writeText(w, &s.ItemName)
 	case CompItemModel:
 		w.String(s.ItemModel)
+	case CompEquippable:
+		writeEquippable(w, s.Equippable)
 	case CompLore:
 		w.VarInt(int32(len(s.Lore)))
 		for i := range s.Lore {
@@ -626,6 +630,8 @@ func (s *Stack) readValue(r *wire.Reader, t int32) {
 		readText(r, &s.ItemName)
 	case CompItemModel:
 		s.ItemModel = r.String(32767)
+	case CompEquippable:
+		s.Equippable = readEquippable(r)
 	case CompLore:
 		n := length(r, 256, 1)
 		for range n {
@@ -821,4 +827,95 @@ func DefaultMaxDamage(id int32) int32 {
 		return 0
 	}
 	return int32(defaultMaxDamage[id])
+}
+
+// Equippable is the minecraft:equippable component: the slot an item is worn in and the equipment
+// asset that draws it there.
+type Equippable struct {
+	Slot            int32  // EquipSlot*
+	EquipSound      string // sound event id, e.g. minecraft:item.armor.equip_diamond
+	Model           string // equipment asset id, e.g. oresplus:ruby; "" for none
+	Dispensable     bool
+	Swappable       bool
+	DamageOnHurt    bool
+	EquipOnInteract bool
+	CanBeSheared    bool
+}
+
+// Equipment slot network ids.
+const (
+	EquipSlotMainHand int32 = 0
+	EquipSlotFeet     int32 = 1
+	EquipSlotLegs     int32 = 2
+	EquipSlotChest    int32 = 3
+	EquipSlotHead     int32 = 4
+	EquipSlotOffHand  int32 = 5
+	EquipSlotBody     int32 = 6
+)
+
+// writeSoundEvent writes a sound as an inline sound event (holder id 0, the event, no fixed range).
+func writeSoundEvent(w *wire.Writer, id string) {
+	w.VarInt(0)
+	w.String(id)
+	w.Bool(false)
+}
+
+func readSoundEvent(r *wire.Reader) string {
+	if n := r.VarInt(); n != 0 {
+		return "" // a registry sound by id; not kept
+	}
+	id := r.String(32767)
+	if r.Bool() {
+		r.Float32()
+	}
+	return id
+}
+
+func writeEquippable(w *wire.Writer, e *Equippable) {
+	if e == nil {
+		e = &Equippable{}
+	}
+	w.VarInt(e.Slot)
+	snd := e.EquipSound
+	if snd == "" {
+		snd = "minecraft:item.armor.equip_generic"
+	}
+	writeSoundEvent(w, snd)
+	w.Bool(e.Model != "")
+	if e.Model != "" {
+		w.String(e.Model)
+	}
+	w.Bool(false) // camera overlay
+	w.Bool(false) // allowed entities: any
+	w.Bool(e.Dispensable)
+	w.Bool(e.Swappable)
+	w.Bool(e.DamageOnHurt)
+	w.Bool(e.EquipOnInteract)
+	w.Bool(e.CanBeSheared)
+	writeSoundEvent(w, "minecraft:item.shears.snip")
+}
+
+func readEquippable(r *wire.Reader) *Equippable {
+	e := &Equippable{Slot: r.VarInt()}
+	e.EquipSound = readSoundEvent(r)
+	if r.Bool() {
+		e.Model = r.String(32767)
+	}
+	if r.Bool() {
+		r.String(32767) // camera overlay
+	}
+	if r.Bool() { // allowed entities: a tag or a list of entity type ids
+		n := r.VarInt()
+		if n == 0 {
+			r.String(32767)
+		} else {
+			for i := int32(1); i < n && r.Err == nil; i++ {
+				r.VarInt()
+			}
+		}
+	}
+	e.Dispensable, e.Swappable, e.DamageOnHurt = r.Bool(), r.Bool(), r.Bool()
+	e.EquipOnInteract, e.CanBeSheared = r.Bool(), r.Bool()
+	readSoundEvent(r)
+	return e
 }

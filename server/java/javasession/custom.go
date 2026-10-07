@@ -26,11 +26,18 @@ type CustomItem struct {
 	Model string
 	// Name is the item name shown (the item_name component); "" keeps the base item's.
 	Name string
+	// Slot and Asset make the item wearable with its own look: the equipment slot
+	// (jitem.EquipSlot*) and the pack's equipment asset (e.g. "oresplus:ruby"). Asset "" with a
+	// slot wears it without one, so the item model itself shows (3D helmets).
+	Slot  int32
+	Asset string
+	Wear  bool
 }
 
 type customItemJava struct {
 	id          int32
 	model, name string
+	equip       *jitem.Equippable
 }
 
 var (
@@ -48,7 +55,12 @@ func RegisterCustomItem(name string, it CustomItem) error {
 	}
 	customMu.Lock()
 	defer customMu.Unlock()
-	customItems[name] = customItemJava{id: id, model: it.Model, name: it.Name}
+	c := customItemJava{id: id, model: it.Model, name: it.Name}
+	if it.Wear {
+		c.equip = &jitem.Equippable{Slot: it.Slot, EquipSound: "minecraft:item.armor.equip_diamond", Model: it.Asset,
+			Dispensable: true, Swappable: true, DamageOnHurt: true}
+	}
+	customItems[name] = c
 	if it.Model != "" {
 		customByModel[it.Model] = name
 	}
@@ -121,6 +133,11 @@ func applyCustomItem(name string, js *jitem.Stack) bool {
 	if c.name != "" {
 		js.ItemName = jitem.Text{Text: c.name}
 		js.Add(jitem.CompItemName)
+	}
+	if c.equip != nil {
+		e := *c.equip
+		js.Equippable = &e
+		js.Add(jitem.CompEquippable)
 	}
 	return true
 }
