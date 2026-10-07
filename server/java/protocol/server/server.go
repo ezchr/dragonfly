@@ -68,6 +68,10 @@ type Config struct {
 	// OnlineMode checks every login with the session server (Microsoft accounts only, encrypted
 	// connection, real UUIDs and signed skins). Off: anyone can join under any name.
 	OnlineMode bool
+	// OnlineModeFor, with OnlineMode off, still checks the logins it reports true for with the
+	// session server: an offline-mode server that lets anyone in under a free name, but protects
+	// the names of real accounts (staff, players whose data is keyed to them) from impersonation.
+	OnlineModeFor func(name string) bool
 	// VelocitySecret, when set, takes each player's profile and address from a Velocity proxy's
 	// modern forwarding (signed with this secret, Velocity's forwarding.secret) instead of the client:
 	// the proxy authenticated them. OnlineMode must be off, and only the proxy may reach the
@@ -171,7 +175,7 @@ func Listen(addr string, cfg Config) (*Listener, error) {
 		cfg.SessionServer = DefaultSessionServer
 	}
 	var key *authKey
-	if cfg.OnlineMode {
+	if cfg.OnlineMode || cfg.OnlineModeFor != nil { // the Microsoft check needs the key
 		var err error
 		if key, err = newAuthKey(); err != nil {
 			return nil, err
@@ -418,7 +422,7 @@ func (l *Listener) login(c *wire.Conn, deadline time.Time) (Profile, string, err
 		if prof, fwdIP, err = l.velocityForward(c, deadline); err != nil {
 			return Profile{}, "", err
 		}
-	case l.cfg.OnlineMode:
+	case l.cfg.OnlineMode, l.cfg.OnlineModeFor != nil && l.cfg.OnlineModeFor(name):
 		if prof, err = l.authenticate(c, name, deadline); err != nil {
 			return Profile{}, "", err
 		}
