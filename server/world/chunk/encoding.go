@@ -119,6 +119,11 @@ func (bpe BlockPaletteEncoding) DecodeBlockState(m map[string]any) (uint32, erro
 
 	v, ok := bpe.Blocks.StateToRuntimeID(upgraded.Name, upgraded.Properties)
 	if !ok {
+		if a, found := aliasFor(upgraded.Name); found {
+			v, ok = bpe.Blocks.StateToRuntimeID(a.name, a.props)
+		}
+	}
+	if !ok {
 		return 0, fmt.Errorf("cannot get runtime ID of block state %v{%+v} %v", upgraded.Name, upgraded.Properties, upgraded.Version)
 	}
 	return v, nil

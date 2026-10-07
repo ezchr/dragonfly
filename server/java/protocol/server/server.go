@@ -73,6 +73,9 @@ type Config struct {
 	// the proxy authenticated them. OnlineMode must be off, and only the proxy may reach the
 	// listener.
 	VelocitySecret []byte
+	// ResourcePack, when set, is offered to every client during configuration (as Paper's
+	// resource-pack setting is).
+	ResourcePack *ResourcePack
 	// SessionServer is the session server's base URL (DefaultSessionServer if empty).
 	SessionServer string
 	// PreventProxyConnections also sends the client's IP to the session server, which then
@@ -537,6 +540,9 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version) (ClientInfo, er
 			for ; i < len(pk); i++ {
 				c.WritePacket(pk[i].ID, pk[i].Body)
 			}
+			if rp := l.cfg.ResourcePack; rp != nil {
+				c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationResourcePackPush), rp.push())
+			}
 			c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationFinishConfiguration), nil)
 			if err := c.Flush(); err != nil {
 				return info, err
@@ -599,4 +605,40 @@ func statusVersion(protocol int32) map[string]any {
 		return map[string]any{"name": v.Name, "protocol": v.Protocol}
 	}
 	return map[string]any{"name": versionNames(), "protocol": ProtocolVersion}
+}
+
+// ResourcePack is a server resource pack.
+type ResourcePack struct {
+	URL  string
+	SHA1 string // 40 hex digits; "" lets the client skip the check
+	// ID identifies the pack to the client; the zero UUID uses the one Paper derives from the
+	// URL, so a client moving between this server and a Paper server with the same pack keeps it.
+	ID       [16]byte
+	Required bool
+	Prompt   string // shown on the download screen; "" for none
+}
+
+// PackID is the pack id Paper uses for a URL with no resource-pack-id: UUID.nameUUIDFromBytes(url).
+func PackID(url string) [16]byte {
+	u := md5.Sum([]byte(url))
+	u[6] = u[6]&0x0f | 0x30
+	u[8] = u[8]&0x3f | 0x80
+	return u
+}
+
+func (rp *ResourcePack) push() []byte {
+	id := rp.ID
+	if id == ([16]byte{}) {
+		id = PackID(rp.URL)
+	}
+	var w wire.Writer
+	w.UUID(id)
+	w.String(rp.URL)
+	w.String(rp.SHA1)
+	w.Bool(rp.Required)
+	w.Bool(rp.Prompt != "")
+	if rp.Prompt != "" {
+		TextComponent(&w, rp.Prompt)
+	}
+	return w.B
 }

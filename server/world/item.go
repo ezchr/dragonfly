@@ -115,6 +115,11 @@ func ItemByName(name string, meta int16) (Item, bool) {
 		// Also try obtaining the item with a metadata value of 0, for cases with durability.
 		it, ok = items[itemHash{name: name}]
 	}
+	if !ok {
+		if to, found := itemAlias(name); found && to != name {
+			return ItemByName(to, 0)
+		}
+	}
 	return it, ok
 }
 

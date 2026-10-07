@@ -23,6 +23,9 @@ func buildBlockInfo() *blockInfo {
 			name == "minecraft:structure_void" || name == "minecraft:light_block"
 		bi.fluid[rid] = reg.LiquidBlock(uint32(rid))
 		bi.java[rid] = uint32(java[rid])
+		if s, ok := customBlockState(name); ok {
+			bi.java[rid] = uint32(s)
+		}
 		// The state to use when Bedrock keeps water in the block's second layer.
 		bi.waterlogged[rid] = bi.java[rid]
 		if javamap.Waterloggable(java[rid]) {

@@ -133,7 +133,10 @@ func javaStack(ds item.Stack, js *jitem.Stack) {
 		return
 	}
 	js.Count = int32(ds.Count())
-	js.ID = javamap.Item(it)
+	name, meta := it.EncodeItem()
+	if id, ok := javamap.ItemID(name, meta); ok || !applyCustomItem(name, js) {
+		js.ID = id
+	}
 	switch v := it.(type) {
 	case item.Potion:
 		setPotion(js, v.Type)
@@ -276,8 +279,13 @@ func dragonflyStack(js *jitem.Stack) (item.Stack, bool) {
 		it = item.Arrow{Tip: javaPotionType(js)}
 	default:
 		var ok bool
-		if it, ok = javaItems()[js.ID]; !ok {
-			return item.Stack{}, false
+		if js.Has(jitem.CompItemModel) {
+			it, ok = customItemByModel(js.ItemModel)
+		}
+		if !ok {
+			if it, ok = javaItems()[js.ID]; !ok {
+				return item.Stack{}, false
+			}
 		}
 	}
 	switch v := it.(type) {
