@@ -142,6 +142,8 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 				c.Send(v777.ServerboundPlayAcceptTeleportation, rw.B)
 				tpCount++
 				pos <- [3]float64{x, y, z}
+			case v777.ClientboundPlayCommands:
+				dumpCommands(body)
 			case v777.ClientboundPlayKeepAlive:
 				c.Send(v777.ServerboundPlayKeepAlive, body)
 			case v777.ClientboundPlayLevelChunkWithLight:
