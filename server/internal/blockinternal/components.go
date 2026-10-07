@@ -50,6 +50,9 @@ func Components(identifier string, b world.CustomBlock, blockID int32) map[strin
 	}
 	if item, ok := b.(world.CustomItem); ok {
 		builder.SetMenuCategory(item.Category())
+		// The block's own name: without it the client names the block and its item by the
+		// identifier wherever the item's name doesn't reach.
+		builder.AddComponent("minecraft:display_name", map[string]any{"value": item.Name()})
 	}
 	return builder.Construct()
 }
