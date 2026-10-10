@@ -56,8 +56,8 @@ const (
 	toolAllowFile = "toolcheck_allow.txt"
 	// toolFlagFile holds the flagged players.
 	toolFlagFile = "toolcheck_flags.json"
-	// toolKickMessage says nothing about the check.
-	toolKickMessage = "Connection not allowed"
+	// toolKickMessage does not say which check it was.
+	toolKickMessage = "Flagged by anticheat"
 	// suspiciousRadius is the view distance, in chunks, from which a request is flagged.
 	suspiciousRadius = 64
 )
