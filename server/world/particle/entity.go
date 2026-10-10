@@ -14,6 +14,21 @@ type SnowballPoof struct{ particle }
 // EggSmash is a particle shown when an egg smashes on something.
 type EggSmash struct{ particle }
 
+// Heart is the heart particle an animal shows while in love.
+type Heart struct{ particle }
+
+// Named is a vanilla particle picked by name, for particles that have no type of their own.
+type Named struct {
+	particle
+
+	// Bedrock is the particle effect Bedrock clients are shown, such as "minecraft:endrod". Bedrock
+	// clients are shown nothing if it is empty.
+	Bedrock string
+	// Java is the particle type Java clients are shown, such as "end_rod". It must be a type
+	// without options. Java clients are shown nothing if it is empty.
+	Java string
+}
+
 // Splash is a particle that shows up when a splash potion is splashed.
 type Splash struct {
 	particle

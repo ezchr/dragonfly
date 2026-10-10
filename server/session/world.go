@@ -525,6 +525,21 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			Position:  vec64To32(pos),
 			EventData: int32(s.br.BlockRuntimeID(pa.Block)) | (int32(pa.Face) << 24),
 		})
+	case particle.Heart:
+		s.writePacket(&packet.SpawnParticleEffect{
+			EntityUniqueID: -1,
+			Position:       vec64To32(pos),
+			ParticleName:   "minecraft:heart_particle",
+		})
+	case particle.Named:
+		if pa.Bedrock == "" {
+			return
+		}
+		s.writePacket(&packet.SpawnParticleEffect{
+			EntityUniqueID: -1,
+			Position:       vec64To32(pos),
+			ParticleName:   pa.Bedrock,
+		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
 			EventType: packet.LevelEventParticlesTeleport,

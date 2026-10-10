@@ -82,6 +82,14 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		s.levelEvent(levelEventEndermanTeleport, cube.PosFromVec3(pos), 0x7f7f7f, false)
 	case particle.SnowballPoof:
 		s.simpleParticle(ptItemSnowball, pos, 8)
+	case particle.Heart:
+		s.simpleParticle(ptHeart, pos, 0)
+	case particle.Named:
+		if id, ok := s.namedParticleID(pa.Java); ok {
+			w := s.packet()
+			w.VarInt(id)
+			s.particleAt(w, false, pos, 0, 0, 0, 0, 0)
+		}
 	case particle.EggSmash:
 		w := s.particleType(ptItem)
 		w.VarInt(s.itemID(javaEggItem)) // ItemStackTemplate: item, count, empty component patch

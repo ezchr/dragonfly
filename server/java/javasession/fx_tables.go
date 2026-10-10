@@ -85,6 +85,11 @@ func init() {
 		soundByName[name[len("minecraft:"):]] = id
 		soundByName[name] = id
 	}
+	for _, m := range soundOverrides {
+		if id, ok := reg["minecraft:"+m[1]]; ok {
+			soundByName[m[0]] = id
+		}
+	}
 	for _, m := range bedrockSoundNames {
 		if _, ok := soundByName[m[0]]; !ok {
 			if id, ok := reg["minecraft:"+m[1]]; ok {
@@ -197,4 +202,13 @@ var discSongs = [...]string{
 	"13", "cat", "blocks", "chirp", "far", "mall", "mellohi", "stal", "strad", "ward", "11", "wait",
 	"otherside", "pigstep", "5", "relic", "creator", "creator_music_box", "precipice", "tears",
 	"lava_chicken",
+}
+
+// soundOverrides are Bedrock sound names mapped by hand, ahead of bedrockSoundNames (generated from
+// Geyser's mappings, which give some names the wrong event for this use): a rabbit's hurt sound is
+// entity.rabbit.hurt (Geyser's entry is the killer bunny's attack), and Gubby's idle sound is the
+// rabbit's ambient one, which the server's Java pack replaces with the Gubby sound.
+var soundOverrides = [...][2]string{
+	{"mob.rabbit.hurt", "entity.rabbit.hurt"},
+	{"mob.gubby.idle", "entity.rabbit.ambient"},
 }
