@@ -6,11 +6,18 @@ import (
 )
 
 // RequestChunkRadiusHandler handles the RequestChunkRadius packet.
-type RequestChunkRadiusHandler struct{}
+type RequestChunkRadiusHandler struct {
+	// seen: the session sent a request before. exempt: one of this machine's own services, not
+	// checked for bedrocktool (toolcheck.go).
+	seen, exempt bool
+}
 
 // Handle ...
-func (*RequestChunkRadiusHandler) Handle(p packet.Packet, s *Session, tx *world.Tx, _ Controllable) error {
+func (h *RequestChunkRadiusHandler) Handle(p packet.Packet, s *Session, tx *world.Tx, _ Controllable) error {
 	pk := p.(*packet.RequestChunkRadius)
+	if h.toolCheck(pk, s) {
+		return nil
+	}
 
 	if pk.ChunkRadius > s.maxChunkRadius {
 		pk.ChunkRadius = s.maxChunkRadius
