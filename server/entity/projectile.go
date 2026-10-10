@@ -177,6 +177,11 @@ func (lt *ProjectileBehaviour) Tick(e *Ent, tx *world.Tx) *Movement {
 		return nil
 	}
 	vel := e.Velocity()
+	if !finiteVec3(vel) || !finiteVec3(e.Position()) {
+		// A NaN or infinite position or velocity never ends the block trace below, which stalls the world.
+		_ = e.Close()
+		return nil
+	}
 	m, result := lt.tickMovement(e, tx)
 	e.data.Pos, e.data.Vel, e.data.Rot = m.pos, m.vel, m.rot
 
@@ -419,4 +424,14 @@ func (lt *ProjectileBehaviour) ignores(e *Ent) trace.EntityFilter {
 			}
 		}
 	}
+}
+
+// finiteVec3 reports whether every component of v is a finite number.
+func finiteVec3(v mgl64.Vec3) bool {
+	for _, c := range v {
+		if math.IsNaN(c) || math.IsInf(c, 0) {
+			return false
+		}
+	}
+	return true
 }
