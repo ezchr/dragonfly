@@ -577,6 +577,10 @@ func (s *Session) SendAbilities(c Controllable) {
 	if mode.AllowsInteraction() {
 		abilities |= protocol.AbilityDoorsAndSwitches | protocol.AbilityOpenContainers | protocol.AbilityAttackPlayers | protocol.AbilityAttackMobs
 	}
+	if c.Operator() {
+		// Without these the client refuses to break command and structure blocks.
+		abilities |= protocol.AbilityOperatorCommands | protocol.AbilityTeleport
+	}
 	s.writePacket(&packet.UpdateAbilities{AbilityData: protocol.AbilityData{
 		EntityUniqueID:     selfEntityRuntimeID,
 		PlayerPermissions:  playerPermissions(c),
