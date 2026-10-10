@@ -62,6 +62,7 @@ type Session struct {
 	riders       map[*world.EntityHandle][]*world.EntityHandle // vehicle -> riders (riding.go)
 	deferred     map[*world.EntityHandle]struct{}              // Bedrock players waiting for their skin (deferForSkin)
 	tracks       map[int32]*track
+	modelParts   map[int32][]int32 // entity id -> its model's part ids (entitymodel.go)
 	nextEntityID int32
 
 	chunkRadius int32
@@ -124,6 +125,7 @@ func newSession(jp *server.Player, radius int32, log *slog.Logger) *Session {
 		wake:        make(chan struct{}, 1),
 		closed:      make(chan struct{}),
 		entityIDs:   map[*world.EntityHandle]int32{},
+		modelParts:  map[int32][]int32{},
 		tracks:      map[int32]*track{},
 		vitals:      vitals{health: 20, food: 20, saturation: 5},
 	}
@@ -308,6 +310,7 @@ func (s *Session) Close(tx *world.Tx, c session.Controllable) {
 		s.cleanup()
 		s.entMu.Lock()
 		clear(s.entityIDs)
+		clear(s.modelParts)
 		s.entMu.Unlock()
 	})
 }
@@ -459,8 +462,40 @@ func (s *Session) readLoop() {
 			s.Disconnect("Internal server error")
 		}
 	}()
-	for {
-		id, body, err := s.conn.ReadPacket()
+	// Packets are read on their own goroutine and handled here, in order. Most handlers wait for
+	// the world (withPlayer), and a keep-alive answer read behind them used to wait too: /ping
+	// counted that wait (up to a tick) as network time, reading about 20 ms over Paper's for the
+	// same connection. The reader times keep-alive answers the moment they arrive instead.
+	type inPacket struct {
+		id   int32
+		body []byte
+		err  error
+	}
+	in := make(chan inPacket, 256)
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		for {
+			id, body, err := s.conn.ReadPacket()
+			if err == nil {
+				if nid := s.ver.ServerboundPlay(id); nid == v777.ServerboundPlayKeepAlive {
+					s.keepAliveAnswered(body, time.Now())
+					continue
+				}
+				body = append([]byte(nil), body...) // the connection may reuse its read buffer
+			}
+			select {
+			case in <- inPacket{id, body, err}:
+			case <-done:
+				return
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
+	for pk := range in {
+		id, body, err := pk.id, pk.body, pk.err
 		if err != nil {
 			s.log.Debug("read", "err", err)
 			return

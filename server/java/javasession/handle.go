@@ -17,20 +17,7 @@ func (s *Session) handle(id int32, body []byte) error {
 	r := wire.NewReader(body)
 	switch id {
 	case v777.ServerboundPlayKeepAlive:
-		// Only the keep-alive we are waiting for counts (ids are send times in nanoseconds).
-		if ka := r.Int64(); ka != 0 && s.keepAlive.CompareAndSwap(ka, 0) {
-			// The whole round trip, smoothed like vanilla (3/4 old, 1/4 new; the first
-			// measurement as it is).
-			sent := ka
-			if t := s.keepAliveSent.Load(); t > ka {
-				sent = t // when it left the server, not when it was queued
-			}
-			rtt := int64(min(time.Duration(time.Now().UnixNano()-sent), time.Minute))
-			if old := s.latency.Load(); old != 0 {
-				rtt = (old*3 + rtt) / 4
-			}
-			s.latency.Store(max(rtt, 1))
-		}
+		s.keepAliveAnswered(body, time.Now()) // normally timed by readLoop's reader on arrival
 	case v777.ServerboundPlayAcceptTeleportation:
 		tp := r.VarInt()
 		s.pendingTeleport.CompareAndSwap(tp, 0)
@@ -133,4 +120,24 @@ func (s *Session) move(pos *mgl64.Vec3, rot *[2]float32, flags byte) error {
 		s.log.Debug("move", "err", err)
 	}
 	return nil
+}
+
+// keepAliveAnswered times a keep-alive answer that arrived at at. Only the keep-alive we are waiting
+// for counts (ids are send times in nanoseconds). The whole round trip, smoothed like vanilla (3/4
+// old, 1/4 new; the first measurement as it is). Safe to call from any goroutine.
+func (s *Session) keepAliveAnswered(body []byte, at time.Time) {
+	r := wire.NewReader(body)
+	ka := r.Int64()
+	if ka == 0 || !s.keepAlive.CompareAndSwap(ka, 0) {
+		return
+	}
+	sent := ka
+	if t := s.keepAliveSent.Load(); t > ka {
+		sent = t // when it left the server, not when it was queued
+	}
+	rtt := int64(min(time.Duration(at.UnixNano()-sent), time.Minute))
+	if old := s.latency.Load(); old != 0 {
+		rtt = (old*3 + rtt) / 4
+	}
+	s.latency.Store(max(rtt, 1))
 }

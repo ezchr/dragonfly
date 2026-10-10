@@ -1,3 +1,5 @@
+// jbot262 is jbot speaking 26.2 (protocol 776): a copy with the v776 packet table, for servers behind
+// a proxy that does not take 26.3 yet.
 // jbot is a scripted Java Edition 26.3 test client: it logs in (offline mode), finishes
 // configuration, then walks a square at walking speed and reports what the server sends back,
 // in particular position corrections (teleports) and disconnects.
@@ -16,7 +18,7 @@ import (
 	"time"
 
 	"github.com/df-mc/dragonfly/server/java/protocol/server"
-	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	v777 "github.com/df-mc/dragonfly/server/java/protocol/v776"
 	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 )
 
@@ -55,7 +57,7 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 	defer c.Close()
 	host, port, _ := net.SplitHostPort(addr)
 	var w wire.Writer
-	w.VarInt(server.ProtocolVersion)
+	w.VarInt(776) // 26.2
 	w.String(host)
 	var p int
 	fmt.Sscan(port, &p)
@@ -109,8 +111,14 @@ func run(addr, name string, stay time.Duration, attack, still bool) error {
 			w.VarInt(1)
 			w.String("minecraft")
 			w.String("core")
-			w.String(server.GameVersion)
+			w.String("26.2")
 			c.Send(v777.ServerboundConfigurationSelectKnownPacks, w.B)
+		case v777.ClientboundConfigurationResourcePackPush:
+			// Answer the server pack offer (a Paper server waits for it): declined.
+			w.Reset()
+			w.B = append(w.B, body[:16]...) // the pack uuid
+			w.VarInt(1)                    // DECLINED
+			c.Send(v777.ServerboundConfigurationResourcePack, w.B)
 		case v777.ClientboundConfigurationKeepAlive:
 			c.Send(v777.ServerboundConfigurationKeepAlive, body)
 		case v777.ClientboundConfigurationPing:

@@ -122,6 +122,7 @@ func (s *Session) viewOtherEntity(e world.Entity) {
 	s.queue(v777.ClientboundPlayAddEntity, w)
 	s.setTrack(id, pos, rot)
 	s.viewEntityMeta(e, id)
+	s.viewModel(e, id, pos, rot)
 	s.noteRiding(e)
 }
 

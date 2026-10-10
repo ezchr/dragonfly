@@ -34,8 +34,11 @@ func Components(it world.CustomItem) map[string]any {
 		case item.BootsType:
 			slot = "slot.armor.feet"
 		}
+		// The armour bar takes its points from the wearable's protection (minecraft:armor alone
+		// left it empty in current clients); Geyser sends it the same way.
 		builder.AddComponent("minecraft:wearable", map[string]any{
-			"slot": slot,
+			"slot":       slot,
+			"protection": int32(x.DefencePoints()),
 		})
 	}
 	if x, ok := it.(item.Consumable); ok {

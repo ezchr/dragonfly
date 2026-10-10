@@ -115,6 +115,7 @@ func (s *Session) HideEntity(e world.Entity) {
 	if !ok {
 		return
 	}
+	s.hideModel(id)
 	w := s.packet()
 	w.VarInt(1)
 	w.VarInt(id)
@@ -171,6 +172,12 @@ func (s *Session) positionSync(e world.Entity, pos mgl64.Vec3, rot cube.Rotation
 	if !ok {
 		return
 	}
+	s.syncEntity(id, pos, rot, onGround)
+	s.moveModel(id, pos, rot, onGround) // the parts of its model, if it has one (entitymodel.go)
+}
+
+// syncEntity is positionSync for the entity the client knows by id.
+func (s *Session) syncEntity(id int32, pos mgl64.Vec3, rot cube.Rotation, onGround bool) {
 	yaw, pitch := angleByte(rot.Yaw()), angleByte(rot.Pitch())
 	s.entMu.Lock()
 	t := s.tracks[id]

@@ -159,6 +159,8 @@ func javaStack(ds item.Stack, js *jitem.Stack) {
 		dyedColour(v.Tier, js)
 	}
 
+	headProfile(ds, js) // a player head's skin (heads_java.go)
+
 	mc := int32(64)
 	if c, ok := it.(item.MaxCounter); ok {
 		mc = int32(c.MaxCount())
