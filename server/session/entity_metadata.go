@@ -149,6 +149,9 @@ func (s *Session) addSpecificMetadata(e any, m protocol.EntityMetadata) {
 	if d, ok := e.(serverAuthDismount); ok && d.ServerAuthOnlyDismount() {
 		m.SetFlag(protocol.EntityDataKeyFlagsTwo, protocol.EntityDataFlagDoesServerAuthOnlyDismount&63)
 	}
+	if a, ok := e.(interface{ Angry() bool }); ok && a.Angry() {
+		m.SetFlag(protocol.EntityDataKeyFlags, protocol.EntityDataFlagAngry)
+	}
 	if t, ok := e.(interactTexter); ok {
 		m[protocol.EntityDataKeyInteractText] = t.InteractText()
 	}

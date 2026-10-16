@@ -201,6 +201,16 @@ func (e *Ent) SetAlwaysShowNameTag(alwaysShow bool) {
 }
 
 // updateState updates the state of the entity for all viewers of the entity.
+// Angry reports whether the entity is after a target, if its behaviour says (a mob attacking):
+// viewers show the angry pose (a vindicator raising its axe).
+func (e *Ent) Angry() bool {
+	a, ok := e.Behaviour().(interface{ Angry() bool })
+	return ok && a.Angry()
+}
+
+// RefreshState shows the entity's state again to its viewers, after its behaviour changed it.
+func (e *Ent) RefreshState() { e.updateState() }
+
 func (e *Ent) updateState() {
 	for _, v := range e.tx.Viewers(e.data.Pos) {
 		v.ViewEntityState(e)
