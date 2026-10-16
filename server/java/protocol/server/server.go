@@ -494,7 +494,7 @@ func forwardedLocal(addr string) bool {
 }
 
 // configure runs the configuration phase and returns what the client said about itself. A local
-// client (see forwardedLocal) may report the previous version's core pack: a translator in front of it
+// client (see forwardedLocal) may report no or an older core pack: a translator in front of it
 // maps the rest.
 func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (ClientInfo, error) {
 	var info ClientInfo
