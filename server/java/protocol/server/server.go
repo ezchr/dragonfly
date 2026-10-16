@@ -311,7 +311,7 @@ func (l *Listener) negotiate(c *wire.Conn, ip string, deadline time.Time) (*Play
 	if err != nil {
 		return nil, err
 	}
-	info, err := l.configure(c, ver)
+	info, err := l.configure(c, ver, forwardedLocal(fwdIP))
 	if err != nil {
 		return nil, err
 	}
@@ -482,8 +482,21 @@ func writeProfile(w *wire.Writer, p Profile) {
 	}
 }
 
-// configure runs the configuration phase and returns what the client said about itself.
-func (l *Listener) configure(c *wire.Conn, ver *version.Version) (ClientInfo, error) {
+// forwardedLocal reports whether a forwarded client address is this machine (bots on the server
+// itself, which come in through a local protocol translator).
+func forwardedLocal(addr string) bool {
+	host := addr
+	if h, _, err := net.SplitHostPort(addr); err == nil {
+		host = h
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+// configure runs the configuration phase and returns what the client said about itself. A local
+// client (see forwardedLocal) may report the previous version's core pack: a translator in front of it
+// maps the rest.
+func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (ClientInfo, error) {
 	var info ClientInfo
 	var w wire.Writer
 	w.String("minecraft:brand")
@@ -528,18 +541,20 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version) (ClientInfo, er
 				return info, fmt.Errorf("select_known_packs: %d packs", n)
 			}
 			core := false
+			var seen []string
 			for j := 0; j < n && r.Err == nil; j++ {
 				ns, pid, pv := r.String(32767), r.String(32767), r.String(32767)
-				if ns == "minecraft" && pid == "core" && pv == ver.Name {
+				seen = append(seen, ns+":"+pid+"@"+pv)
+				if ns == "minecraft" && pid == "core" && (pv == ver.Name || local) {
 					core = true
 				}
 			}
 			if r.Err != nil {
 				return info, fmt.Errorf("select_known_packs: %w", r.Err)
 			}
-			if !core {
+			if !core && !local {
 				disconnect(c, ver.ClientboundConfig(v777.ClientboundConfigurationDisconnect), "Your client doesn't have the vanilla "+ver.Name+" data.")
-				return info, errors.New("client lacks the vanilla core pack")
+				return info, fmt.Errorf("client lacks the vanilla core pack (local=%v, packs %v)", local, seen)
 			}
 			for ; i < len(pk); i++ {
 				c.WritePacket(pk[i].ID, pk[i].Body)
