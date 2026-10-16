@@ -57,8 +57,10 @@ type Session struct {
 	spawned     atomic.Bool
 
 	// Java entity ids of the entities this client sees (it is selfEntityID itself).
-	entMu        sync.Mutex
-	entityIDs    map[*world.EntityHandle]int32
+	entMu     sync.Mutex
+	entityIDs map[*world.EntityHandle]int32
+	// named is the name tag last sent for each non-player entity, under entMu.
+	named        map[int32]string
 	riders       map[*world.EntityHandle][]*world.EntityHandle // vehicle -> riders (riding.go)
 	deferred     map[*world.EntityHandle]struct{}              // Bedrock players waiting for their skin (deferForSkin)
 	tracks       map[int32]*track

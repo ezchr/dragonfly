@@ -175,6 +175,7 @@ func (s *Session) ViewEntityState(e world.Entity) {
 		s.viewTextDisplay(e, id, false)
 		return
 	}
+	s.viewCustomName(e, id)
 	st, ok := e.(stateful)
 	if !ok {
 		return

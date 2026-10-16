@@ -116,6 +116,7 @@ func (s *Session) HideEntity(e world.Entity) {
 		return
 	}
 	s.hideModel(id)
+	s.forgetCustomName(id)
 	w := s.packet()
 	w.VarInt(1)
 	w.VarInt(id)
