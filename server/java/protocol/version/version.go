@@ -33,6 +33,7 @@ type Version struct {
 	builtin          map[string][]int32
 	synced           map[string][]int32
 	configuration    func() []Packet
+	fullRegistries   func() [][]byte
 	registries       map[string][]string
 	builtinIDs       map[string]map[string]int32
 }
@@ -40,9 +41,10 @@ type Version struct {
 // Newest is the protocol the server is written against.
 var Newest = &Version{
 	Protocol: 777, Name: "26.3", BlockStates: 35723, Biomes: len(v777.Registries["minecraft:worldgen/biome"]),
-	native:     true,
-	registries: v777.Registries,
-	builtinIDs: v777.Builtin,
+	native:         true,
+	registries:     v777.Registries,
+	builtinIDs:     v777.Builtin,
+	fullRegistries: v777.FullRegistryData,
 	configuration: func() []Packet {
 		var out []Packet
 		for _, p := range v777.VanillaConfiguration() {
@@ -58,9 +60,10 @@ var V776 = &Version{
 	cbConfig: v776.ClientboundConfiguration(), cbPlay: v776.ClientboundPlay(),
 	sbConfig: v776.ServerboundConfiguration(), sbPlay: v776.ServerboundPlay(),
 	blocks: v776.BlockStates(), builtin: v776.BuiltinRemap(),
-	synced:     syncedRemap(v777.Registries, v776.Registries),
-	registries: v776.Registries,
-	builtinIDs: v776.Builtin,
+	synced:         syncedRemap(v777.Registries, v776.Registries),
+	registries:     v776.Registries,
+	builtinIDs:     v776.Builtin,
+	fullRegistries: v776.FullRegistryData,
 	configuration: func() []Packet {
 		var out []Packet
 		for _, p := range v776.VanillaConfiguration() {
@@ -89,6 +92,10 @@ func (v *Version) Native() bool { return v.native }
 // Configuration is the vanilla configuration packets for this version (see v777.VanillaConfiguration),
 // with this version's ids.
 func (v *Version) Configuration() []Packet { return v.configuration() }
+
+// FullRegistryData is the bodies of the configuration's registry_data packets with every entry's
+// data, for clients without the vanilla core pack (such as older clients behind ViaBackwards).
+func (v *Version) FullRegistryData() [][]byte { return v.fullRegistries() }
 
 func lookup(t []int32, id int32) int32 {
 	if id < 0 || int(id) >= len(t) {

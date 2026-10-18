@@ -3,8 +3,8 @@
 //
 // Configuration sends vanilla's own registry, tag and feature packets (generated per version in
 // java/v777 from a vanilla join), so the client sees exactly the registries a vanilla server
-// would send. The client must already have vanilla's core data pack (every vanilla client does);
-// registry entries are then sent by name only.
+// would send. Registry entries go by name only to clients with vanilla's core data pack (every
+// vanilla client); others get each entry's data too.
 package server
 
 import (
@@ -315,7 +315,12 @@ func (l *Listener) negotiate(c *wire.Conn, ip string, deadline time.Time) (*Play
 	if err != nil {
 		return nil, err
 	}
-	info, err := l.configure(c, ver, forwardedLocal(fwdIP))
+	local := forwardedLocal(fwdIP)
+	if len(l.cfg.VelocitySecret) == 0 {
+		// No proxy in front: the connection itself is the client.
+		local = forwardedLocal(c.NetConn().RemoteAddr().String())
+	}
+	info, err := l.configure(c, ver, local)
 	if err != nil {
 		return nil, err
 	}
@@ -548,10 +553,8 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (Cl
 				return info, fmt.Errorf("select_known_packs: %d packs", n)
 			}
 			core := false
-			var seen []string
 			for j := 0; j < n && r.Err == nil; j++ {
 				ns, pid, pv := r.String(32767), r.String(32767), r.String(32767)
-				seen = append(seen, ns+":"+pid+"@"+pv)
 				if ns == "minecraft" && pid == "core" && (pv == ver.Name || local) {
 					core = true
 				}
@@ -559,14 +562,25 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (Cl
 			if r.Err != nil {
 				return info, fmt.Errorf("select_known_packs: %w", r.Err)
 			}
+			// Without the core pack the client can't fill in the entries we send by name only, so it
+			// gets vanilla's registries with their data, as vanilla does.
+			var full [][]byte
 			if !core && !local {
-				disconnect(c, ver.ClientboundConfig(v777.ClientboundConfigurationDisconnect), "Your client doesn't have the vanilla "+ver.Name+" data.")
-				return info, fmt.Errorf("client lacks the vanilla core pack (local=%v, packs %v)", local, seen)
+				full = ver.FullRegistryData()
 			}
-			for ; i < len(pk); i++ {
-				c.WritePacket(pk[i].ID, pk[i].Body)
+			for k := 0; i < len(pk); i++ {
+				body := pk[i].Body
+				if full != nil && pk[i].ID == registryData {
+					body = full[k]
+					k++
+				}
+				c.WritePacket(pk[i].ID, body)
 			}
 			for _, rp := range l.packs() {
+				if full != nil {
+					// An older client behind a translator: our packs are for this version only.
+					break
+				}
 				pending[rp.id()] = rp
 				c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationResourcePackPush), rp.push())
 			}
