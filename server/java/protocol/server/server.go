@@ -18,6 +18,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -80,6 +81,9 @@ type Config struct {
 	// ResourcePack, when set, is offered to every client during configuration (as Paper's
 	// resource-pack setting is).
 	ResourcePack *ResourcePack
+	// ExtraResourcePacks are offered after ResourcePack, each with its own id (Java keeps them all
+	// loaded, the later ones on top).
+	ExtraResourcePacks []*ResourcePack
 	// SessionServer is the session server's base URL (DefaultSessionServer if empty).
 	SessionServer string
 	// PreventProxyConnections also sends the client's IP to the session server, which then
@@ -514,6 +518,9 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (Cl
 		return info, err
 	}
 	sentRegistries := false
+	pending := map[[16]byte]*ResourcePack{}
+	stopKeepAlive := func() {}
+	defer func() { stopKeepAlive() }()
 	for {
 		id, body, err := c.ReadPacket()
 		if err != nil {
@@ -559,21 +566,52 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (Cl
 			for ; i < len(pk); i++ {
 				c.WritePacket(pk[i].ID, pk[i].Body)
 			}
-			if rp := l.cfg.ResourcePack; rp != nil {
+			for _, rp := range l.packs() {
+				pending[rp.id()] = rp
 				c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationResourcePackPush), rp.push())
 			}
-			c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationFinishConfiguration), nil)
+			if len(pending) == 0 {
+				c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationFinishConfiguration), nil)
+			} else {
+				// Like Paper, finish only once the client has answered every pack: an answer that
+				// arrives in play leaves the pack outstanding in a proxy in front, and the next
+				// server offering the same pack then never gets an answer (the player hangs on
+				// "Reconfiguring"). The prompt may stay open a while, so it gets its own deadline.
+				c.NetConn().SetDeadline(time.Now().Add(packAnswerTimeout))
+				stopKeepAlive = keepConfigAlive(c, ver)
+			}
 			if err := c.Flush(); err != nil {
 				return info, err
 			}
 			sentRegistries = true
+		case v777.ServerboundConfigurationResourcePack:
+			id, status := r.UUID(), r.VarInt()
+			if r.Err != nil {
+				return info, fmt.Errorf("resource_pack: %w", r.Err)
+			}
+			rp, ok := pending[id]
+			if !ok || !packAnswered(status) {
+				break
+			}
+			if rp.Required && status != packLoaded {
+				disconnect(c, ver.ClientboundConfig(v777.ClientboundConfigurationDisconnect), "This server needs its resource pack.")
+				return info, fmt.Errorf("required resource pack refused (status %d)", status)
+			}
+			delete(pending, id)
+			if len(pending) == 0 {
+				stopKeepAlive()
+				c.NetConn().SetDeadline(time.Now().Add(15 * time.Second))
+				if err := c.Send(ver.ClientboundConfig(v777.ClientboundConfigurationFinishConfiguration), nil); err != nil {
+					return info, err
+				}
+			}
 		case v777.ServerboundConfigurationFinishConfiguration:
 			if !sentRegistries {
 				return info, errors.New("client finished configuration early")
 			}
 			return info, nil
 		case v777.ServerboundConfigurationCustomPayload, v777.ServerboundConfigurationKeepAlive,
-			v777.ServerboundConfigurationPong, v777.ServerboundConfigurationResourcePack:
+			v777.ServerboundConfigurationPong:
 			// Brand and plugin channels: nothing to do yet.
 		default:
 			return info, fmt.Errorf("configuration: unexpected packet %#x", id)
@@ -637,6 +675,48 @@ type ResourcePack struct {
 	Prompt   string // shown on the download screen; "" for none
 }
 
+// packAnswerTimeout bounds how long configuration waits for the answers to its resource packs
+// (the player may be reading the download prompt).
+const packAnswerTimeout = 3 * time.Minute
+
+// Resource pack statuses the client sends; all but accepted (3) and downloaded (4) are final.
+const packLoaded = 0
+
+func packAnswered(status int32) bool { return status != 3 && status != 4 }
+
+// packs returns the packs offered during configuration, in order.
+func (l *Listener) packs() []*ResourcePack {
+	var out []*ResourcePack
+	if l.cfg.ResourcePack != nil {
+		out = append(out, l.cfg.ResourcePack)
+	}
+	return append(out, l.cfg.ExtraResourcePacks...)
+}
+
+// keepConfigAlive sends configuration keep-alives every 10 s until stop is called, so the client
+// does not time out while it waits on the pack prompt.
+func keepConfigAlive(c *wire.Conn, ver *version.Version) (stop func()) {
+	done := make(chan struct{})
+	go func() {
+		t := time.NewTicker(10 * time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-t.C:
+				var w wire.Writer
+				w.Int64(time.Now().UnixMilli())
+				if c.Send(ver.ClientboundConfig(v777.ClientboundConfigurationKeepAlive), w.B) != nil {
+					return
+				}
+			}
+		}
+	}()
+	var once sync.Once
+	return func() { once.Do(func() { close(done) }) }
+}
+
 // PackID is the pack id Paper uses for a URL with no resource-pack-id: UUID.nameUUIDFromBytes(url).
 func PackID(url string) [16]byte {
 	u := md5.Sum([]byte(url))
@@ -645,13 +725,17 @@ func PackID(url string) [16]byte {
 	return u
 }
 
-func (rp *ResourcePack) push() []byte {
-	id := rp.ID
-	if id == ([16]byte{}) {
-		id = PackID(rp.URL)
+// id is the pack id sent to the client.
+func (rp *ResourcePack) id() [16]byte {
+	if rp.ID == ([16]byte{}) {
+		return PackID(rp.URL)
 	}
+	return rp.ID
+}
+
+func (rp *ResourcePack) push() []byte {
 	var w wire.Writer
-	w.UUID(id)
+	w.UUID(rp.id())
 	w.String(rp.URL)
 	w.String(rp.SHA1)
 	w.Bool(rp.Required)
