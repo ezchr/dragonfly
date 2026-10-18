@@ -3,6 +3,7 @@ package session
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
@@ -34,6 +35,7 @@ type TradeOffer struct {
 }
 
 type tradeState struct {
+	opened    time.Time
 	traderRID uint64
 	traderID  int64
 	name      string
@@ -78,6 +80,7 @@ func (s *Session) OpenTrade(tx *world.Tx, trader world.Entity, name string, offe
 	s.openedContainerID.Store(uint32(protocol.ContainerTypeTrade))
 	rid := s.entityRuntimeID(trader)
 	st := &tradeState{
+		opened:    time.Now(),
 		traderRID: rid,
 		traderID:  int64(rid),
 		name:      name,

@@ -1297,6 +1297,12 @@ func (s *Session) ViewEntityAnimation(e world.Entity, a world.EntityAnimation) {
 
 // OpenBlockContainer ...
 func (s *Session) OpenBlockContainer(pos cube.Pos, tx *world.Tx) {
+	// One click on a trader can also use the block behind it. Opening that block would end the
+	// trade server-side while the client keeps the trading window, after which the two disagree
+	// about the open window and no container opens again.
+	if t := s.trade.Load(); t != nil && time.Since(t.opened) < time.Second {
+		return
+	}
 	if s.containerOpened.Load() && *s.openedPos.Load() == pos {
 		return
 	}
