@@ -149,7 +149,7 @@ func (s *Session) sendBlobHashes(pos world.ChunkPos, dim world.Dimension, c *chu
 				Dimension:     s.dimensionID(dim),
 				SubChunkCount: 0,
 				Position:      protocol.ChunkPos(pos),
-				SubChunkLimit: protocol.Option(int32(c.HighestFilledSubChunk())),
+				SubChunkLimit: protocol.Option(s.subChunkLimit(pos, c)),
 				BlobHashes:    []uint64{hash},
 				RawPayload:    []byte{0},
 				CacheEnabled:  true,
@@ -210,7 +210,7 @@ func (s *Session) sendNetworkChunk(pos world.ChunkPos, dim world.Dimension, c *c
 			Dimension:     s.dimensionID(dim),
 			SubChunkCount: 0,
 			Position:      protocol.ChunkPos(pos),
-			SubChunkLimit: protocol.Option(int32(c.HighestFilledSubChunk())),
+			SubChunkLimit: protocol.Option(s.subChunkLimit(pos, c)),
 			RawPayload:    append(chunk.EncodeBiomes(c, chunk.NetworkEncoding), 0),
 		})
 		return
@@ -255,4 +255,23 @@ func (s *Session) trackBlob(hash uint64, blob []byte) bool {
 	s.blobs[hash] = blob
 	s.blobMu.Unlock()
 	return true
+}
+
+// subChunkLimit is how many sub-chunks of the chunk at pos the client is told
+// to ask for: up to its highest filled one, but never fewer than it was told
+// before. Clients only ask for sub-chunks up to the limit and keep what they
+// had above it, so a chunk emptied from the top (a structure pasted and then
+// undone) would otherwise keep its old blocks floating on the client.
+func (s *Session) subChunkLimit(pos world.ChunkPos, c *chunk.Chunk) int32 {
+	n := int32(c.HighestFilledSubChunk())
+	s.blobMu.Lock()
+	defer s.blobMu.Unlock()
+	if s.subLimits == nil {
+		s.subLimits = make(map[world.ChunkPos]int32)
+	}
+	if prev := s.subLimits[pos]; prev > n {
+		n = prev
+	}
+	s.subLimits[pos] = n
+	return n
 }

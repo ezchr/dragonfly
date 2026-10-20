@@ -91,6 +91,9 @@ type Session struct {
 	blobMu                sync.Mutex
 	blobs                 map[uint64][]byte
 	openChunkTransactions []map[uint64]struct{}
+	// subLimits is how many sub-chunks of each chunk the client was told to
+	// ask for; see subChunkLimit.
+	subLimits map[world.ChunkPos]int32
 	invOpened             bool
 
 	hudMu      sync.RWMutex
