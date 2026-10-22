@@ -8,6 +8,7 @@
 package server
 
 import (
+	"strings"
 	"context"
 	"crypto/md5"
 	"crypto/rand"
@@ -555,8 +556,14 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (Cl
 			core := false
 			for j := 0; j < n && r.Err == nil; j++ {
 				ns, pid, pv := r.String(32767), r.String(32767), r.String(32767)
-				if ns == "minecraft" && pid == "core" && (pv == ver.Name || local) {
+				// The release or one of its patches (26.2, 26.2.1): the same protocol has the same
+				// registries. An exact match left a patched client (Lunar on 26.2) without any of
+				// our resource packs.
+				if ns == "minecraft" && pid == "core" && (pv == ver.Name || strings.HasPrefix(pv, ver.Name+".") || local) {
 					core = true
+				}
+				if ns == "minecraft" && pid == "core" && l.cfg.Log != nil {
+					l.cfg.Log.Info("java known core pack", "client", pv, "server", ver.Name)
 				}
 			}
 			if r.Err != nil {
@@ -604,6 +611,11 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (Cl
 				return info, fmt.Errorf("resource_pack: %w", r.Err)
 			}
 			rp, ok := pending[id]
+			if ok && l.cfg.Log != nil {
+				// 0 loaded, 1 declined, 2 download failed, 3 accepted, 4 downloaded, 5 bad URL,
+				// 6 reload failed, 7 discarded.
+				l.cfg.Log.Info("java resource pack answer", "url", rp.URL, "status", status)
+			}
 			if !ok || !packAnswered(status) {
 				break
 			}
