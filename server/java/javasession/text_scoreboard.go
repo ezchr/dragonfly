@@ -2,6 +2,7 @@ package javasession
 
 import (
 	"encoding/hex"
+	"strconv"
 	"strings"
 
 	"github.com/df-mc/dragonfly/server/java/protocol/text"
@@ -64,12 +65,18 @@ func (s *Session) SendScoreboard(sb *scoreboard.Scoreboard) {
 	// descending board, the last line: Lines() is already reversed and Bedrock sorts descending).
 	desc := sb.Descending()
 	n := len(lines)
+	shown := make([]int32, n)
 	for i, line := range lines {
 		score := int32(len(lineOwners) - i)
 		if desc {
 			score = int32(i + 1)
 		}
-		if i < len(ts.sbLines) && ts.sbLines[i] == line && desc == ts.sbDesc {
+		v, own := sb.Score(i)
+		shown[i] = -1
+		if own {
+			score, shown[i] = int32(v), int32(v)
+		}
+		if i < len(ts.sbLines) && ts.sbLines[i] == line && desc == ts.sbDesc && i < len(ts.sbScores) && ts.sbScores[i] == shown[i] {
 			continue
 		}
 		w := s.packet()
@@ -78,7 +85,15 @@ func (s *Session) SendScoreboard(sb *scoreboard.Scoreboard) {
 		w.VarInt(score)
 		w.Bool(true)
 		writeText(w, line)
-		w.Bool(false) // the objective's number format
+		if own {
+			// A line with its own number (Scoreboard.SetScore) shows it, red as the game draws
+			// scores; the objective's blank format hides the numbers of the rest.
+			w.Bool(true)
+			w.VarInt(2) // fixed
+			writeText(w, "§c"+strconv.Itoa(v))
+		} else {
+			w.Bool(false) // the objective's number format
+		}
 		s.queue(v777.ClientboundPlaySetScore, w)
 	}
 	for i := n; i < len(ts.sbLines); i++ {
@@ -88,7 +103,7 @@ func (s *Session) SendScoreboard(sb *scoreboard.Scoreboard) {
 		w.String(sidebarObjective)
 		s.queue(v777.ClientboundPlayResetScore, w)
 	}
-	ts.sbLines, ts.sbDesc = append(ts.sbLines[:0], lines...), desc
+	ts.sbLines, ts.sbDesc, ts.sbScores = append(ts.sbLines[:0], lines...), desc, shown
 }
 
 // writeObjectiveInfo writes the add/update part of set_objective: title, integer render type and

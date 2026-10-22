@@ -15,6 +15,8 @@ type Scoreboard struct {
 	lines      []string
 	padding    bool
 	descending bool
+	// scores are the numbers shown beside lines that have one set (SetScore), by line index.
+	scores map[int]int
 }
 
 // New returns a new scoreboard with the display name passed. Once returned, lines may be added to the
@@ -91,6 +93,25 @@ func (board *Scoreboard) Lines() []string {
 		slices.Reverse(lines)
 	}
 	return lines
+}
+
+// SetScore shows score as the number beside line index, instead of its place on the board.
+// Clients sort the lines by it.
+func (board *Scoreboard) SetScore(index, score int) {
+	if board.scores == nil {
+		board.scores = map[int]int{}
+	}
+	board.scores[index] = score
+}
+
+// Score returns the score set for the i-th line of Lines(), if one was.
+func (board *Scoreboard) Score(i int) (int, bool) {
+	index := i
+	if board.descending {
+		index = len(board.lines) - 1 - i
+	}
+	v, ok := board.scores[index]
+	return v, ok
 }
 
 // Descending returns whether the scoreboard is sorted in descending order.

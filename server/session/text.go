@@ -113,10 +113,14 @@ func (s *Session) SendScoreboard(sb *scoreboard.Scoreboard) {
 		if len(line) == 0 {
 			line = "§" + colours[k]
 		}
+		score := int32(k)
+		if v, ok := sb.Score(k); ok {
+			score = int32(v)
+		}
 		pk.Entries = append(pk.Entries, protocol.ScoreboardEntry{
 			EntryID:       int64(k),
 			ObjectiveName: sb.Name(),
-			Score:         int32(k),
+			Score:         score,
 			IdentityType:  protocol.ScoreboardIdentityFakePlayer,
 			DisplayName:   line,
 		})

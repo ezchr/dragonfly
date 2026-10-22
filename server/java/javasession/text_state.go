@@ -23,6 +23,9 @@ type textState struct {
 	sbName  string
 	sbLines []string
 	sbDesc  bool
+	// sbScores are the numbers shown beside the lines (-1: none), to resend a line whose number
+	// changed though its text did not.
+	sbScores []int32
 
 	// Boss bar.
 	bossShown  bool
