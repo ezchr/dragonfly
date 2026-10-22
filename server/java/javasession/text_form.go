@@ -5,6 +5,8 @@ import (
 	"errors"
 	"math"
 	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/df-mc/dragonfly/server/java/protocol/text"
 	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
@@ -56,7 +58,41 @@ type formElement struct {
 	Step        float64  `json:"step"`
 	Options     []string `json:"options"`
 	Steps       []string `json:"steps"`
+	Image       *struct {
+		Type string `json:"type"`
+		Data string `json:"data"`
+	} `json:"image"`
 }
+
+// Form button pictures for Java: a dialog cannot show a Bedrock texture, but its body can show an
+// item, so a server may name the item model that stands for a button image (RegisterFormIcon).
+var (
+	formIconsMu sync.RWMutex
+	formIcons   = map[string]string{}
+)
+
+// RegisterFormIcon draws a menu form button whose image is the Bedrock texture path (as given to
+// form.NewButton) as the item model itemModel ("namespace:path") in Java dialogs: the dialog's
+// body lists each such button's item beside the button's full text, and the button itself shows
+// only the text's first line.
+func RegisterFormIcon(path, itemModel string) {
+	formIconsMu.Lock()
+	defer formIconsMu.Unlock()
+	formIcons[path] = itemModel
+}
+
+func formIcon(e formElement) (string, bool) {
+	if e.Image == nil || e.Image.Data == "" {
+		return "", false
+	}
+	formIconsMu.RLock()
+	defer formIconsMu.RUnlock()
+	m, ok := formIcons[e.Image.Data]
+	return m, ok
+}
+
+// iconEntry is a body item of a dialog: an item model with a text beside it.
+type iconEntry struct{ model, text string }
 
 // SendForm shows a form as a dialog.
 func (s *Session) SendForm(f form.Form) {
@@ -96,6 +132,7 @@ func (s *Session) SendForm(f form.Form) {
 	text.StringTag(w, "after_action", "close")
 
 	var body []string
+	var icons []iconEntry
 	var buttons []string
 	var inputs []formElement
 	switch bf.Type {
@@ -106,6 +143,12 @@ func (s *Session) SendForm(f form.Form) {
 		for _, e := range bf.Elements {
 			switch e.Type {
 			case "button":
+				if m, ok := formIcon(e); ok {
+					icons = append(icons, iconEntry{model: m, text: e.Text})
+					first, _, _ := strings.Cut(e.Text, "\n")
+					buttons = append(buttons, first)
+					continue
+				}
 				buttons = append(buttons, e.Text)
 			case "label", "header":
 				body = appendBody(body, e.Text)
@@ -124,7 +167,7 @@ func (s *Session) SendForm(f form.Form) {
 			}
 		}
 	}
-	writeBody(w, body)
+	writeBody(w, body, icons)
 	if bf.Type == "custom_form" {
 		writeInputs(w, inputs)
 		text.ListStart(w, "actions", text.TagCompound, 1)
@@ -168,17 +211,43 @@ func appendBody(body []string, t string) []string {
 	return append(body, t)
 }
 
-// writeBody writes the dialog body: one plain_message per text.
-func writeBody(w *wire.Writer, body []string) {
-	if len(body) == 0 {
+// writeBody writes the dialog body: one plain_message per text, then per button icon the
+// button's text and its item under it.
+func writeBody(w *wire.Writer, body []string, icons []iconEntry) {
+	if len(body)+len(icons) == 0 {
 		return
 	}
-	text.ListStart(w, "body", text.TagCompound, len(body))
+	text.ListStart(w, "body", text.TagCompound, len(body)+2*len(icons))
 	for _, b := range body {
 		text.StringTag(w, "type", "minecraft:plain_message")
 		c := bedrockText(b)
 		text.ComponentTag(w, "contents", &c)
 		text.IntTag(w, "width", 300)
+		w.Byte(text.TagEnd)
+	}
+	for _, ic := range icons {
+		// The button's text, then its item on a line of its own under it, centred (an item with a
+		// description beside it is laid out off to the side). Dialogs draw the item at slot size in
+		// the middle of its box (centred as the box is, so the box is item-wide): a model that
+		// should look big draws itself bigger (its gui display, oversized_in_gui) and the box's
+		// height leaves room for it.
+		text.StringTag(w, "type", "minecraft:plain_message")
+		c := bedrockText(ic.text)
+		text.ComponentTag(w, "contents", &c)
+		text.IntTag(w, "width", 300)
+		w.Byte(text.TagEnd)
+		text.StringTag(w, "type", "minecraft:item")
+		text.Key(w, text.TagCompound, "item")
+		text.StringTag(w, "id", "minecraft:paper")
+		text.IntTag(w, "count", 1)
+		text.Key(w, text.TagCompound, "components")
+		text.StringTag(w, "minecraft:item_model", ic.model)
+		w.Byte(text.TagEnd)
+		w.Byte(text.TagEnd)
+		text.BoolTag(w, "show_decorations", false)
+		text.BoolTag(w, "show_tooltip", false)
+		text.IntTag(w, "width", 16)
+		text.IntTag(w, "height", 52)
 		w.Byte(text.TagEnd)
 	}
 }
@@ -314,7 +383,7 @@ func (s *Session) SendDialogue(d dialogue.Dialogue, _ world.Entity) {
 	title := bedrockText(d.Title())
 	text.ComponentTag(w, "title", &title)
 	text.BoolTag(w, "pause", false)
-	writeBody(w, appendBody(nil, d.Body()))
+	writeBody(w, appendBody(nil, d.Body()), nil)
 	buttons := d.Buttons()
 	if len(buttons) == 0 {
 		text.ListStart(w, "actions", text.TagCompound, 1)
