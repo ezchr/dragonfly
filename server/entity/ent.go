@@ -133,6 +133,19 @@ func (e *Ent) Invisible() bool {
 	return false
 }
 
+// scaledBehaviour is a Behaviour drawn at another size than usual.
+type scaledBehaviour interface {
+	Scale() float64
+}
+
+// Scale is how big the entity is drawn: its Behaviour's Scale if it has one, 1 otherwise.
+func (e *Ent) Scale() float64 {
+	if s, ok := e.Behaviour().(scaledBehaviour); ok {
+		return s.Scale()
+	}
+	return 1
+}
+
 // Teleport teleports the entity to the position given.
 func (e *Ent) Teleport(pos mgl64.Vec3) {
 	viewers := e.tx.Viewers(e.data.Pos)

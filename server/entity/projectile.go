@@ -86,6 +86,8 @@ type ProjectileBehaviourConfig struct {
 	// passes through PiercingLevel entities and damages PiercingLevel+1 in
 	// total. A value of 0 means no piercing.
 	PiercingLevel int
+	// Scale is how big the projectile is drawn: 1 (or 0) for its usual size.
+	Scale float64
 }
 
 func (conf ProjectileBehaviourConfig) Apply(data *world.EntityData) {
@@ -143,6 +145,14 @@ func (lt *ProjectileBehaviour) Explode(e *Ent, src world.ExplosionSource, impact
 // projectile.
 func (lt *ProjectileBehaviour) Potion() potion.Potion {
 	return lt.conf.Potion
+}
+
+// Scale returns how big the projectile is drawn (ProjectileBehaviourConfig.Scale, 1 if unset).
+func (lt *ProjectileBehaviour) Scale() float64 {
+	if lt.conf.Scale > 0 {
+		return lt.conf.Scale
+	}
+	return 1
 }
 
 // Critical returns true if ProjectileBehaviourConfig.Critical was set to true

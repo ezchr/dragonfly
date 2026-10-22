@@ -69,6 +69,7 @@ const (
 	dataDisplayTransformDur = 9
 	dataDisplayPosRotDur    = 10
 	dataDisplayTranslation  = 11
+	dataDisplayScale        = 12
 	dataDisplayLeftRotation = 13
 	dataItemDisplayItem     = 23
 	dataTypeItemStack       = 7
@@ -130,6 +131,15 @@ func (s *Session) viewModel(e world.Entity, id int32, pos mgl64.Vec3, rot cube.R
 		w.Float32(float32(p.Offset[0]))
 		w.Float32(float32(p.Offset[1]))
 		w.Float32(float32(p.Offset[2]))
+		if sc, ok := e.(interface{ Scale() float64 }); ok && sc.Scale() != 1 {
+			// An entity drawn at another size (a projectile's Scale): every part with it.
+			f := float32(sc.Scale())
+			w.Byte(dataDisplayScale)
+			w.VarInt(dataTypeVector3)
+			w.Float32(f)
+			w.Float32(f)
+			w.Float32(f)
+		}
 		w.Byte(dataDisplayLeftRotation)
 		w.VarInt(dataTypeQuaternion)
 		w.Float32(float32(q[0]))
