@@ -69,6 +69,12 @@ func (s *Session) ViewEntity(e world.Entity) {
 	if e.H() == s.ent {
 		return
 	}
+	s.entMu.Lock()
+	hidden := s.hiddenEnts[e.H()]
+	s.entMu.Unlock()
+	if hidden {
+		return
+	}
 	p, ok := e.(*player.Player)
 	if !ok {
 		s.viewOtherEntity(e)
@@ -100,7 +106,36 @@ func (s *Session) ViewEntity(e world.Entity) {
 	s.setTrack(id, pos, rot)
 	s.viewPlayerNameTag(p)
 	s.sendSkinParts(id, skinPartsOf(u)) // else the outer skin layer is not drawn: a flat skin
+	// Its state as it is now (invisible, sneaking, on fire...): a player that came into view
+	// already invisible was drawn with its skin until its state next changed.
+	s.ViewEntityState(p)
 	s.noteRiding(e)
+}
+
+// StopShowingEntity hides e from this player for good (player.HideEntity): it goes from their
+// screen and is not shown again until StartShowingEntity.
+func (s *Session) StopShowingEntity(e world.Entity) {
+	if e.H() == s.ent {
+		return
+	}
+	s.entMu.Lock()
+	if s.hiddenEnts == nil {
+		s.hiddenEnts = map[*world.EntityHandle]bool{}
+	}
+	s.hiddenEnts[e.H()] = true
+	s.entMu.Unlock()
+	s.HideEntity(e)
+}
+
+// StartShowingEntity shows e again after StopShowingEntity.
+func (s *Session) StartShowingEntity(e world.Entity) {
+	s.entMu.Lock()
+	hidden := s.hiddenEnts[e.H()]
+	delete(s.hiddenEnts, e.H())
+	s.entMu.Unlock()
+	if hidden {
+		s.ViewEntity(e)
+	}
 }
 
 // HideEntity removes an entity that left view.

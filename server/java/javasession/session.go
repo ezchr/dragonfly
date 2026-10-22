@@ -59,6 +59,9 @@ type Session struct {
 	// Java entity ids of the entities this client sees (it is selfEntityID itself).
 	entMu     sync.Mutex
 	entityIDs map[*world.EntityHandle]int32
+	// hiddenEnts are the entities hidden from this player (StopShowingEntity): never shown, even
+	// when they come into view again.
+	hiddenEnts map[*world.EntityHandle]bool
 	// named is the name tag last sent for each non-player entity, under entMu.
 	named        map[int32]string
 	riders       map[*world.EntityHandle][]*world.EntityHandle // vehicle -> riders (riding.go)

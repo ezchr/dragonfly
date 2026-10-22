@@ -162,7 +162,8 @@ type stateful interface {
 // ViewEntityState sends another entity's flags (crouching, sprinting...) and pose.
 func (s *Session) ViewEntityState(e world.Entity) {
 	if e.H() == s.ent {
-		return // the client knows its own state
+		s.viewSelfFlags(e) // the client knows its own state, but not that it is invisible
+		return
 	}
 	id, ok := s.entityID(e)
 	if !ok {
@@ -212,6 +213,40 @@ func (s *Session) ViewEntityState(e world.Entity) {
 	w.VarInt(dataTypePose)
 	w.VarInt(pose)
 	s.writeLivingFxData(w, e)
+	w.Byte(0xff)
+	s.queue(v777.ClientboundPlaySetEntityData, w)
+}
+
+// viewSelfFlags sends the player their own entity flags, as vanilla servers do: the client keeps its
+// own sneaking and sprinting, but learns only this way that it is invisible (which hides its body
+// and its arm in first person).
+func (s *Session) viewSelfFlags(e world.Entity) {
+	var flags byte
+	if st, ok := e.(stateful); ok {
+		if st.Sneaking() {
+			flags |= 0x02
+		}
+		if st.Sprinting() {
+			flags |= 0x08
+		}
+		if st.Swimming() {
+			flags |= 0x10
+		}
+		if st.Gliding() {
+			flags |= 0x80
+		}
+	}
+	if f, ok := e.(interface{ OnFireDuration() int }); ok && f.OnFireDuration() > 0 {
+		flags |= 0x01
+	}
+	if inv, ok := e.(interface{ Invisible() bool }); ok && inv.Invisible() {
+		flags |= 0x20
+	}
+	w := s.packet()
+	w.VarInt(selfEntityID)
+	w.Byte(0)
+	w.VarInt(dataTypeByte)
+	w.Byte(flags)
 	w.Byte(0xff)
 	s.queue(v777.ClientboundPlaySetEntityData, w)
 }

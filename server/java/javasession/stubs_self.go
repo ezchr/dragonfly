@@ -30,8 +30,6 @@ func (*Session) SendDebugShapes(_ world.Dimension)                      {}
 func (*Session) SendHudUpdates()                                        {}
 func (*Session) SendInputLocks()                                        {}
 func (*Session) ShowHudElement(_ hud.Element)                           {}
-func (*Session) StartShowingEntity(_ world.Entity)                      {}
-func (*Session) StopShowingEntity(_ world.Entity)                       {}
 func (*Session) Transfer(_ net.IP, _ int)                               {}
 func (*Session) UnlockInput(_ input.Lock)                               {}
 func (*Session) ViewEntityGameMode(_ world.Entity)                      {}
