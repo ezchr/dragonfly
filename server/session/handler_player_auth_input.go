@@ -44,7 +44,19 @@ func (h PlayerAuthInputHandler) handleMovement(pk *packet.PlayerAuthInput, s *Se
 
 	if rideable, ok := c.RidingEntity(tx); ok {
 		if controller := rideable.ControllingRider(); controller == c.H() {
-			rideable.MoveInput(mgl64.Vec2{float64(pk.MoveVector.X()), float64(pk.MoveVector.Y())}, pk.Yaw, pk.Pitch)
+			// The move vector is only filled in for vehicles the client steers itself (horses,
+			// boats). Riding anything else, a touch joystick (mobile) gives its direction as the
+			// analogue or raw move vector, and keys arrive as input flags: the first one set wins.
+			move := mgl64.Vec2{float64(pk.MoveVector.X()), float64(pk.MoveVector.Y())}
+			for _, v := range []mgl32.Vec2{pk.AnalogueMoveVector, pk.RawMoveVector} {
+				if move == (mgl64.Vec2{}) {
+					move = mgl64.Vec2{float64(v.X()), float64(v.Y())}
+				}
+			}
+			if move == (mgl64.Vec2{}) {
+				move = keyVector(pk)
+			}
+			rideable.MoveInput(move, pk.Yaw, pk.Pitch)
 		}
 	}
 
@@ -240,4 +252,22 @@ func (h PlayerAuthInputHandler) handleBlockActions(a []protocol.PlayerBlockActio
 		}
 	}
 	return nil
+}
+
+// keyVector is the movement keys of an input as a move vector: x left, y forward.
+func keyVector(pk *packet.PlayerAuthInput) mgl64.Vec2 {
+	var v mgl64.Vec2
+	if pk.InputData.Load(packet.InputFlagUp) || pk.InputData.Load(packet.InputFlagUpLeft) || pk.InputData.Load(packet.InputFlagUpRight) {
+		v[1]++
+	}
+	if pk.InputData.Load(packet.InputFlagDown) {
+		v[1]--
+	}
+	if pk.InputData.Load(packet.InputFlagLeft) || pk.InputData.Load(packet.InputFlagUpLeft) {
+		v[0]++
+	}
+	if pk.InputData.Load(packet.InputFlagRight) || pk.InputData.Load(packet.InputFlagUpRight) {
+		v[0]--
+	}
+	return v
 }

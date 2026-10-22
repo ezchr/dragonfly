@@ -51,8 +51,12 @@ const (
 
 // Java player_input flags.
 const (
-	inputJump  = 16
-	inputShift = 32
+	inputForward  = 1
+	inputBackward = 2
+	inputLeft     = 4
+	inputRight    = 8
+	inputJump     = 16
+	inputShift    = 32
 )
 
 // Java player_command actions.
@@ -208,7 +212,28 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 			return true, r.Err
 		}
 		sneak, jump := flags&inputShift != 0, flags&inputJump != 0
+		var move mgl64.Vec2
+		if flags&inputLeft != 0 {
+			move[0]++
+		}
+		if flags&inputRight != 0 {
+			move[0]--
+		}
+		if flags&inputForward != 0 {
+			move[1]++
+		}
+		if flags&inputBackward != 0 {
+			move[1]--
+		}
 		s.do(func(tx *world.Tx, c session.Controllable) {
+			if h := c.RidingEntityHandle(); h != nil {
+				if e, ok := h.Entity(tx); ok {
+					if rideable, ok := e.(entity.Rideable); ok {
+						rot := c.Rotation()
+						rideable.MoveInput(move, float32(rot.Yaw()), float32(rot.Pitch()))
+					}
+				}
+			}
 			if sneak && !s.input.sneaking && c.RidingEntityHandle() != nil {
 				// Java gets off a seat with the sneak key (Bedrock sends a leave-vehicle interact).
 				c.DismountEntity(tx)
