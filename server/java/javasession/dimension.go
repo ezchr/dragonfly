@@ -38,7 +38,10 @@ func (s *Session) writeRespawn(dim string, c session.Controllable, keep byte) {
 // switchWorld follows the player into another world (portals, teleports between worlds).
 func (s *Session) switchWorld(tx *world.Tx, w *world.World, c session.Controllable) {
 	s.closeWindows(tx, c)
-	if dim := dimensionKey(w.Dimension()); dim != s.dim {
+	// Every world change gets the client a new level, even into the same dimension: forgetting the
+	// chunks alone left a client moved between two overworlds waiting for chunks that never came
+	// (a void), there and back.
+	if dim := dimensionKey(w.Dimension()); true {
 		s.dim = dim
 		s.forgetAllChunks(false)
 		s.writeRespawn(dim, c, 3)
