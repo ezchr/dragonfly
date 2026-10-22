@@ -100,7 +100,13 @@ func (s *Session) move(pos *mgl64.Vec3, rot *[2]float32, flags byte) error {
 		// Checked in the world transaction: a teleport made there after this packet was read
 		// must not be undone by it.
 		if s.pendingTeleport.Load() != 0 {
-			return // the client has not caught up with our last teleport yet
+			// The client has not caught up with our last teleport yet: its position is stale, but
+			// its look is not (a rider, which may never answer a teleport, keeps turning).
+			if rot != nil {
+				r := c.Rotation()
+				c.Move(mgl64.Vec3{}, float64(rot[0])-r.Yaw(), float64(rot[1])-r.Pitch())
+			}
+			return
 		}
 		if tx.World() != s.loader.World() {
 			return // moved to another world: the next tick's switchWorld teleports the client
