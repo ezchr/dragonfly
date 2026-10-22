@@ -3,6 +3,7 @@ package packbuilder
 import (
 	_ "embed"
 	"os"
+	"slices"
 
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/sandertv/gophertunnel/minecraft/resource"
@@ -34,6 +35,9 @@ func BuildResourcePack(reg world.BlockRegistry) (*resource.Pack, bool) {
 	lang = append(lang, blockLang...)
 
 	if assets > 0 {
+		// Sorted: items and blocks come in a different order at every start, and the pack would get
+		// a new UUID (from the hash of its files) every time.
+		slices.Sort(lang)
 		buildLanguageFile(dir, lang)
 		if err := os.WriteFile(dir+"/pack_icon.png", packIcon, 0666); err != nil {
 			panic(err)
