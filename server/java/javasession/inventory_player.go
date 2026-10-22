@@ -341,6 +341,14 @@ func (s *Session) ViewEntityItems(e world.Entity) {
 		return
 	}
 	main, off := c.HeldItems()
+	if h, ok := e.(interface {
+		Invisible() bool
+		NameTag() string
+	}); ok && h.Invisible() && h.NameTag() == "" {
+		// A hidden player (invisible with no name shown, as a tank driver in the tank arena)
+		// holds nothing for others: held items show even on invisible players.
+		main, off = item.Stack{}, item.Stack{}
+	}
 	w := s.packet()
 	w.VarInt(id)
 	w.Byte(equipMainHand | 0x80)
