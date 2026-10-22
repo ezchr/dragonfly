@@ -27,7 +27,13 @@ type ModelPart struct {
 	// Offset is where the part's pivot is relative to the entity's position, in blocks, for an
 	// entity facing south (yaw 0, +z).
 	Offset mgl64.Vec3
+	// Display is which of the item model's display transforms the part is drawn with (an
+	// ItemDisplayContext id, e.g. DisplayFixed); 0: none.
+	Display byte
 }
+
+// DisplayFixed draws a part with its item model's "fixed" display transform (as in item frames).
+const DisplayFixed = 8
 
 // EntityModel is the model a Java player sees instead of an entity's stand-in.
 type EntityModel struct {
@@ -72,6 +78,7 @@ const (
 	dataDisplayScale        = 12
 	dataDisplayLeftRotation = 13
 	dataItemDisplayItem     = 23
+	dataItemDisplayContext  = 24
 	dataTypeItemStack       = 7
 	dataTypeVector3         = 39
 	dataTypeQuaternion      = 40
@@ -149,6 +156,11 @@ func (s *Session) viewModel(e world.Entity, id int32, pos mgl64.Vec3, rot cube.R
 		w.Byte(dataItemDisplayItem)
 		w.VarInt(dataTypeItemStack)
 		js.EncodeFor(w, s.items().proto)
+		if p.Display != 0 {
+			w.Byte(dataItemDisplayContext)
+			w.VarInt(dataTypeByte)
+			w.Byte(p.Display)
+		}
 		w.Byte(0xff)
 		s.queue(v777.ClientboundPlaySetEntityData, w)
 	}
