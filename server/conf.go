@@ -83,6 +83,11 @@ type Config struct {
 	// Compression is the packet compression used for connections accepted by
 	// the default listener. If nil, gophertunnel's default compression is used.
 	Compression packet.Compression
+	// AcceptedProtocols holds the protocols, besides the one Dragonfly is
+	// built for, that the default listeners accept. Each converts its packets
+	// from and to the current protocol (see
+	// minecraft.ListenConfig.AcceptedProtocols).
+	AcceptedProtocols []minecraft.Protocol
 	// PlayerProvider is the player.Provider used for storing and loading player
 	// data. If left as nil, player data will be newly created every time a
 	// player joins the server and no data will be stored.

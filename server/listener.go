@@ -369,6 +369,7 @@ func listenerConfig(conf Config) minecraft.ListenConfig {
 		TexturePacksRequired:   conf.ResourcesRequired,
 		Compression:            conf.Compression,
 		Allow:                  conf.Allower.Allow,
+		AcceptedProtocols:      conf.AcceptedProtocols,
 	}
 	if conf.Log.Enabled(context.Background(), slog.LevelDebug) {
 		cfg.ErrorLog = conf.Log.With("net origin", "gophertunnel")

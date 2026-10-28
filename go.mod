@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/brentp/intintmap v0.0.0-20251106190759-56907b1f8479
 	github.com/cespare/xxhash/v2 v2.3.0
-	github.com/df-mc/go-nethernet v1.0.24
+	github.com/df-mc/go-nethernet v1.0.27-0.20261027203254-60826b5e5a8f
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/df-mc/worldupgrader v1.0.22
 	github.com/go-gl/mathgl v1.2.0
