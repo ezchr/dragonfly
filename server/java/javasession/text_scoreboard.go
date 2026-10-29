@@ -10,6 +10,7 @@ import (
 	"github.com/df-mc/dragonfly/server/java/protocol/wire"
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/scoreboard"
+	"github.com/df-mc/dragonfly/server/textcolour"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/google/uuid"
 )
@@ -132,10 +133,11 @@ func (s *Session) RemoveScoreboard() {
 
 // Name tags. A Java client draws a player's name from its profile name, decorated by the
 // player's scoreboard team (prefix, colour, suffix); the custom_name entity data does nothing on
-// players. So a Bedrock name tag is shown with one client-side team per player: the text before
-// the player's name becomes the prefix, the text after it the suffix, the colour at the name the
-// team colour. An empty name tag hides the name. Score tags (Bedrock's line under the name) use
-// a below_name objective whose scores carry the tag as a fixed number format.
+// players. The name itself can only take one of the 16 team colours, so the team hides it and a
+// text display riding the player draws the whole Bedrock name tag and score tag instead
+// (namedisplay.go). The team still carries the tag as prefix, colour and suffix, for what else
+// shows it. Score tags (Bedrock's line under the name) also use a below_name objective whose
+// scores carry the tag as a fixed number format.
 
 // ViewNameTag shows a different name tag for e to this client only.
 func (s *Session) ViewNameTag(e world.Entity, nameTag string) {
@@ -147,6 +149,7 @@ func (s *Session) ViewNameTag(e world.Entity, nameTag string) {
 	ts.nameOverride[e.H()] = nameTag
 	ts.mu.Unlock()
 	s.applyNameTag(e, nameTag)
+	s.viewNameDisplayOf(e)
 }
 
 // ViewPublicNameTag removes this client's name tag override of e.
@@ -157,6 +160,7 @@ func (s *Session) ViewPublicNameTag(e world.Entity) {
 	ts.mu.Unlock()
 	if p, ok := e.(*player.Player); ok {
 		s.applyNameTag(e, p.NameTag())
+		s.viewNameDisplay(p)
 	}
 }
 
@@ -182,6 +186,7 @@ func (s *Session) viewPlayerNameTag(p *player.Player) {
 		scoreTag = p.ScoreTag()
 	}
 	s.applyScoreTag(p, scoreTag)
+	s.viewNameDisplay(p)
 }
 
 // applyNameTag sends the team that makes e's name read as tag.
@@ -200,16 +205,6 @@ func (s *Session) applyNameTag(e world.Entity, tag string) {
 		ts.teams = map[uuid.UUID]string{}
 	}
 	_, exists := ts.teams[u]
-	if tag == name || tag == p.Name() {
-		if exists { // plain name again: drop the team
-			w := s.packet()
-			w.String(team)
-			w.Byte(1)
-			s.queue(v777.ClientboundPlaySetPlayerTeam, w)
-			delete(ts.teams, u)
-		}
-		return
-	}
 	if line, _, ok := strings.Cut(tag, "\n"); ok && strings.Contains(line, name) {
 		tag = line
 	} else if ok {
@@ -225,7 +220,8 @@ func (s *Session) applyNameTag(e world.Entity, tag string) {
 	colour := int32(-1)
 	visible := tag != ""
 	if i := strings.Index(tag, name); i >= 0 {
-		prefix, suffix = bedrockText(tag[:i]), bedrockText(tag[i+len(name):])
+		before, after := gradientAroundName(tag[:i], tag[i+len(name):])
+		prefix, suffix = bedrockText(before), bedrockText(after)
 		colour = teamColour(lastColour(tag[:i]))
 	} else if visible {
 		prefix = bedrockText(tag + "§r ")
@@ -240,11 +236,7 @@ func (s *Session) applyNameTag(e world.Entity, tag string) {
 	text.WriteString(w, "")
 	prefix.Write(w)
 	suffix.Write(w)
-	if visible {
-		w.VarInt(0) // name tag: always
-	} else {
-		w.VarInt(1) // never
-	}
+	w.VarInt(1) // name tag: never; a text display riding the player draws it (namedisplay.go)
 	w.VarInt(0) // collision: always
 	if colour >= 0 {
 		w.Bool(true)
@@ -259,6 +251,30 @@ func (s *Session) applyNameTag(e world.Entity, tag string) {
 	}
 	s.queue(v777.ClientboundPlaySetPlayerTeam, w)
 	ts.teams[u] = team
+}
+
+// gradientAroundName handles a gradient over the name: a Java client draws the name itself in one
+// colour (the team's), so the gradient's tag is taken out and the name gets its first colour.
+func gradientAroundName(before, after string) (string, string) {
+	open := strings.LastIndex(before, "<gradient:")
+	if open < 0 || strings.Contains(before[open:], "</gradient>") {
+		return before, after
+	}
+	end := strings.IndexByte(before[open:], '>')
+	if end < 0 {
+		return before, after
+	}
+	stops := strings.Split(before[open+len("<gradient:"):open+end], ":")
+	first, ok := textcolour.ParseStop(stops[0])
+	if !ok {
+		return before, after
+	}
+	before = before[:open] + "§" + string(textcolour.Nearest(first)) + before[open+end+1:]
+	after, _ = strings.CutPrefix(after, "</gradient>")
+	if i := strings.Index(after, "</gradient>"); i >= 0 {
+		after = after[:i] + after[i+len("</gradient>"):]
+	}
+	return before, after
 }
 
 // lastColour returns the last colour code in s ("" if none or reset after it).
@@ -281,16 +297,33 @@ func lastColour(s string) string {
 
 var teamColours = map[string]int32{"black": 0, "dark_blue": 1, "dark_green": 2, "dark_aqua": 3,
 	"dark_red": 4, "dark_purple": 5, "gold": 6, "gray": 7, "dark_gray": 8, "blue": 9, "green": 10,
-	"aqua": 11, "red": 12, "light_purple": 13, "yellow": 14, "white": 15,
-	// Bedrock-only colours: the nearest of the 16 (teams only take those).
-	"#DDD605": 14, "#E3D4D1": 15, "#CECACA": 7, "#443A3B": 8, "#971607": 4, "#B4684D": 6,
-	"#DEB12D": 6, "#47A036": 2, "#2CBAA8": 3, "#21497B": 1, "#9A5CC6": 5, "#EB7114": 6}
+	"aqua": 11, "red": 12, "light_purple": 13, "yellow": 14, "white": 15}
 
+// javaColours are the 16 colours a team can have, in team colour order, as Java draws them.
+var javaColours = [16][3]int{{0, 0, 0}, {0, 0, 0xAA}, {0, 0xAA, 0}, {0, 0xAA, 0xAA}, {0xAA, 0, 0},
+	{0xAA, 0, 0xAA}, {0xFF, 0xAA, 0}, {0xAA, 0xAA, 0xAA}, {0x55, 0x55, 0x55}, {0x55, 0x55, 0xFF},
+	{0x55, 0xFF, 0x55}, {0x55, 0xFF, 0xFF}, {0xFF, 0x55, 0x55}, {0xFF, 0x55, 0xFF}, {0xFF, 0xFF, 0x55},
+	{0xFF, 0xFF, 0xFF}}
+
+// teamColour is the team colour of a colour name or #RRGGBB colour: a hex colour (a Bedrock shade
+// or a Bedrock-only colour) gets the nearest of the 16. -1 for none.
 func teamColour(name string) int32 {
 	if c, ok := teamColours[name]; ok {
 		return c
 	}
-	return -1
+	v, err := strconv.ParseUint(strings.TrimPrefix(name, "#"), 16, 32)
+	if !strings.HasPrefix(name, "#") || len(name) != 7 || err != nil {
+		return -1
+	}
+	r, g, b := int(v>>16), int(v>>8&0xFF), int(v&0xFF)
+	best, bestD := int32(-1), 1<<30
+	for i, c := range javaColours {
+		dr, dg, db := r-c[0], g-c[1], b-c[2]
+		if d := 2*dr*dr + 4*dg*dg + 3*db*db; d < bestD {
+			best, bestD = int32(i), d
+		}
+	}
+	return best
 }
 
 // ViewScoreTag shows a different score tag (the line under the name) for e to this client only.
@@ -303,6 +336,7 @@ func (s *Session) ViewScoreTag(e world.Entity, scoreTag string) {
 	ts.scoreOverride[e.H()] = scoreTag
 	ts.mu.Unlock()
 	s.applyScoreTag(e, scoreTag)
+	s.viewNameDisplayOf(e)
 }
 
 // ViewPublicScoreTag removes this client's score tag override of e.
@@ -313,6 +347,7 @@ func (s *Session) ViewPublicScoreTag(e world.Entity) {
 	ts.mu.Unlock()
 	if p, ok := e.(*player.Player); ok {
 		s.applyScoreTag(e, p.ScoreTag())
+		s.viewNameDisplay(p)
 	}
 }
 

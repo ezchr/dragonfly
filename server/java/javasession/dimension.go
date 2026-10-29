@@ -81,9 +81,13 @@ func (s *Session) removeAllEntities() {
 	for _, parts := range s.modelParts {
 		ids = append(ids, parts...)
 	}
+	for _, d := range s.nameDisplays {
+		ids = append(ids, d.id)
+	}
 	clear(s.entityIDs)
 	clear(s.tracks)
 	clear(s.modelParts)
+	clear(s.nameDisplays)
 	s.entMu.Unlock()
 	if len(ids) == 0 {
 		return

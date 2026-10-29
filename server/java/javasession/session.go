@@ -67,7 +67,8 @@ type Session struct {
 	riders       map[*world.EntityHandle][]*world.EntityHandle // vehicle -> riders (riding.go)
 	deferred     map[*world.EntityHandle]struct{}              // Bedrock players waiting for their skin (deferForSkin)
 	tracks       map[int32]*track
-	modelParts   map[int32][]int32 // entity id -> its model's part ids (entitymodel.go)
+	modelParts   map[int32][]int32      // entity id -> its model's part ids (entitymodel.go)
+	nameDisplays map[int32]*nameDisplay // player entity id -> the text display of its name (namedisplay.go)
 	nextEntityID int32
 
 	chunkRadius int32
@@ -316,6 +317,7 @@ func (s *Session) Close(tx *world.Tx, c session.Controllable) {
 		s.entMu.Lock()
 		clear(s.entityIDs)
 		clear(s.modelParts)
+		clear(s.nameDisplays)
 		s.entMu.Unlock()
 	})
 }

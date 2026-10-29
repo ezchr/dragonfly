@@ -101,6 +101,9 @@ func (s *Session) sendPassengers(vehicle *world.EntityHandle) {
 			ids = append(ids, id)
 		}
 	}
+	if id, ok := s.nameDisplayOf(vid); ok {
+		ids = append(ids, id) // the player's name (namedisplay.go)
+	}
 	s.entMu.Unlock()
 	w := s.packet()
 	w.VarInt(vid)
