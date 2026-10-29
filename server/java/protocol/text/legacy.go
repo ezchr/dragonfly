@@ -3,6 +3,8 @@ package text
 import (
 	"strings"
 	"unicode/utf8"
+
+	"github.com/df-mc/dragonfly/server/textcolour"
 )
 
 // Palette says how section-sign (§) codes in a legacy string are read.
@@ -23,21 +25,18 @@ var legacyNames = [16]string{"black", "dark_blue", "dark_green", "dark_aqua", "d
 	"dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple",
 	"yellow", "white"}
 
-// bedrockColours are the Bedrock-only colour codes and their RGB (Bedrock's text formatting table).
-var bedrockColours = [128]string{
-	'g': "#DDD605", // minecoin_gold
-	'h': "#E3D4D1", // material_quartz
-	'i': "#CECACA", // material_iron
-	'j': "#443A3B", // material_netherite
-	'm': "#971607", // material_redstone
-	'n': "#B4684D", // material_copper
-	'p': "#DEB12D", // material_gold
-	'q': "#47A036", // material_emerald
-	's': "#2CBAA8", // material_diamond
-	't': "#21497B", // material_lapis
-	'u': "#9A5CC6", // material_amethyst
-	'v': "#EB7114", // material_resin
-}
+// bedrockColours are the colours a Bedrock client draws where they differ from Java's colour of the
+// same code, and the Bedrock-only codes (textcolour.Bedrock, as hex): a Java player is shown these,
+// so a text looks the same on both editions.
+var bedrockColours = func() [128]string {
+	var out [128]string
+	for code, c := range textcolour.Bedrock {
+		if (code < '0' || code > '6') && code != 'f' {
+			out[code] = c.Hex()
+		}
+	}
+	return out
+}()
 
 // ColourName returns the Java colour for a legacy colour code character in palette p ("" if c is
 // not a colour code).
@@ -45,14 +44,14 @@ func ColourName(c byte, p Palette) string {
 	if c >= 'A' && c <= 'Z' {
 		c += 'a' - 'A'
 	}
+	if p == Bedrock && c < 128 && bedrockColours[c] != "" {
+		return bedrockColours[c]
+	}
 	switch {
 	case c >= '0' && c <= '9':
 		return legacyNames[c-'0']
 	case c >= 'a' && c <= 'f':
 		return legacyNames[c-'a'+10]
-	}
-	if p == Bedrock && c < 128 {
-		return bedrockColours[c]
 	}
 	return ""
 }
@@ -86,6 +85,9 @@ func (s legacyStyle) apply(c *Component) {
 // code, with one child per styled run. Unknown codes are dropped (both characters), as both
 // editions do; a trailing lone § is dropped too.
 func Legacy(s string, p Palette) Component {
+	if p == Bedrock && textcolour.Has(s) {
+		s = textcolour.Expand(s, true)
+	}
 	i := strings.Index(s, section)
 	if i < 0 {
 		return Component{Text: s}
@@ -126,6 +128,20 @@ func Legacy(s string, p Palette) Component {
 		rest = rest[j+2:]
 		if len(rest) == 0 {
 			break
+		}
+		if hex, ok := exactColour(rest); ok {
+			rest = rest[len(hex):]
+			next := st
+			if p == Java {
+				next = legacyStyle{colour: hex}
+			} else {
+				next.colour = hex
+			}
+			if next != st {
+				flush()
+				st = next
+			}
+			continue
 		}
 		code, size := utf8.DecodeRuneInString(rest)
 		rest = rest[size:]
@@ -209,3 +225,17 @@ func Strip(s string) string {
 
 // section is the section sign that starts a formatting code.
 const section = "\u00a7"
+
+// exactColour reads an exact colour code's colour (§#RRGGBB, as gradients leave them) at the start
+// of s, the part after the section sign.
+func exactColour(s string) (string, bool) {
+	if len(s) < 7 || s[0] != '#' {
+		return "", false
+	}
+	for _, c := range s[1:7] {
+		if !strings.ContainsRune("0123456789abcdefABCDEF", c) {
+			return "", false
+		}
+	}
+	return strings.ToUpper(s[:7]), true
+}

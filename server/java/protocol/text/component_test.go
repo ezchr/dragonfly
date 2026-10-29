@@ -52,11 +52,13 @@ func TestLegacy(t *testing.T) {
 		{"hello", Bedrock, Plain("hello")},
 		{"§ahello", Java, Component{Text: "hello", Color: "green"}},
 		{"a§lb§cc", Java, Component{Text: "a", Extra: []Component{{Text: "b", Bold: On}, {Text: "c", Color: "red"}}}},
-		{"a§lb§cc", Bedrock, Component{Text: "a", Extra: []Component{{Text: "b", Bold: On}, {Text: "c", Color: "red", Bold: On}}}},
+		{"a§lb§cc", Bedrock, Component{Text: "a", Extra: []Component{{Text: "b", Bold: On}, {Text: "c", Color: "#FF5454", Bold: On}}}},
 		{"§mX§nY", Java, Component{Extra: []Component{{Text: "X", Strikethrough: On}, {Text: "Y", Strikethrough: On, Underlined: On}}}},
-		{"§mX§nY", Bedrock, Component{Extra: []Component{{Text: "X", Color: "#971607"}, {Text: "Y", Color: "#B4684D"}}}},
-		{"§gGold§r plain§z§", Bedrock, Component{Extra: []Component{{Text: "Gold", Color: "#DDD605"}, {Text: " plain"}}}},
-		{"§l§eÄö§r", Bedrock, Component{Text: "Äö", Color: "yellow", Bold: On}},
+		{"§mX§nY", Bedrock, Component{Extra: []Component{{Text: "X", Color: "#EE222C"}, {Text: "Y", Color: "#C87363"}}}},
+		{"§gGold§r plain§z§", Bedrock, Component{Extra: []Component{{Text: "Gold", Color: "#EFCE16"}, {Text: " plain"}}}},
+		{"§l§eÄö§r", Bedrock, Component{Text: "Äö", Color: "#FFFF54", Bold: On}},
+		{"§7<gradient:&c:&6>ab</gradient> c", Bedrock, Component{Extra: []Component{{Text: "a", Color: "#FF5454"}, {Text: "b", Color: "#FFAA00"}, {Text: " c", Color: "#C5C5C5"}}}},
+		{"§#12aB34x", Bedrock, Component{Text: "x", Color: "#12AB34"}},
 	}
 	for _, tc := range cases {
 		got := Legacy(tc.in, tc.p)

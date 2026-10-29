@@ -641,6 +641,7 @@ func (s *Session) writePacket(pk packet.Packet) {
 	if s == Nop {
 		return
 	}
+	pk = expandGradients(pk)
 	select {
 	case s.packets <- pk:
 	case <-s.closeBackground:

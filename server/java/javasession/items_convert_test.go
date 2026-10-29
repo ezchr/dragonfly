@@ -189,3 +189,13 @@ func TestJavaStack262(t *testing.T) {
 		}
 	}
 }
+
+func TestItemTextSendsGradientsAsComponents(t *testing.T) {
+	if got := itemText("§cPlain"); got.NBT != nil || got.Text != "§cPlain" {
+		t.Fatalf("plain name = %+v", got)
+	}
+	got := itemText("<gradient:c:6>Gradient</gradient>")
+	if got.NBT == nil || jitem.PlainText(got.NBT) != "Gradient" {
+		t.Fatalf("gradient name = %+v", got)
+	}
+}

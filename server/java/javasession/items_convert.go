@@ -8,7 +8,9 @@ import (
 	"github.com/df-mc/dragonfly/server/item/potion"
 	"github.com/df-mc/dragonfly/server/java/javamap"
 	jitem "github.com/df-mc/dragonfly/server/java/protocol/item"
+	"github.com/df-mc/dragonfly/server/java/protocol/text"
 	v777 "github.com/df-mc/dragonfly/server/java/protocol/v777"
+	"github.com/df-mc/dragonfly/server/textcolour"
 	"github.com/df-mc/dragonfly/server/world"
 )
 
@@ -185,12 +187,12 @@ func javaStack(ds item.Stack, js *jitem.Stack) {
 		js.Add(jitem.CompUnbreakable)
 	}
 	if n := ds.CustomName(); n != "" {
-		js.CustomName.Text = n
+		js.CustomName = itemText(n)
 		js.Add(jitem.CompCustomName)
 	}
 	if lore := ds.Lore(); len(lore) > 0 {
 		for _, l := range lore {
-			js.Lore = append(js.Lore, jitem.Text{Text: l})
+			js.Lore = append(js.Lore, itemText(l))
 		}
 		js.Add(jitem.CompLore)
 	}
@@ -351,4 +353,14 @@ func cutRunes(s string, n int) string {
 		i++
 	}
 	return s
+}
+
+// itemText is an item's name or lore line for a Java client. A plain string's § codes are drawn by
+// the client, which knows no gradient tags, so a text with a gradient is sent as its component.
+func itemText(s string) jitem.Text {
+	if !textcolour.Has(s) {
+		return jitem.Text{Text: s}
+	}
+	c := text.Legacy(s, text.Bedrock)
+	return jitem.Text{Text: s, NBT: c.Bytes()}
 }
