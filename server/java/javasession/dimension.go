@@ -44,12 +44,12 @@ func (s *Session) switchWorld(tx *world.Tx, w *world.World, c session.Controllab
 	if dim := dimensionKey(w.Dimension()); true {
 		s.dim = dim
 		s.forgetAllChunks(false)
+		// A respawn into the same dimension keeps the client's level and every entity in it (only
+		// a new dimension starts a new level): they are removed first, or the old world's entities
+		// stay in view in the new one, and one that leaves later is never removed (it is no longer
+		// known here).
+		s.removeAllEntities()
 		s.writeRespawn(dim, c, 3)
-		// The client forgets every entity and chunk when it changes dimension.
-		s.entMu.Lock()
-		clear(s.entityIDs)
-		clear(s.tracks)
-		s.entMu.Unlock()
 		s.centreSent = false
 		s.batchInFlight.Store(false)
 		p := s.packet()
@@ -68,4 +68,30 @@ func (s *Session) switchWorld(tx *world.Tx, w *world.World, c session.Controllab
 	s.teleport(pos[0], pos[1], pos[2], float32(rot.Yaw()), float32(rot.Pitch()))
 	s.loader.ChangeWorld(tx, w)
 	s.sendCentre(pos)
+}
+
+// removeAllEntities removes every entity the client was shown (world entities and the extra parts
+// of their models) and forgets them.
+func (s *Session) removeAllEntities() {
+	s.entMu.Lock()
+	ids := make([]int32, 0, len(s.entityIDs))
+	for _, id := range s.entityIDs {
+		ids = append(ids, id)
+	}
+	for _, parts := range s.modelParts {
+		ids = append(ids, parts...)
+	}
+	clear(s.entityIDs)
+	clear(s.tracks)
+	clear(s.modelParts)
+	s.entMu.Unlock()
+	if len(ids) == 0 {
+		return
+	}
+	w := s.packet()
+	w.VarInt(int32(len(ids)))
+	for _, id := range ids {
+		w.VarInt(id)
+	}
+	s.queue(v777.ClientboundPlayRemoveEntities, w)
 }
