@@ -258,7 +258,6 @@ func init() {
 	registerAll(allCopperBars())
 	registerAll(allCopperChains())
 	registerAll(allCopperDoors())
-	registerAll(allIronDoors())
 	registerAll(allCopperGolemStatues())
 	registerAll(allCopperGrates())
 	registerAll(allCopperLanterns())
@@ -268,7 +267,6 @@ func init() {
 }
 
 func init() {
-	world.RegisterItem(IronDoor{})
 	world.RegisterItem(Air{})
 	world.RegisterItem(Amethyst{})
 	world.RegisterItem(AncientDebris{})

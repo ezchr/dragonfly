@@ -53,7 +53,6 @@ const (
 	hashCopperBars
 	hashCopperChain
 	hashCopperDoor
-	hashIronDoor
 	hashCopperGolemStatue
 	hashCopperGrate
 	hashCopperLantern
@@ -1152,8 +1151,4 @@ func (t WoodTrapdoor) Hash() (uint64, uint64) {
 
 func (w Wool) Hash() (uint64, uint64) {
 	return hashWool, uint64(w.Colour.Uint8())
-}
-
-func (d IronDoor) Hash() (uint64, uint64) {
-	return hashIronDoor, uint64(d.Facing) | uint64(boolByte(d.Open))<<2 | uint64(boolByte(d.Top))<<3 | uint64(boolByte(d.Right))<<4
 }
