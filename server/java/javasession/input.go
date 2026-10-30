@@ -197,7 +197,15 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 				}
 				// As Dragonfly's Bedrock interact handler: using a rideable (a cushion, a boat)
 				// also gets on it, in the seat nearest the click.
-				if c.UseItemOnEntity(e) {
+				used := false
+				if at, ok := c.(interface {
+					UseItemOnEntityAt(e world.Entity, clickPos mgl64.Vec3) bool
+				}); ok {
+					used = at.UseItemOnEntityAt(e, e.Position().Add(clicked))
+				} else {
+					used = c.UseItemOnEntity(e)
+				}
+				if used {
 					if rideable, ok := e.(entity.Rideable); ok {
 						if seat, ok := rideable.NextFreeSeatIndex(e.Position().Add(clicked)); ok {
 							c.MountEntity(tx, rideable, seat)

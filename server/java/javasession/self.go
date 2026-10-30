@@ -177,6 +177,7 @@ func (s *Session) ViewEntityState(e world.Entity) {
 		return
 	}
 	s.viewCustomName(e, id)
+	s.viewArmourStand(e, id)
 	st, ok := e.(stateful)
 	if !ok {
 		return

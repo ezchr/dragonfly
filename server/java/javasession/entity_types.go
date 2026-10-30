@@ -123,6 +123,7 @@ func (s *Session) viewOtherEntity(e world.Entity) {
 	s.setTrack(id, pos, rot)
 	s.viewEntityMeta(e, id)
 	s.viewCustomName(e, id)
+	s.viewArmourStand(e, id)
 	s.viewModel(e, id, pos, rot)
 	s.noteRiding(e)
 }

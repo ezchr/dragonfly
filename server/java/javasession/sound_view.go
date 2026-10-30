@@ -107,6 +107,12 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, broadcast bool) {
 		s.sound(pos, sndFireworkBlast, srcAmbient, 20, 0.95+rnd()*0.1)
 	case sound.FireworkTwinkle:
 		s.sound(pos, sndFireworkTwinkle, srcAmbient, 20, 0.9+rnd()*0.15)
+	case sound.ArmourStandPlace:
+		s.customSound(pos, "minecraft:entity.armor_stand.place", 1, 1)
+	case sound.ArmourStandBreak:
+		s.customSound(pos, "minecraft:entity.armor_stand.break", 1, 1)
+	case sound.ArmourStandLand:
+		s.customSound(pos, "minecraft:entity.armor_stand.fall", 1, 1)
 	case sound.CushionPlace: // Bedrock-only block: wool sounds
 		s.sound(pos, sndWoolPlace, srcBlocks, 1, 0.8)
 	case sound.CushionSit:
