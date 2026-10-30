@@ -403,7 +403,8 @@ func (b *armourStandBehaviour) Interact(e *Ent, user item.User, held item.Stack,
 		slot = b.slot(wornSlot(held))
 	}
 	old := slot.get()
-	if held.Empty() && old.Empty() || !held.Empty() && held.Comparable(old) {
+	// Comparable counts an empty stack as matching anything, so both are checked.
+	if held.Empty() && old.Empty() || !held.Empty() && !old.Empty() && held.Comparable(old) {
 		return held, false
 	}
 

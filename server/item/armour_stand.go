@@ -62,9 +62,6 @@ func placeableIn(tx *world.Tx, pos cube.Pos) bool {
 	return ok && r.ReplaceableBy(air())
 }
 
-// MaxCount ...
-func (ArmourStand) MaxCount() int { return 16 }
-
 // EncodeItem ...
 func (ArmourStand) EncodeItem() (name string, meta int16) {
 	return "minecraft:armor_stand", 0
