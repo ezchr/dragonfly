@@ -142,7 +142,10 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 			// The click position is within the block; clamp what a hostile client sends (NaN too).
 			click := mgl64.Vec3{clamp01(cx), clamp01(cy), clamp01(cz)}
 			s.fxUsedOn(pos)
-			s.do(func(tx *world.Tx, c session.Controllable) { c.UseItemOnBlock(pos, face, click) })
+			s.do(func(tx *world.Tx, c session.Controllable) {
+				c.UseItemOnBlock(pos, face, click)
+				s.resendHeldItem()
+			})
 		}
 		s.ackBlock(seq)
 	case v777.ServerboundPlayUseItem:
@@ -205,6 +208,7 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 				} else {
 					used = c.UseItemOnEntity(e)
 				}
+				s.resendHeldItem()
 				if used {
 					if rideable, ok := e.(entity.Rideable); ok {
 						if seat, ok := rideable.NextFreeSeatIndex(e.Position().Add(clicked)); ok {

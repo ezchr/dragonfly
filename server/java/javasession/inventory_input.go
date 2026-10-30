@@ -128,6 +128,22 @@ func (s *Session) handleInventoryPacket(id int32, body []byte) (handled bool, er
 	return true, nil
 }
 
+// resendHeldItem sends the client the item in its hand as the server has it. A Java client takes
+// a placed block or used item out of its hotbar before the server answers, so when the server
+// refuses the use (a protected area, a cancelled event) the slot would otherwise stay wrong.
+func (s *Session) resendHeldItem() {
+	st := s.items()
+	if st.inv == nil {
+		return
+	}
+	hs := st.heldSlot.Load()
+	if hs == nil {
+		return
+	}
+	js := mainToJava(int(*hs))
+	s.sendSlot(js, st.slotItem(js))
+}
+
 // dropHeldItem drops the held item (Q, or Ctrl+Q for the whole stack): call it for player_action
 // DROP_ITEM / DROP_ALL_ITEMS.
 func (s *Session) dropHeldItem(c session.Controllable, all bool) {
