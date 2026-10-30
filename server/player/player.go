@@ -1983,6 +1983,12 @@ func (p *Player) UseItemOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec
 // within range of the player.
 // If the item held in the main hand of the player does nothing when used on an entity, nothing will happen.
 func (p *Player) UseItemOnEntity(e world.Entity) bool {
+	return p.UseItemOnEntityAt(e, e.Position().Add(mgl64.Vec3{0, 1, 0}))
+}
+
+// UseItemOnEntityAt uses the item held in the main hand of the player on the
+// entity passed, which the player clicked at clickPos, a position in the world.
+func (p *Player) UseItemOnEntityAt(e world.Entity, clickPos mgl64.Vec3) bool {
 	if !p.canReach(e.Position()) {
 		return false
 	}
@@ -1991,6 +1997,15 @@ func (p *Player) UseItemOnEntity(e world.Entity) bool {
 		return false
 	}
 	i, left := p.HeldItems()
+	if in, ok := e.(interface {
+		Interact(user item.User, held item.Stack, clickPos mgl64.Vec3) (item.Stack, bool)
+	}); ok {
+		if after, used := in.Interact(p, i, clickPos); used {
+			p.SwingArm()
+			p.SetHeldItems(after, left)
+			return true
+		}
+	}
 	usable, ok := i.Item().(item.UsableOnEntity)
 	if !ok {
 		return true

@@ -78,3 +78,15 @@ type CushionSit struct{ sound }
 
 // CushionBreak is a sound played when a cushion breaks.
 type CushionBreak struct{ sound }
+
+// ArmourStandPlace is a sound played when an armour stand is placed.
+type ArmourStandPlace struct{ sound }
+
+// ArmourStandHit is a sound played when an armour stand is hit.
+type ArmourStandHit struct{ sound }
+
+// ArmourStandBreak is a sound played, with particles, when an armour stand breaks.
+type ArmourStandBreak struct{ sound }
+
+// ArmourStandLand is a sound played when an armour stand lands after a fall.
+type ArmourStandLand struct{ sound }

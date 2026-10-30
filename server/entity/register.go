@@ -11,6 +11,7 @@ import (
 // implemented by Dragonfly.
 var DefaultRegistry = conf.New([]world.EntityType{
 	AreaEffectCloudType,
+	ArmourStandType,
 	ArrowType,
 	BottleOfEnchantingType,
 	CushionType,
@@ -34,6 +35,7 @@ var conf = world.EntityRegistryConfig{
 	TNTWithConfig:      NewTNTWithConfig,
 	Egg:                NewEgg,
 	EndCrystal:         NewEndCrystal,
+	ArmourStand:        NewArmourStand,
 	Snowball:           NewSnowball,
 	BottleOfEnchanting: NewBottleOfEnchanting,
 	Cushion: func(opts world.EntitySpawnOpts, colour any) *world.EntityHandle {

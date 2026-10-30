@@ -118,6 +118,12 @@ func (s *Session) addSpecificMetadata(e any, m protocol.EntityMetadata) {
 	if sc, ok := e.(scaled); ok {
 		m[protocol.EntityDataKeyScale] = float32(sc.Scale())
 	}
+	if p, ok := e.(posed); ok {
+		m[protocol.EntityDataKeyPoseIndex] = int32(p.PoseIndex())
+	}
+	if w, ok := e.(wobbling); ok {
+		m[protocol.EntityDataKeyHurt] = int32(w.HurtTicks())
+	}
 	if pos, ok := s.seatOffset(e); ok {
 		m[protocol.EntityDataKeySeatOffset] = vec64To32(pos)
 		m.SetFlag(protocol.EntityDataKeyFlags, protocol.EntityDataFlagRiding)
@@ -448,4 +454,14 @@ type serverAuthDismount interface {
 // interactTexter is an entity shown an interact button for the entity it looks at.
 type interactTexter interface {
 	InteractText() string
+}
+
+// posed is an entity shown in one of several poses, such as an armour stand.
+type posed interface {
+	PoseIndex() int
+}
+
+// wobbling is an entity that wobbles after a hit, such as an armour stand.
+type wobbling interface {
+	HurtTicks() int
 }

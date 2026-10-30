@@ -6,6 +6,7 @@ import (
 
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
+	"github.com/df-mc/dragonfly/server/item/inventory"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
 )
@@ -111,6 +112,43 @@ func (e *Ent) HeldItems() (mainHand, offHand item.Stack) {
 		return c.HeldItems()
 	}
 	return item.Stack{}, item.Stack{}
+}
+
+// armouredBehaviour is a Behaviour that wears armour, shown to viewers.
+type armouredBehaviour interface {
+	Armour() *inventory.Armour
+}
+
+// Armour returns the armour the entity wears, if its Behaviour implements
+// armouredBehaviour, or nil.
+func (e *Ent) Armour() *inventory.Armour {
+	if a, ok := e.Behaviour().(armouredBehaviour); ok {
+		return a.Armour()
+	}
+	return nil
+}
+
+// interactBehaviour is a Behaviour that reacts to a player using the entity
+// (right-click) with the stack they hold.
+type interactBehaviour interface {
+	Interact(e *Ent, user item.User, held item.Stack, clickPos mgl64.Vec3) (item.Stack, bool)
+}
+
+// Interact lets the entity react to user using it with held, clicking it at
+// clickPos. It returns what the user holds afterwards and whether the entity
+// did anything.
+func (e *Ent) Interact(user item.User, held item.Stack, clickPos mgl64.Vec3) (item.Stack, bool) {
+	if i, ok := e.Behaviour().(interactBehaviour); ok {
+		return i.Interact(e, user, held, clickPos)
+	}
+	return held, false
+}
+
+// NameTaggable reports whether a name tag may rename the entity, which its
+// Behaviour decides.
+func (e *Ent) NameTaggable() bool {
+	n, ok := e.Behaviour().(interface{ NameTaggable() bool })
+	return ok && n.NameTaggable()
 }
 
 // invisibleBehaviour may be implemented by a Behaviour to make its Ent report itself invisible to

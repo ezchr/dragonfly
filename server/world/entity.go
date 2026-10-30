@@ -542,6 +542,7 @@ type EntityRegistryConfig struct {
 	Arrow              func(opts EntitySpawnOpts, conf ArrowSpawnConfig) *EntityHandle
 	Egg                func(opts EntitySpawnOpts, owner Entity) *EntityHandle
 	EndCrystal         func(opts EntitySpawnOpts) *EntityHandle
+	ArmourStand        func(opts EntitySpawnOpts) *EntityHandle
 	EnderPearl         func(opts EntitySpawnOpts, owner Entity) *EntityHandle
 	Firework           func(opts EntitySpawnOpts, firework Item, owner Entity, sidewaysVelocityMultiplier, upwardsAcceleration float64, attached bool) *EntityHandle
 	LingeringPotion    func(opts EntitySpawnOpts, t any, owner Entity) *EntityHandle

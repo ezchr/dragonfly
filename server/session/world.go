@@ -830,6 +830,19 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 		}
 		s.playNamedSound(pos, name, 0.5, 0.9+0.1*rand.Float32())
 		return
+	case sound.ArmourStandPlace:
+		s.writePacket(&packet.LevelEvent{EventType: packet.LevelEventSoundArmorStandPlace, Position: vec64To32(pos)})
+		return
+	case sound.ArmourStandHit:
+		s.writePacket(&packet.LevelEvent{EventType: packet.LevelEventSoundArmorStandHit, Position: vec64To32(pos)})
+		return
+	case sound.ArmourStandLand:
+		s.writePacket(&packet.LevelEvent{EventType: packet.LevelEventSoundArmorStandLand, Position: vec64To32(pos)})
+		return
+	case sound.ArmourStandBreak:
+		s.writePacket(&packet.LevelEvent{EventType: packet.LevelEventParticlesDestroyArmorStand, Position: vec64To32(pos), EventData: 1})
+		s.writePacket(&packet.LevelEvent{EventType: packet.LevelEventSoundArmorStandBreak, Position: vec64To32(pos)})
+		return
 	case sound.CushionPlace:
 		pk.SoundType, pk.EntityType = packet.SoundEventSpawn, "minecraft:cushion"
 	case sound.CushionSit:
