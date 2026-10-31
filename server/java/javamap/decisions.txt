@@ -4594,8 +4594,71 @@ B	chorus_flower age	chorus_flower age	geyser
 	3	3
 	4	4
 	5	5
-B	chorus_plant -	chorus_plant down east north south up west	geyser
-	-	false false false false false false
+B	chorus_plant minecraft:connection_down minecraft:connection_east minecraft:connection_north minecraft:connection_south minecraft:connection_up minecraft:connection_west	chorus_plant down east north south up west	auto:siblings
+	0 0 0 0 0 0	true false false false true false
+	0 0 0 0 0 1	true false false false true true
+	0 0 0 0 1 0	true false false false true false
+	0 0 0 0 1 1	true false false false true true
+	0 0 0 1 0 0	true false false true true false
+	0 0 0 1 0 1	true false false true true true
+	0 0 0 1 1 0	true false false true true false
+	0 0 0 1 1 1	true false false true true true
+	0 0 1 0 0 0	true false true false true false
+	0 0 1 0 0 1	true false true false true true
+	0 0 1 0 1 0	true false true false true false
+	0 0 1 0 1 1	true false true false true true
+	0 0 1 1 0 0	true false true true true false
+	0 0 1 1 0 1	true false true true true true
+	0 0 1 1 1 0	true false true true true false
+	0 0 1 1 1 1	true false true true true true
+	0 1 0 0 0 0	true true false false true false
+	0 1 0 0 0 1	true true false false true true
+	0 1 0 0 1 0	true true false false true false
+	0 1 0 0 1 1	true true false false true true
+	0 1 0 1 0 0	true true false true true false
+	0 1 0 1 0 1	true true false true true true
+	0 1 0 1 1 0	true true false true true false
+	0 1 0 1 1 1	true true false true true true
+	0 1 1 0 0 0	true true true false true false
+	0 1 1 0 0 1	true true true false true true
+	0 1 1 0 1 0	true true true false true false
+	0 1 1 0 1 1	true true true false true true
+	0 1 1 1 0 0	true true true true true false
+	0 1 1 1 0 1	true true true true true true
+	0 1 1 1 1 0	true true true true true false
+	0 1 1 1 1 1	true true true true true true
+	1 0 0 0 0 0	true false false false true false
+	1 0 0 0 0 1	true false false false true true
+	1 0 0 0 1 0	true false false false true false
+	1 0 0 0 1 1	true false false false true true
+	1 0 0 1 0 0	true false false true true false
+	1 0 0 1 0 1	true false false true true true
+	1 0 0 1 1 0	true false false true true false
+	1 0 0 1 1 1	true false false true true true
+	1 0 1 0 0 0	true false true false true false
+	1 0 1 0 0 1	true false true false true true
+	1 0 1 0 1 0	true false true false true false
+	1 0 1 0 1 1	true false true false true true
+	1 0 1 1 0 0	true false true true true false
+	1 0 1 1 0 1	true false true true true true
+	1 0 1 1 1 0	true false true true true false
+	1 0 1 1 1 1	true false true true true true
+	1 1 0 0 0 0	true true false false true false
+	1 1 0 0 0 1	true true false false true true
+	1 1 0 0 1 0	true true false false true false
+	1 1 0 0 1 1	true true false false true true
+	1 1 0 1 0 0	true true false true true false
+	1 1 0 1 0 1	true true false true true true
+	1 1 0 1 1 0	true true false true true false
+	1 1 0 1 1 1	true true false true true true
+	1 1 1 0 0 0	true true true false true false
+	1 1 1 0 0 1	true true true false true true
+	1 1 1 0 1 0	true true true false true false
+	1 1 1 0 1 1	true true true false true true
+	1 1 1 1 0 0	true true true true true false
+	1 1 1 1 0 1	true true true true true true
+	1 1 1 1 1 0	true true true true true false
+	1 1 1 1 1 1	true true true true true true
 B	cinnabar -	cinnabar -	geyser
 	-	-
 B	cinnabar_brick_double_slab minecraft:vertical_half	cinnabar_brick_slab type waterlogged	geyser
@@ -7974,6 +8037,11 @@ B	dirt -	dirt -	geyser
 	-	-
 B	dirt_with_roots -	rooted_dirt -	geyser
 	-	-
+B	disc_press minecraft:cardinal_direction	stone -	miss
+	"east"	-
+	"north"	-
+	"south"	-
+	"west"	-
 B	dispenser facing_direction triggered_bit	dispenser facing triggered	geyser
 	0 0	down false
 	0 1	down true
@@ -8706,23 +8774,519 @@ B	fence_gate in_wall_bit minecraft:cardinal_direction open_bit	oak_fence_gate fa
 	1 "west" 1	west true true false
 B	fern -	fern -	geyser
 	-	-
-B	fire age	fire age east north south up west	geyser
-	0	0 false false false false false
-	1	1 false false false false false
-	10	10 false false false false false
-	11	11 false false false false false
-	12	12 false false false false false
-	13	13 false false false false false
-	14	14 false false false false false
-	15	15 false false false false false
-	2	2 false false false false false
-	3	3 false false false false false
-	4	4 false false false false false
-	5	5 false false false false false
-	6	6 false false false false false
-	7	7 false false false false false
-	8	8 false false false false false
-	9	9 false false false false false
+B	fire age minecraft:connection_east minecraft:connection_north minecraft:connection_south minecraft:connection_up minecraft:connection_west	fire age east north south up west	auto:siblings
+	0 0 0 0 0 0	0 false false false false false
+	0 0 0 0 0 1	0 false false false false false
+	0 0 0 0 1 0	0 false false false false false
+	0 0 0 0 1 1	0 false false false false false
+	0 0 0 1 0 0	0 false false false false false
+	0 0 0 1 0 1	0 false false false false false
+	0 0 0 1 1 0	0 false false false false false
+	0 0 0 1 1 1	0 false false false false false
+	0 0 1 0 0 0	0 false false false false false
+	0 0 1 0 0 1	0 false false false false false
+	0 0 1 0 1 0	0 false false false false false
+	0 0 1 0 1 1	0 false false false false false
+	0 0 1 1 0 0	0 false false false false false
+	0 0 1 1 0 1	0 false false false false false
+	0 0 1 1 1 0	0 false false false false false
+	0 0 1 1 1 1	0 false false false false false
+	0 1 0 0 0 0	0 false false false false false
+	0 1 0 0 0 1	0 false false false false false
+	0 1 0 0 1 0	0 false false false false false
+	0 1 0 0 1 1	0 false false false false false
+	0 1 0 1 0 0	0 false false false false false
+	0 1 0 1 0 1	0 false false false false false
+	0 1 0 1 1 0	0 false false false false false
+	0 1 0 1 1 1	0 false false false false false
+	0 1 1 0 0 0	0 false false false false false
+	0 1 1 0 0 1	0 false false false false false
+	0 1 1 0 1 0	0 false false false false false
+	0 1 1 0 1 1	0 false false false false false
+	0 1 1 1 0 0	0 false false false false false
+	0 1 1 1 0 1	0 false false false false false
+	0 1 1 1 1 0	0 false false false false false
+	0 1 1 1 1 1	0 false false false false false
+	1 0 0 0 0 0	1 false false false false false
+	1 0 0 0 0 1	1 false false false false false
+	1 0 0 0 1 0	1 false false false false false
+	1 0 0 0 1 1	1 false false false false false
+	1 0 0 1 0 0	1 false false false false false
+	1 0 0 1 0 1	1 false false false false false
+	1 0 0 1 1 0	1 false false false false false
+	1 0 0 1 1 1	1 false false false false false
+	1 0 1 0 0 0	1 false false false false false
+	1 0 1 0 0 1	1 false false false false false
+	1 0 1 0 1 0	1 false false false false false
+	1 0 1 0 1 1	1 false false false false false
+	1 0 1 1 0 0	1 false false false false false
+	1 0 1 1 0 1	1 false false false false false
+	1 0 1 1 1 0	1 false false false false false
+	1 0 1 1 1 1	1 false false false false false
+	1 1 0 0 0 0	1 false false false false false
+	1 1 0 0 0 1	1 false false false false false
+	1 1 0 0 1 0	1 false false false false false
+	1 1 0 0 1 1	1 false false false false false
+	1 1 0 1 0 0	1 false false false false false
+	1 1 0 1 0 1	1 false false false false false
+	1 1 0 1 1 0	1 false false false false false
+	1 1 0 1 1 1	1 false false false false false
+	1 1 1 0 0 0	1 false false false false false
+	1 1 1 0 0 1	1 false false false false false
+	1 1 1 0 1 0	1 false false false false false
+	1 1 1 0 1 1	1 false false false false false
+	1 1 1 1 0 0	1 false false false false false
+	1 1 1 1 0 1	1 false false false false false
+	1 1 1 1 1 0	1 false false false false false
+	1 1 1 1 1 1	1 false false false false false
+	10 0 0 0 0 0	10 false false false false false
+	10 0 0 0 0 1	10 false false false false false
+	10 0 0 0 1 0	10 false false false false false
+	10 0 0 0 1 1	10 false false false false false
+	10 0 0 1 0 0	10 false false false false false
+	10 0 0 1 0 1	10 false false false false false
+	10 0 0 1 1 0	10 false false false false false
+	10 0 0 1 1 1	10 false false false false false
+	10 0 1 0 0 0	10 false false false false false
+	10 0 1 0 0 1	10 false false false false false
+	10 0 1 0 1 0	10 false false false false false
+	10 0 1 0 1 1	10 false false false false false
+	10 0 1 1 0 0	10 false false false false false
+	10 0 1 1 0 1	10 false false false false false
+	10 0 1 1 1 0	10 false false false false false
+	10 0 1 1 1 1	10 false false false false false
+	10 1 0 0 0 0	10 false false false false false
+	10 1 0 0 0 1	10 false false false false false
+	10 1 0 0 1 0	10 false false false false false
+	10 1 0 0 1 1	10 false false false false false
+	10 1 0 1 0 0	10 false false false false false
+	10 1 0 1 0 1	10 false false false false false
+	10 1 0 1 1 0	10 false false false false false
+	10 1 0 1 1 1	10 false false false false false
+	10 1 1 0 0 0	10 false false false false false
+	10 1 1 0 0 1	10 false false false false false
+	10 1 1 0 1 0	10 false false false false false
+	10 1 1 0 1 1	10 false false false false false
+	10 1 1 1 0 0	10 false false false false false
+	10 1 1 1 0 1	10 false false false false false
+	10 1 1 1 1 0	10 false false false false false
+	10 1 1 1 1 1	10 false false false false false
+	11 0 0 0 0 0	11 false false false false false
+	11 0 0 0 0 1	11 false false false false false
+	11 0 0 0 1 0	11 false false false false false
+	11 0 0 0 1 1	11 false false false false false
+	11 0 0 1 0 0	11 false false false false false
+	11 0 0 1 0 1	11 false false false false false
+	11 0 0 1 1 0	11 false false false false false
+	11 0 0 1 1 1	11 false false false false false
+	11 0 1 0 0 0	11 false false false false false
+	11 0 1 0 0 1	11 false false false false false
+	11 0 1 0 1 0	11 false false false false false
+	11 0 1 0 1 1	11 false false false false false
+	11 0 1 1 0 0	11 false false false false false
+	11 0 1 1 0 1	11 false false false false false
+	11 0 1 1 1 0	11 false false false false false
+	11 0 1 1 1 1	11 false false false false false
+	11 1 0 0 0 0	11 false false false false false
+	11 1 0 0 0 1	11 false false false false false
+	11 1 0 0 1 0	11 false false false false false
+	11 1 0 0 1 1	11 false false false false false
+	11 1 0 1 0 0	11 false false false false false
+	11 1 0 1 0 1	11 false false false false false
+	11 1 0 1 1 0	11 false false false false false
+	11 1 0 1 1 1	11 false false false false false
+	11 1 1 0 0 0	11 false false false false false
+	11 1 1 0 0 1	11 false false false false false
+	11 1 1 0 1 0	11 false false false false false
+	11 1 1 0 1 1	11 false false false false false
+	11 1 1 1 0 0	11 false false false false false
+	11 1 1 1 0 1	11 false false false false false
+	11 1 1 1 1 0	11 false false false false false
+	11 1 1 1 1 1	11 false false false false false
+	12 0 0 0 0 0	12 false false false false false
+	12 0 0 0 0 1	12 false false false false false
+	12 0 0 0 1 0	12 false false false false false
+	12 0 0 0 1 1	12 false false false false false
+	12 0 0 1 0 0	12 false false false false false
+	12 0 0 1 0 1	12 false false false false false
+	12 0 0 1 1 0	12 false false false false false
+	12 0 0 1 1 1	12 false false false false false
+	12 0 1 0 0 0	12 false false false false false
+	12 0 1 0 0 1	12 false false false false false
+	12 0 1 0 1 0	12 false false false false false
+	12 0 1 0 1 1	12 false false false false false
+	12 0 1 1 0 0	12 false false false false false
+	12 0 1 1 0 1	12 false false false false false
+	12 0 1 1 1 0	12 false false false false false
+	12 0 1 1 1 1	12 false false false false false
+	12 1 0 0 0 0	12 false false false false false
+	12 1 0 0 0 1	12 false false false false false
+	12 1 0 0 1 0	12 false false false false false
+	12 1 0 0 1 1	12 false false false false false
+	12 1 0 1 0 0	12 false false false false false
+	12 1 0 1 0 1	12 false false false false false
+	12 1 0 1 1 0	12 false false false false false
+	12 1 0 1 1 1	12 false false false false false
+	12 1 1 0 0 0	12 false false false false false
+	12 1 1 0 0 1	12 false false false false false
+	12 1 1 0 1 0	12 false false false false false
+	12 1 1 0 1 1	12 false false false false false
+	12 1 1 1 0 0	12 false false false false false
+	12 1 1 1 0 1	12 false false false false false
+	12 1 1 1 1 0	12 false false false false false
+	12 1 1 1 1 1	12 false false false false false
+	13 0 0 0 0 0	13 false false false false false
+	13 0 0 0 0 1	13 false false false false false
+	13 0 0 0 1 0	13 false false false false false
+	13 0 0 0 1 1	13 false false false false false
+	13 0 0 1 0 0	13 false false false false false
+	13 0 0 1 0 1	13 false false false false false
+	13 0 0 1 1 0	13 false false false false false
+	13 0 0 1 1 1	13 false false false false false
+	13 0 1 0 0 0	13 false false false false false
+	13 0 1 0 0 1	13 false false false false false
+	13 0 1 0 1 0	13 false false false false false
+	13 0 1 0 1 1	13 false false false false false
+	13 0 1 1 0 0	13 false false false false false
+	13 0 1 1 0 1	13 false false false false false
+	13 0 1 1 1 0	13 false false false false false
+	13 0 1 1 1 1	13 false false false false false
+	13 1 0 0 0 0	13 false false false false false
+	13 1 0 0 0 1	13 false false false false false
+	13 1 0 0 1 0	13 false false false false false
+	13 1 0 0 1 1	13 false false false false false
+	13 1 0 1 0 0	13 false false false false false
+	13 1 0 1 0 1	13 false false false false false
+	13 1 0 1 1 0	13 false false false false false
+	13 1 0 1 1 1	13 false false false false false
+	13 1 1 0 0 0	13 false false false false false
+	13 1 1 0 0 1	13 false false false false false
+	13 1 1 0 1 0	13 false false false false false
+	13 1 1 0 1 1	13 false false false false false
+	13 1 1 1 0 0	13 false false false false false
+	13 1 1 1 0 1	13 false false false false false
+	13 1 1 1 1 0	13 false false false false false
+	13 1 1 1 1 1	13 false false false false false
+	14 0 0 0 0 0	14 false false false false false
+	14 0 0 0 0 1	14 false false false false false
+	14 0 0 0 1 0	14 false false false false false
+	14 0 0 0 1 1	14 false false false false false
+	14 0 0 1 0 0	14 false false false false false
+	14 0 0 1 0 1	14 false false false false false
+	14 0 0 1 1 0	14 false false false false false
+	14 0 0 1 1 1	14 false false false false false
+	14 0 1 0 0 0	14 false false false false false
+	14 0 1 0 0 1	14 false false false false false
+	14 0 1 0 1 0	14 false false false false false
+	14 0 1 0 1 1	14 false false false false false
+	14 0 1 1 0 0	14 false false false false false
+	14 0 1 1 0 1	14 false false false false false
+	14 0 1 1 1 0	14 false false false false false
+	14 0 1 1 1 1	14 false false false false false
+	14 1 0 0 0 0	14 false false false false false
+	14 1 0 0 0 1	14 false false false false false
+	14 1 0 0 1 0	14 false false false false false
+	14 1 0 0 1 1	14 false false false false false
+	14 1 0 1 0 0	14 false false false false false
+	14 1 0 1 0 1	14 false false false false false
+	14 1 0 1 1 0	14 false false false false false
+	14 1 0 1 1 1	14 false false false false false
+	14 1 1 0 0 0	14 false false false false false
+	14 1 1 0 0 1	14 false false false false false
+	14 1 1 0 1 0	14 false false false false false
+	14 1 1 0 1 1	14 false false false false false
+	14 1 1 1 0 0	14 false false false false false
+	14 1 1 1 0 1	14 false false false false false
+	14 1 1 1 1 0	14 false false false false false
+	14 1 1 1 1 1	14 false false false false false
+	15 0 0 0 0 0	15 false false false false false
+	15 0 0 0 0 1	15 false false false false false
+	15 0 0 0 1 0	15 false false false false false
+	15 0 0 0 1 1	15 false false false false false
+	15 0 0 1 0 0	15 false false false false false
+	15 0 0 1 0 1	15 false false false false false
+	15 0 0 1 1 0	15 false false false false false
+	15 0 0 1 1 1	15 false false false false false
+	15 0 1 0 0 0	15 false false false false false
+	15 0 1 0 0 1	15 false false false false false
+	15 0 1 0 1 0	15 false false false false false
+	15 0 1 0 1 1	15 false false false false false
+	15 0 1 1 0 0	15 false false false false false
+	15 0 1 1 0 1	15 false false false false false
+	15 0 1 1 1 0	15 false false false false false
+	15 0 1 1 1 1	15 false false false false false
+	15 1 0 0 0 0	15 false false false false false
+	15 1 0 0 0 1	15 false false false false false
+	15 1 0 0 1 0	15 false false false false false
+	15 1 0 0 1 1	15 false false false false false
+	15 1 0 1 0 0	15 false false false false false
+	15 1 0 1 0 1	15 false false false false false
+	15 1 0 1 1 0	15 false false false false false
+	15 1 0 1 1 1	15 false false false false false
+	15 1 1 0 0 0	15 false false false false false
+	15 1 1 0 0 1	15 false false false false false
+	15 1 1 0 1 0	15 false false false false false
+	15 1 1 0 1 1	15 false false false false false
+	15 1 1 1 0 0	15 false false false false false
+	15 1 1 1 0 1	15 false false false false false
+	15 1 1 1 1 0	15 false false false false false
+	15 1 1 1 1 1	15 false false false false false
+	2 0 0 0 0 0	2 false false false false false
+	2 0 0 0 0 1	2 false false false false false
+	2 0 0 0 1 0	2 false false false false false
+	2 0 0 0 1 1	2 false false false false false
+	2 0 0 1 0 0	2 false false false false false
+	2 0 0 1 0 1	2 false false false false false
+	2 0 0 1 1 0	2 false false false false false
+	2 0 0 1 1 1	2 false false false false false
+	2 0 1 0 0 0	2 false false false false false
+	2 0 1 0 0 1	2 false false false false false
+	2 0 1 0 1 0	2 false false false false false
+	2 0 1 0 1 1	2 false false false false false
+	2 0 1 1 0 0	2 false false false false false
+	2 0 1 1 0 1	2 false false false false false
+	2 0 1 1 1 0	2 false false false false false
+	2 0 1 1 1 1	2 false false false false false
+	2 1 0 0 0 0	2 false false false false false
+	2 1 0 0 0 1	2 false false false false false
+	2 1 0 0 1 0	2 false false false false false
+	2 1 0 0 1 1	2 false false false false false
+	2 1 0 1 0 0	2 false false false false false
+	2 1 0 1 0 1	2 false false false false false
+	2 1 0 1 1 0	2 false false false false false
+	2 1 0 1 1 1	2 false false false false false
+	2 1 1 0 0 0	2 false false false false false
+	2 1 1 0 0 1	2 false false false false false
+	2 1 1 0 1 0	2 false false false false false
+	2 1 1 0 1 1	2 false false false false false
+	2 1 1 1 0 0	2 false false false false false
+	2 1 1 1 0 1	2 false false false false false
+	2 1 1 1 1 0	2 false false false false false
+	2 1 1 1 1 1	2 false false false false false
+	3 0 0 0 0 0	3 false false false false false
+	3 0 0 0 0 1	3 false false false false false
+	3 0 0 0 1 0	3 false false false false false
+	3 0 0 0 1 1	3 false false false false false
+	3 0 0 1 0 0	3 false false false false false
+	3 0 0 1 0 1	3 false false false false false
+	3 0 0 1 1 0	3 false false false false false
+	3 0 0 1 1 1	3 false false false false false
+	3 0 1 0 0 0	3 false false false false false
+	3 0 1 0 0 1	3 false false false false false
+	3 0 1 0 1 0	3 false false false false false
+	3 0 1 0 1 1	3 false false false false false
+	3 0 1 1 0 0	3 false false false false false
+	3 0 1 1 0 1	3 false false false false false
+	3 0 1 1 1 0	3 false false false false false
+	3 0 1 1 1 1	3 false false false false false
+	3 1 0 0 0 0	3 false false false false false
+	3 1 0 0 0 1	3 false false false false false
+	3 1 0 0 1 0	3 false false false false false
+	3 1 0 0 1 1	3 false false false false false
+	3 1 0 1 0 0	3 false false false false false
+	3 1 0 1 0 1	3 false false false false false
+	3 1 0 1 1 0	3 false false false false false
+	3 1 0 1 1 1	3 false false false false false
+	3 1 1 0 0 0	3 false false false false false
+	3 1 1 0 0 1	3 false false false false false
+	3 1 1 0 1 0	3 false false false false false
+	3 1 1 0 1 1	3 false false false false false
+	3 1 1 1 0 0	3 false false false false false
+	3 1 1 1 0 1	3 false false false false false
+	3 1 1 1 1 0	3 false false false false false
+	3 1 1 1 1 1	3 false false false false false
+	4 0 0 0 0 0	4 false false false false false
+	4 0 0 0 0 1	4 false false false false false
+	4 0 0 0 1 0	4 false false false false false
+	4 0 0 0 1 1	4 false false false false false
+	4 0 0 1 0 0	4 false false false false false
+	4 0 0 1 0 1	4 false false false false false
+	4 0 0 1 1 0	4 false false false false false
+	4 0 0 1 1 1	4 false false false false false
+	4 0 1 0 0 0	4 false false false false false
+	4 0 1 0 0 1	4 false false false false false
+	4 0 1 0 1 0	4 false false false false false
+	4 0 1 0 1 1	4 false false false false false
+	4 0 1 1 0 0	4 false false false false false
+	4 0 1 1 0 1	4 false false false false false
+	4 0 1 1 1 0	4 false false false false false
+	4 0 1 1 1 1	4 false false false false false
+	4 1 0 0 0 0	4 false false false false false
+	4 1 0 0 0 1	4 false false false false false
+	4 1 0 0 1 0	4 false false false false false
+	4 1 0 0 1 1	4 false false false false false
+	4 1 0 1 0 0	4 false false false false false
+	4 1 0 1 0 1	4 false false false false false
+	4 1 0 1 1 0	4 false false false false false
+	4 1 0 1 1 1	4 false false false false false
+	4 1 1 0 0 0	4 false false false false false
+	4 1 1 0 0 1	4 false false false false false
+	4 1 1 0 1 0	4 false false false false false
+	4 1 1 0 1 1	4 false false false false false
+	4 1 1 1 0 0	4 false false false false false
+	4 1 1 1 0 1	4 false false false false false
+	4 1 1 1 1 0	4 false false false false false
+	4 1 1 1 1 1	4 false false false false false
+	5 0 0 0 0 0	5 false false false false false
+	5 0 0 0 0 1	5 false false false false false
+	5 0 0 0 1 0	5 false false false false false
+	5 0 0 0 1 1	5 false false false false false
+	5 0 0 1 0 0	5 false false false false false
+	5 0 0 1 0 1	5 false false false false false
+	5 0 0 1 1 0	5 false false false false false
+	5 0 0 1 1 1	5 false false false false false
+	5 0 1 0 0 0	5 false false false false false
+	5 0 1 0 0 1	5 false false false false false
+	5 0 1 0 1 0	5 false false false false false
+	5 0 1 0 1 1	5 false false false false false
+	5 0 1 1 0 0	5 false false false false false
+	5 0 1 1 0 1	5 false false false false false
+	5 0 1 1 1 0	5 false false false false false
+	5 0 1 1 1 1	5 false false false false false
+	5 1 0 0 0 0	5 false false false false false
+	5 1 0 0 0 1	5 false false false false false
+	5 1 0 0 1 0	5 false false false false false
+	5 1 0 0 1 1	5 false false false false false
+	5 1 0 1 0 0	5 false false false false false
+	5 1 0 1 0 1	5 false false false false false
+	5 1 0 1 1 0	5 false false false false false
+	5 1 0 1 1 1	5 false false false false false
+	5 1 1 0 0 0	5 false false false false false
+	5 1 1 0 0 1	5 false false false false false
+	5 1 1 0 1 0	5 false false false false false
+	5 1 1 0 1 1	5 false false false false false
+	5 1 1 1 0 0	5 false false false false false
+	5 1 1 1 0 1	5 false false false false false
+	5 1 1 1 1 0	5 false false false false false
+	5 1 1 1 1 1	5 false false false false false
+	6 0 0 0 0 0	6 false false false false false
+	6 0 0 0 0 1	6 false false false false false
+	6 0 0 0 1 0	6 false false false false false
+	6 0 0 0 1 1	6 false false false false false
+	6 0 0 1 0 0	6 false false false false false
+	6 0 0 1 0 1	6 false false false false false
+	6 0 0 1 1 0	6 false false false false false
+	6 0 0 1 1 1	6 false false false false false
+	6 0 1 0 0 0	6 false false false false false
+	6 0 1 0 0 1	6 false false false false false
+	6 0 1 0 1 0	6 false false false false false
+	6 0 1 0 1 1	6 false false false false false
+	6 0 1 1 0 0	6 false false false false false
+	6 0 1 1 0 1	6 false false false false false
+	6 0 1 1 1 0	6 false false false false false
+	6 0 1 1 1 1	6 false false false false false
+	6 1 0 0 0 0	6 false false false false false
+	6 1 0 0 0 1	6 false false false false false
+	6 1 0 0 1 0	6 false false false false false
+	6 1 0 0 1 1	6 false false false false false
+	6 1 0 1 0 0	6 false false false false false
+	6 1 0 1 0 1	6 false false false false false
+	6 1 0 1 1 0	6 false false false false false
+	6 1 0 1 1 1	6 false false false false false
+	6 1 1 0 0 0	6 false false false false false
+	6 1 1 0 0 1	6 false false false false false
+	6 1 1 0 1 0	6 false false false false false
+	6 1 1 0 1 1	6 false false false false false
+	6 1 1 1 0 0	6 false false false false false
+	6 1 1 1 0 1	6 false false false false false
+	6 1 1 1 1 0	6 false false false false false
+	6 1 1 1 1 1	6 false false false false false
+	7 0 0 0 0 0	7 false false false false false
+	7 0 0 0 0 1	7 false false false false false
+	7 0 0 0 1 0	7 false false false false false
+	7 0 0 0 1 1	7 false false false false false
+	7 0 0 1 0 0	7 false false false false false
+	7 0 0 1 0 1	7 false false false false false
+	7 0 0 1 1 0	7 false false false false false
+	7 0 0 1 1 1	7 false false false false false
+	7 0 1 0 0 0	7 false false false false false
+	7 0 1 0 0 1	7 false false false false false
+	7 0 1 0 1 0	7 false false false false false
+	7 0 1 0 1 1	7 false false false false false
+	7 0 1 1 0 0	7 false false false false false
+	7 0 1 1 0 1	7 false false false false false
+	7 0 1 1 1 0	7 false false false false false
+	7 0 1 1 1 1	7 false false false false false
+	7 1 0 0 0 0	7 false false false false false
+	7 1 0 0 0 1	7 false false false false false
+	7 1 0 0 1 0	7 false false false false false
+	7 1 0 0 1 1	7 false false false false false
+	7 1 0 1 0 0	7 false false false false false
+	7 1 0 1 0 1	7 false false false false false
+	7 1 0 1 1 0	7 false false false false false
+	7 1 0 1 1 1	7 false false false false false
+	7 1 1 0 0 0	7 false false false false false
+	7 1 1 0 0 1	7 false false false false false
+	7 1 1 0 1 0	7 false false false false false
+	7 1 1 0 1 1	7 false false false false false
+	7 1 1 1 0 0	7 false false false false false
+	7 1 1 1 0 1	7 false false false false false
+	7 1 1 1 1 0	7 false false false false false
+	7 1 1 1 1 1	7 false false false false false
+	8 0 0 0 0 0	8 false false false false false
+	8 0 0 0 0 1	8 false false false false false
+	8 0 0 0 1 0	8 false false false false false
+	8 0 0 0 1 1	8 false false false false false
+	8 0 0 1 0 0	8 false false false false false
+	8 0 0 1 0 1	8 false false false false false
+	8 0 0 1 1 0	8 false false false false false
+	8 0 0 1 1 1	8 false false false false false
+	8 0 1 0 0 0	8 false false false false false
+	8 0 1 0 0 1	8 false false false false false
+	8 0 1 0 1 0	8 false false false false false
+	8 0 1 0 1 1	8 false false false false false
+	8 0 1 1 0 0	8 false false false false false
+	8 0 1 1 0 1	8 false false false false false
+	8 0 1 1 1 0	8 false false false false false
+	8 0 1 1 1 1	8 false false false false false
+	8 1 0 0 0 0	8 false false false false false
+	8 1 0 0 0 1	8 false false false false false
+	8 1 0 0 1 0	8 false false false false false
+	8 1 0 0 1 1	8 false false false false false
+	8 1 0 1 0 0	8 false false false false false
+	8 1 0 1 0 1	8 false false false false false
+	8 1 0 1 1 0	8 false false false false false
+	8 1 0 1 1 1	8 false false false false false
+	8 1 1 0 0 0	8 false false false false false
+	8 1 1 0 0 1	8 false false false false false
+	8 1 1 0 1 0	8 false false false false false
+	8 1 1 0 1 1	8 false false false false false
+	8 1 1 1 0 0	8 false false false false false
+	8 1 1 1 0 1	8 false false false false false
+	8 1 1 1 1 0	8 false false false false false
+	8 1 1 1 1 1	8 false false false false false
+	9 0 0 0 0 0	9 false false false false false
+	9 0 0 0 0 1	9 false false false false false
+	9 0 0 0 1 0	9 false false false false false
+	9 0 0 0 1 1	9 false false false false false
+	9 0 0 1 0 0	9 false false false false false
+	9 0 0 1 0 1	9 false false false false false
+	9 0 0 1 1 0	9 false false false false false
+	9 0 0 1 1 1	9 false false false false false
+	9 0 1 0 0 0	9 false false false false false
+	9 0 1 0 0 1	9 false false false false false
+	9 0 1 0 1 0	9 false false false false false
+	9 0 1 0 1 1	9 false false false false false
+	9 0 1 1 0 0	9 false false false false false
+	9 0 1 1 0 1	9 false false false false false
+	9 0 1 1 1 0	9 false false false false false
+	9 0 1 1 1 1	9 false false false false false
+	9 1 0 0 0 0	9 false false false false false
+	9 1 0 0 0 1	9 false false false false false
+	9 1 0 0 1 0	9 false false false false false
+	9 1 0 0 1 1	9 false false false false false
+	9 1 0 1 0 0	9 false false false false false
+	9 1 0 1 0 1	9 false false false false false
+	9 1 0 1 1 0	9 false false false false false
+	9 1 0 1 1 1	9 false false false false false
+	9 1 1 0 0 0	9 false false false false false
+	9 1 1 0 0 1	9 false false false false false
+	9 1 1 0 1 0	9 false false false false false
+	9 1 1 0 1 1	9 false false false false false
+	9 1 1 1 0 0	9 false false false false false
+	9 1 1 1 0 1	9 false false false false false
+	9 1 1 1 1 0	9 false false false false false
+	9 1 1 1 1 1	9 false false false false false
 B	fire_coral -	fire_coral waterlogged	geyser
 	-	false
 B	fire_coral_block -	fire_coral_block -	geyser
@@ -9862,6 +10426,34 @@ B	horn_coral_wall_fan coral_direction	horn_coral_wall_fan facing waterlogged	gey
 	3	south false
 B	ice -	ice -	geyser
 	-	-
+B	ice_crystal minecraft:block_face	stone -	miss
+	"down"	-
+	"east"	-
+	"north"	-
+	"south"	-
+	"up"	-
+	"west"	-
+B	icicle attached_bit dripstone_thickness hanging	stone -	miss
+	0 "base" 0	-
+	0 "base" 1	-
+	0 "frustum" 0	-
+	0 "frustum" 1	-
+	0 "merge" 0	-
+	0 "merge" 1	-
+	0 "middle" 0	-
+	0 "middle" 1	-
+	0 "tip" 0	-
+	0 "tip" 1	-
+	1 "base" 0	-
+	1 "base" 1	-
+	1 "frustum" 0	-
+	1 "frustum" 1	-
+	1 "merge" 0	-
+	1 "merge" 1	-
+	1 "middle" 0	-
+	1 "middle" 1	-
+	1 "tip" 0	-
+	1 "tip" 1	-
 B	infested_chiseled_stone_bricks -	infested_chiseled_stone_bricks -	geyser
 	-	-
 B	infested_cobblestone -	infested_cobblestone -	geyser
@@ -18272,23 +18864,1303 @@ B	redstone_torch torch_facing_direction	redstone_wall_torch facing lit	geyser
 	"top"	@redstone_torch[lit=true]
 	"unknown"	@redstone_torch[lit=true]
 	"west"	east true
-B	redstone_wire redstone_signal	redstone_wire east north power south west	geyser
-	0	none none 0 none none
-	1	none none 1 none none
-	10	none none 10 none none
-	11	none none 11 none none
-	12	none none 12 none none
-	13	none none 13 none none
-	14	none none 14 none none
-	15	none none 15 none none
-	2	none none 2 none none
-	3	none none 3 none none
-	4	none none 4 none none
-	5	none none 5 none none
-	6	none none 6 none none
-	7	none none 7 none none
-	8	none none 8 none none
-	9	none none 9 none none
+B	redstone_wire redstone_east redstone_north redstone_signal redstone_south redstone_west	redstone_wire east north power south west	auto:siblings
+	"none" "none" 0 "none" "none"	none none 0 none none
+	"none" "none" 0 "none" "side"	none none 0 none none
+	"none" "none" 0 "none" "up"	none none 0 none none
+	"none" "none" 0 "side" "none"	none none 0 none none
+	"none" "none" 0 "side" "side"	none none 0 none none
+	"none" "none" 0 "side" "up"	none none 0 none none
+	"none" "none" 0 "up" "none"	none none 0 none none
+	"none" "none" 0 "up" "side"	none none 0 none none
+	"none" "none" 0 "up" "up"	none none 0 none none
+	"none" "none" 1 "none" "none"	none none 1 none none
+	"none" "none" 1 "none" "side"	none none 1 none none
+	"none" "none" 1 "none" "up"	none none 1 none none
+	"none" "none" 1 "side" "none"	none none 1 none none
+	"none" "none" 1 "side" "side"	none none 1 none none
+	"none" "none" 1 "side" "up"	none none 1 none none
+	"none" "none" 1 "up" "none"	none none 1 none none
+	"none" "none" 1 "up" "side"	none none 1 none none
+	"none" "none" 1 "up" "up"	none none 1 none none
+	"none" "none" 10 "none" "none"	none none 10 none none
+	"none" "none" 10 "none" "side"	none none 10 none none
+	"none" "none" 10 "none" "up"	none none 10 none none
+	"none" "none" 10 "side" "none"	none none 10 none none
+	"none" "none" 10 "side" "side"	none none 10 none none
+	"none" "none" 10 "side" "up"	none none 10 none none
+	"none" "none" 10 "up" "none"	none none 10 none none
+	"none" "none" 10 "up" "side"	none none 10 none none
+	"none" "none" 10 "up" "up"	none none 10 none none
+	"none" "none" 11 "none" "none"	none none 11 none none
+	"none" "none" 11 "none" "side"	none none 11 none none
+	"none" "none" 11 "none" "up"	none none 11 none none
+	"none" "none" 11 "side" "none"	none none 11 none none
+	"none" "none" 11 "side" "side"	none none 11 none none
+	"none" "none" 11 "side" "up"	none none 11 none none
+	"none" "none" 11 "up" "none"	none none 11 none none
+	"none" "none" 11 "up" "side"	none none 11 none none
+	"none" "none" 11 "up" "up"	none none 11 none none
+	"none" "none" 12 "none" "none"	none none 12 none none
+	"none" "none" 12 "none" "side"	none none 12 none none
+	"none" "none" 12 "none" "up"	none none 12 none none
+	"none" "none" 12 "side" "none"	none none 12 none none
+	"none" "none" 12 "side" "side"	none none 12 none none
+	"none" "none" 12 "side" "up"	none none 12 none none
+	"none" "none" 12 "up" "none"	none none 12 none none
+	"none" "none" 12 "up" "side"	none none 12 none none
+	"none" "none" 12 "up" "up"	none none 12 none none
+	"none" "none" 13 "none" "none"	none none 13 none none
+	"none" "none" 13 "none" "side"	none none 13 none none
+	"none" "none" 13 "none" "up"	none none 13 none none
+	"none" "none" 13 "side" "none"	none none 13 none none
+	"none" "none" 13 "side" "side"	none none 13 none none
+	"none" "none" 13 "side" "up"	none none 13 none none
+	"none" "none" 13 "up" "none"	none none 13 none none
+	"none" "none" 13 "up" "side"	none none 13 none none
+	"none" "none" 13 "up" "up"	none none 13 none none
+	"none" "none" 14 "none" "none"	none none 14 none none
+	"none" "none" 14 "none" "side"	none none 14 none none
+	"none" "none" 14 "none" "up"	none none 14 none none
+	"none" "none" 14 "side" "none"	none none 14 none none
+	"none" "none" 14 "side" "side"	none none 14 none none
+	"none" "none" 14 "side" "up"	none none 14 none none
+	"none" "none" 14 "up" "none"	none none 14 none none
+	"none" "none" 14 "up" "side"	none none 14 none none
+	"none" "none" 14 "up" "up"	none none 14 none none
+	"none" "none" 15 "none" "none"	none none 15 none none
+	"none" "none" 15 "none" "side"	none none 15 none none
+	"none" "none" 15 "none" "up"	none none 15 none none
+	"none" "none" 15 "side" "none"	none none 15 none none
+	"none" "none" 15 "side" "side"	none none 15 none none
+	"none" "none" 15 "side" "up"	none none 15 none none
+	"none" "none" 15 "up" "none"	none none 15 none none
+	"none" "none" 15 "up" "side"	none none 15 none none
+	"none" "none" 15 "up" "up"	none none 15 none none
+	"none" "none" 2 "none" "none"	none none 2 none none
+	"none" "none" 2 "none" "side"	none none 2 none none
+	"none" "none" 2 "none" "up"	none none 2 none none
+	"none" "none" 2 "side" "none"	none none 2 none none
+	"none" "none" 2 "side" "side"	none none 2 none none
+	"none" "none" 2 "side" "up"	none none 2 none none
+	"none" "none" 2 "up" "none"	none none 2 none none
+	"none" "none" 2 "up" "side"	none none 2 none none
+	"none" "none" 2 "up" "up"	none none 2 none none
+	"none" "none" 3 "none" "none"	none none 3 none none
+	"none" "none" 3 "none" "side"	none none 3 none none
+	"none" "none" 3 "none" "up"	none none 3 none none
+	"none" "none" 3 "side" "none"	none none 3 none none
+	"none" "none" 3 "side" "side"	none none 3 none none
+	"none" "none" 3 "side" "up"	none none 3 none none
+	"none" "none" 3 "up" "none"	none none 3 none none
+	"none" "none" 3 "up" "side"	none none 3 none none
+	"none" "none" 3 "up" "up"	none none 3 none none
+	"none" "none" 4 "none" "none"	none none 4 none none
+	"none" "none" 4 "none" "side"	none none 4 none none
+	"none" "none" 4 "none" "up"	none none 4 none none
+	"none" "none" 4 "side" "none"	none none 4 none none
+	"none" "none" 4 "side" "side"	none none 4 none none
+	"none" "none" 4 "side" "up"	none none 4 none none
+	"none" "none" 4 "up" "none"	none none 4 none none
+	"none" "none" 4 "up" "side"	none none 4 none none
+	"none" "none" 4 "up" "up"	none none 4 none none
+	"none" "none" 5 "none" "none"	none none 5 none none
+	"none" "none" 5 "none" "side"	none none 5 none none
+	"none" "none" 5 "none" "up"	none none 5 none none
+	"none" "none" 5 "side" "none"	none none 5 none none
+	"none" "none" 5 "side" "side"	none none 5 none none
+	"none" "none" 5 "side" "up"	none none 5 none none
+	"none" "none" 5 "up" "none"	none none 5 none none
+	"none" "none" 5 "up" "side"	none none 5 none none
+	"none" "none" 5 "up" "up"	none none 5 none none
+	"none" "none" 6 "none" "none"	none none 6 none none
+	"none" "none" 6 "none" "side"	none none 6 none none
+	"none" "none" 6 "none" "up"	none none 6 none none
+	"none" "none" 6 "side" "none"	none none 6 none none
+	"none" "none" 6 "side" "side"	none none 6 none none
+	"none" "none" 6 "side" "up"	none none 6 none none
+	"none" "none" 6 "up" "none"	none none 6 none none
+	"none" "none" 6 "up" "side"	none none 6 none none
+	"none" "none" 6 "up" "up"	none none 6 none none
+	"none" "none" 7 "none" "none"	none none 7 none none
+	"none" "none" 7 "none" "side"	none none 7 none none
+	"none" "none" 7 "none" "up"	none none 7 none none
+	"none" "none" 7 "side" "none"	none none 7 none none
+	"none" "none" 7 "side" "side"	none none 7 none none
+	"none" "none" 7 "side" "up"	none none 7 none none
+	"none" "none" 7 "up" "none"	none none 7 none none
+	"none" "none" 7 "up" "side"	none none 7 none none
+	"none" "none" 7 "up" "up"	none none 7 none none
+	"none" "none" 8 "none" "none"	none none 8 none none
+	"none" "none" 8 "none" "side"	none none 8 none none
+	"none" "none" 8 "none" "up"	none none 8 none none
+	"none" "none" 8 "side" "none"	none none 8 none none
+	"none" "none" 8 "side" "side"	none none 8 none none
+	"none" "none" 8 "side" "up"	none none 8 none none
+	"none" "none" 8 "up" "none"	none none 8 none none
+	"none" "none" 8 "up" "side"	none none 8 none none
+	"none" "none" 8 "up" "up"	none none 8 none none
+	"none" "none" 9 "none" "none"	none none 9 none none
+	"none" "none" 9 "none" "side"	none none 9 none none
+	"none" "none" 9 "none" "up"	none none 9 none none
+	"none" "none" 9 "side" "none"	none none 9 none none
+	"none" "none" 9 "side" "side"	none none 9 none none
+	"none" "none" 9 "side" "up"	none none 9 none none
+	"none" "none" 9 "up" "none"	none none 9 none none
+	"none" "none" 9 "up" "side"	none none 9 none none
+	"none" "none" 9 "up" "up"	none none 9 none none
+	"none" "side" 0 "none" "none"	none none 0 none none
+	"none" "side" 0 "none" "side"	none none 0 none none
+	"none" "side" 0 "none" "up"	none none 0 none none
+	"none" "side" 0 "side" "none"	none none 0 none none
+	"none" "side" 0 "side" "side"	none none 0 none none
+	"none" "side" 0 "side" "up"	none none 0 none none
+	"none" "side" 0 "up" "none"	none none 0 none none
+	"none" "side" 0 "up" "side"	none none 0 none none
+	"none" "side" 0 "up" "up"	none none 0 none none
+	"none" "side" 1 "none" "none"	none none 1 none none
+	"none" "side" 1 "none" "side"	none none 1 none none
+	"none" "side" 1 "none" "up"	none none 1 none none
+	"none" "side" 1 "side" "none"	none none 1 none none
+	"none" "side" 1 "side" "side"	none none 1 none none
+	"none" "side" 1 "side" "up"	none none 1 none none
+	"none" "side" 1 "up" "none"	none none 1 none none
+	"none" "side" 1 "up" "side"	none none 1 none none
+	"none" "side" 1 "up" "up"	none none 1 none none
+	"none" "side" 10 "none" "none"	none none 10 none none
+	"none" "side" 10 "none" "side"	none none 10 none none
+	"none" "side" 10 "none" "up"	none none 10 none none
+	"none" "side" 10 "side" "none"	none none 10 none none
+	"none" "side" 10 "side" "side"	none none 10 none none
+	"none" "side" 10 "side" "up"	none none 10 none none
+	"none" "side" 10 "up" "none"	none none 10 none none
+	"none" "side" 10 "up" "side"	none none 10 none none
+	"none" "side" 10 "up" "up"	none none 10 none none
+	"none" "side" 11 "none" "none"	none none 11 none none
+	"none" "side" 11 "none" "side"	none none 11 none none
+	"none" "side" 11 "none" "up"	none none 11 none none
+	"none" "side" 11 "side" "none"	none none 11 none none
+	"none" "side" 11 "side" "side"	none none 11 none none
+	"none" "side" 11 "side" "up"	none none 11 none none
+	"none" "side" 11 "up" "none"	none none 11 none none
+	"none" "side" 11 "up" "side"	none none 11 none none
+	"none" "side" 11 "up" "up"	none none 11 none none
+	"none" "side" 12 "none" "none"	none none 12 none none
+	"none" "side" 12 "none" "side"	none none 12 none none
+	"none" "side" 12 "none" "up"	none none 12 none none
+	"none" "side" 12 "side" "none"	none none 12 none none
+	"none" "side" 12 "side" "side"	none none 12 none none
+	"none" "side" 12 "side" "up"	none none 12 none none
+	"none" "side" 12 "up" "none"	none none 12 none none
+	"none" "side" 12 "up" "side"	none none 12 none none
+	"none" "side" 12 "up" "up"	none none 12 none none
+	"none" "side" 13 "none" "none"	none none 13 none none
+	"none" "side" 13 "none" "side"	none none 13 none none
+	"none" "side" 13 "none" "up"	none none 13 none none
+	"none" "side" 13 "side" "none"	none none 13 none none
+	"none" "side" 13 "side" "side"	none none 13 none none
+	"none" "side" 13 "side" "up"	none none 13 none none
+	"none" "side" 13 "up" "none"	none none 13 none none
+	"none" "side" 13 "up" "side"	none none 13 none none
+	"none" "side" 13 "up" "up"	none none 13 none none
+	"none" "side" 14 "none" "none"	none none 14 none none
+	"none" "side" 14 "none" "side"	none none 14 none none
+	"none" "side" 14 "none" "up"	none none 14 none none
+	"none" "side" 14 "side" "none"	none none 14 none none
+	"none" "side" 14 "side" "side"	none none 14 none none
+	"none" "side" 14 "side" "up"	none none 14 none none
+	"none" "side" 14 "up" "none"	none none 14 none none
+	"none" "side" 14 "up" "side"	none none 14 none none
+	"none" "side" 14 "up" "up"	none none 14 none none
+	"none" "side" 15 "none" "none"	none none 15 none none
+	"none" "side" 15 "none" "side"	none none 15 none none
+	"none" "side" 15 "none" "up"	none none 15 none none
+	"none" "side" 15 "side" "none"	none none 15 none none
+	"none" "side" 15 "side" "side"	none none 15 none none
+	"none" "side" 15 "side" "up"	none none 15 none none
+	"none" "side" 15 "up" "none"	none none 15 none none
+	"none" "side" 15 "up" "side"	none none 15 none none
+	"none" "side" 15 "up" "up"	none none 15 none none
+	"none" "side" 2 "none" "none"	none none 2 none none
+	"none" "side" 2 "none" "side"	none none 2 none none
+	"none" "side" 2 "none" "up"	none none 2 none none
+	"none" "side" 2 "side" "none"	none none 2 none none
+	"none" "side" 2 "side" "side"	none none 2 none none
+	"none" "side" 2 "side" "up"	none none 2 none none
+	"none" "side" 2 "up" "none"	none none 2 none none
+	"none" "side" 2 "up" "side"	none none 2 none none
+	"none" "side" 2 "up" "up"	none none 2 none none
+	"none" "side" 3 "none" "none"	none none 3 none none
+	"none" "side" 3 "none" "side"	none none 3 none none
+	"none" "side" 3 "none" "up"	none none 3 none none
+	"none" "side" 3 "side" "none"	none none 3 none none
+	"none" "side" 3 "side" "side"	none none 3 none none
+	"none" "side" 3 "side" "up"	none none 3 none none
+	"none" "side" 3 "up" "none"	none none 3 none none
+	"none" "side" 3 "up" "side"	none none 3 none none
+	"none" "side" 3 "up" "up"	none none 3 none none
+	"none" "side" 4 "none" "none"	none none 4 none none
+	"none" "side" 4 "none" "side"	none none 4 none none
+	"none" "side" 4 "none" "up"	none none 4 none none
+	"none" "side" 4 "side" "none"	none none 4 none none
+	"none" "side" 4 "side" "side"	none none 4 none none
+	"none" "side" 4 "side" "up"	none none 4 none none
+	"none" "side" 4 "up" "none"	none none 4 none none
+	"none" "side" 4 "up" "side"	none none 4 none none
+	"none" "side" 4 "up" "up"	none none 4 none none
+	"none" "side" 5 "none" "none"	none none 5 none none
+	"none" "side" 5 "none" "side"	none none 5 none none
+	"none" "side" 5 "none" "up"	none none 5 none none
+	"none" "side" 5 "side" "none"	none none 5 none none
+	"none" "side" 5 "side" "side"	none none 5 none none
+	"none" "side" 5 "side" "up"	none none 5 none none
+	"none" "side" 5 "up" "none"	none none 5 none none
+	"none" "side" 5 "up" "side"	none none 5 none none
+	"none" "side" 5 "up" "up"	none none 5 none none
+	"none" "side" 6 "none" "none"	none none 6 none none
+	"none" "side" 6 "none" "side"	none none 6 none none
+	"none" "side" 6 "none" "up"	none none 6 none none
+	"none" "side" 6 "side" "none"	none none 6 none none
+	"none" "side" 6 "side" "side"	none none 6 none none
+	"none" "side" 6 "side" "up"	none none 6 none none
+	"none" "side" 6 "up" "none"	none none 6 none none
+	"none" "side" 6 "up" "side"	none none 6 none none
+	"none" "side" 6 "up" "up"	none none 6 none none
+	"none" "side" 7 "none" "none"	none none 7 none none
+	"none" "side" 7 "none" "side"	none none 7 none none
+	"none" "side" 7 "none" "up"	none none 7 none none
+	"none" "side" 7 "side" "none"	none none 7 none none
+	"none" "side" 7 "side" "side"	none none 7 none none
+	"none" "side" 7 "side" "up"	none none 7 none none
+	"none" "side" 7 "up" "none"	none none 7 none none
+	"none" "side" 7 "up" "side"	none none 7 none none
+	"none" "side" 7 "up" "up"	none none 7 none none
+	"none" "side" 8 "none" "none"	none none 8 none none
+	"none" "side" 8 "none" "side"	none none 8 none none
+	"none" "side" 8 "none" "up"	none none 8 none none
+	"none" "side" 8 "side" "none"	none none 8 none none
+	"none" "side" 8 "side" "side"	none none 8 none none
+	"none" "side" 8 "side" "up"	none none 8 none none
+	"none" "side" 8 "up" "none"	none none 8 none none
+	"none" "side" 8 "up" "side"	none none 8 none none
+	"none" "side" 8 "up" "up"	none none 8 none none
+	"none" "side" 9 "none" "none"	none none 9 none none
+	"none" "side" 9 "none" "side"	none none 9 none none
+	"none" "side" 9 "none" "up"	none none 9 none none
+	"none" "side" 9 "side" "none"	none none 9 none none
+	"none" "side" 9 "side" "side"	none none 9 none none
+	"none" "side" 9 "side" "up"	none none 9 none none
+	"none" "side" 9 "up" "none"	none none 9 none none
+	"none" "side" 9 "up" "side"	none none 9 none none
+	"none" "side" 9 "up" "up"	none none 9 none none
+	"none" "up" 0 "none" "none"	none none 0 none none
+	"none" "up" 0 "none" "side"	none none 0 none none
+	"none" "up" 0 "none" "up"	none none 0 none none
+	"none" "up" 0 "side" "none"	none none 0 none none
+	"none" "up" 0 "side" "side"	none none 0 none none
+	"none" "up" 0 "side" "up"	none none 0 none none
+	"none" "up" 0 "up" "none"	none none 0 none none
+	"none" "up" 0 "up" "side"	none none 0 none none
+	"none" "up" 0 "up" "up"	none none 0 none none
+	"none" "up" 1 "none" "none"	none none 1 none none
+	"none" "up" 1 "none" "side"	none none 1 none none
+	"none" "up" 1 "none" "up"	none none 1 none none
+	"none" "up" 1 "side" "none"	none none 1 none none
+	"none" "up" 1 "side" "side"	none none 1 none none
+	"none" "up" 1 "side" "up"	none none 1 none none
+	"none" "up" 1 "up" "none"	none none 1 none none
+	"none" "up" 1 "up" "side"	none none 1 none none
+	"none" "up" 1 "up" "up"	none none 1 none none
+	"none" "up" 10 "none" "none"	none none 10 none none
+	"none" "up" 10 "none" "side"	none none 10 none none
+	"none" "up" 10 "none" "up"	none none 10 none none
+	"none" "up" 10 "side" "none"	none none 10 none none
+	"none" "up" 10 "side" "side"	none none 10 none none
+	"none" "up" 10 "side" "up"	none none 10 none none
+	"none" "up" 10 "up" "none"	none none 10 none none
+	"none" "up" 10 "up" "side"	none none 10 none none
+	"none" "up" 10 "up" "up"	none none 10 none none
+	"none" "up" 11 "none" "none"	none none 11 none none
+	"none" "up" 11 "none" "side"	none none 11 none none
+	"none" "up" 11 "none" "up"	none none 11 none none
+	"none" "up" 11 "side" "none"	none none 11 none none
+	"none" "up" 11 "side" "side"	none none 11 none none
+	"none" "up" 11 "side" "up"	none none 11 none none
+	"none" "up" 11 "up" "none"	none none 11 none none
+	"none" "up" 11 "up" "side"	none none 11 none none
+	"none" "up" 11 "up" "up"	none none 11 none none
+	"none" "up" 12 "none" "none"	none none 12 none none
+	"none" "up" 12 "none" "side"	none none 12 none none
+	"none" "up" 12 "none" "up"	none none 12 none none
+	"none" "up" 12 "side" "none"	none none 12 none none
+	"none" "up" 12 "side" "side"	none none 12 none none
+	"none" "up" 12 "side" "up"	none none 12 none none
+	"none" "up" 12 "up" "none"	none none 12 none none
+	"none" "up" 12 "up" "side"	none none 12 none none
+	"none" "up" 12 "up" "up"	none none 12 none none
+	"none" "up" 13 "none" "none"	none none 13 none none
+	"none" "up" 13 "none" "side"	none none 13 none none
+	"none" "up" 13 "none" "up"	none none 13 none none
+	"none" "up" 13 "side" "none"	none none 13 none none
+	"none" "up" 13 "side" "side"	none none 13 none none
+	"none" "up" 13 "side" "up"	none none 13 none none
+	"none" "up" 13 "up" "none"	none none 13 none none
+	"none" "up" 13 "up" "side"	none none 13 none none
+	"none" "up" 13 "up" "up"	none none 13 none none
+	"none" "up" 14 "none" "none"	none none 14 none none
+	"none" "up" 14 "none" "side"	none none 14 none none
+	"none" "up" 14 "none" "up"	none none 14 none none
+	"none" "up" 14 "side" "none"	none none 14 none none
+	"none" "up" 14 "side" "side"	none none 14 none none
+	"none" "up" 14 "side" "up"	none none 14 none none
+	"none" "up" 14 "up" "none"	none none 14 none none
+	"none" "up" 14 "up" "side"	none none 14 none none
+	"none" "up" 14 "up" "up"	none none 14 none none
+	"none" "up" 15 "none" "none"	none none 15 none none
+	"none" "up" 15 "none" "side"	none none 15 none none
+	"none" "up" 15 "none" "up"	none none 15 none none
+	"none" "up" 15 "side" "none"	none none 15 none none
+	"none" "up" 15 "side" "side"	none none 15 none none
+	"none" "up" 15 "side" "up"	none none 15 none none
+	"none" "up" 15 "up" "none"	none none 15 none none
+	"none" "up" 15 "up" "side"	none none 15 none none
+	"none" "up" 15 "up" "up"	none none 15 none none
+	"none" "up" 2 "none" "none"	none none 2 none none
+	"none" "up" 2 "none" "side"	none none 2 none none
+	"none" "up" 2 "none" "up"	none none 2 none none
+	"none" "up" 2 "side" "none"	none none 2 none none
+	"none" "up" 2 "side" "side"	none none 2 none none
+	"none" "up" 2 "side" "up"	none none 2 none none
+	"none" "up" 2 "up" "none"	none none 2 none none
+	"none" "up" 2 "up" "side"	none none 2 none none
+	"none" "up" 2 "up" "up"	none none 2 none none
+	"none" "up" 3 "none" "none"	none none 3 none none
+	"none" "up" 3 "none" "side"	none none 3 none none
+	"none" "up" 3 "none" "up"	none none 3 none none
+	"none" "up" 3 "side" "none"	none none 3 none none
+	"none" "up" 3 "side" "side"	none none 3 none none
+	"none" "up" 3 "side" "up"	none none 3 none none
+	"none" "up" 3 "up" "none"	none none 3 none none
+	"none" "up" 3 "up" "side"	none none 3 none none
+	"none" "up" 3 "up" "up"	none none 3 none none
+	"none" "up" 4 "none" "none"	none none 4 none none
+	"none" "up" 4 "none" "side"	none none 4 none none
+	"none" "up" 4 "none" "up"	none none 4 none none
+	"none" "up" 4 "side" "none"	none none 4 none none
+	"none" "up" 4 "side" "side"	none none 4 none none
+	"none" "up" 4 "side" "up"	none none 4 none none
+	"none" "up" 4 "up" "none"	none none 4 none none
+	"none" "up" 4 "up" "side"	none none 4 none none
+	"none" "up" 4 "up" "up"	none none 4 none none
+	"none" "up" 5 "none" "none"	none none 5 none none
+	"none" "up" 5 "none" "side"	none none 5 none none
+	"none" "up" 5 "none" "up"	none none 5 none none
+	"none" "up" 5 "side" "none"	none none 5 none none
+	"none" "up" 5 "side" "side"	none none 5 none none
+	"none" "up" 5 "side" "up"	none none 5 none none
+	"none" "up" 5 "up" "none"	none none 5 none none
+	"none" "up" 5 "up" "side"	none none 5 none none
+	"none" "up" 5 "up" "up"	none none 5 none none
+	"none" "up" 6 "none" "none"	none none 6 none none
+	"none" "up" 6 "none" "side"	none none 6 none none
+	"none" "up" 6 "none" "up"	none none 6 none none
+	"none" "up" 6 "side" "none"	none none 6 none none
+	"none" "up" 6 "side" "side"	none none 6 none none
+	"none" "up" 6 "side" "up"	none none 6 none none
+	"none" "up" 6 "up" "none"	none none 6 none none
+	"none" "up" 6 "up" "side"	none none 6 none none
+	"none" "up" 6 "up" "up"	none none 6 none none
+	"none" "up" 7 "none" "none"	none none 7 none none
+	"none" "up" 7 "none" "side"	none none 7 none none
+	"none" "up" 7 "none" "up"	none none 7 none none
+	"none" "up" 7 "side" "none"	none none 7 none none
+	"none" "up" 7 "side" "side"	none none 7 none none
+	"none" "up" 7 "side" "up"	none none 7 none none
+	"none" "up" 7 "up" "none"	none none 7 none none
+	"none" "up" 7 "up" "side"	none none 7 none none
+	"none" "up" 7 "up" "up"	none none 7 none none
+	"none" "up" 8 "none" "none"	none none 8 none none
+	"none" "up" 8 "none" "side"	none none 8 none none
+	"none" "up" 8 "none" "up"	none none 8 none none
+	"none" "up" 8 "side" "none"	none none 8 none none
+	"none" "up" 8 "side" "side"	none none 8 none none
+	"none" "up" 8 "side" "up"	none none 8 none none
+	"none" "up" 8 "up" "none"	none none 8 none none
+	"none" "up" 8 "up" "side"	none none 8 none none
+	"none" "up" 8 "up" "up"	none none 8 none none
+	"none" "up" 9 "none" "none"	none none 9 none none
+	"none" "up" 9 "none" "side"	none none 9 none none
+	"none" "up" 9 "none" "up"	none none 9 none none
+	"none" "up" 9 "side" "none"	none none 9 none none
+	"none" "up" 9 "side" "side"	none none 9 none none
+	"none" "up" 9 "side" "up"	none none 9 none none
+	"none" "up" 9 "up" "none"	none none 9 none none
+	"none" "up" 9 "up" "side"	none none 9 none none
+	"none" "up" 9 "up" "up"	none none 9 none none
+	"side" "none" 0 "none" "none"	none none 0 none none
+	"side" "none" 0 "none" "side"	none none 0 none none
+	"side" "none" 0 "none" "up"	none none 0 none none
+	"side" "none" 0 "side" "none"	none none 0 none none
+	"side" "none" 0 "side" "side"	none none 0 none none
+	"side" "none" 0 "side" "up"	none none 0 none none
+	"side" "none" 0 "up" "none"	none none 0 none none
+	"side" "none" 0 "up" "side"	none none 0 none none
+	"side" "none" 0 "up" "up"	none none 0 none none
+	"side" "none" 1 "none" "none"	none none 1 none none
+	"side" "none" 1 "none" "side"	none none 1 none none
+	"side" "none" 1 "none" "up"	none none 1 none none
+	"side" "none" 1 "side" "none"	none none 1 none none
+	"side" "none" 1 "side" "side"	none none 1 none none
+	"side" "none" 1 "side" "up"	none none 1 none none
+	"side" "none" 1 "up" "none"	none none 1 none none
+	"side" "none" 1 "up" "side"	none none 1 none none
+	"side" "none" 1 "up" "up"	none none 1 none none
+	"side" "none" 10 "none" "none"	none none 10 none none
+	"side" "none" 10 "none" "side"	none none 10 none none
+	"side" "none" 10 "none" "up"	none none 10 none none
+	"side" "none" 10 "side" "none"	none none 10 none none
+	"side" "none" 10 "side" "side"	none none 10 none none
+	"side" "none" 10 "side" "up"	none none 10 none none
+	"side" "none" 10 "up" "none"	none none 10 none none
+	"side" "none" 10 "up" "side"	none none 10 none none
+	"side" "none" 10 "up" "up"	none none 10 none none
+	"side" "none" 11 "none" "none"	none none 11 none none
+	"side" "none" 11 "none" "side"	none none 11 none none
+	"side" "none" 11 "none" "up"	none none 11 none none
+	"side" "none" 11 "side" "none"	none none 11 none none
+	"side" "none" 11 "side" "side"	none none 11 none none
+	"side" "none" 11 "side" "up"	none none 11 none none
+	"side" "none" 11 "up" "none"	none none 11 none none
+	"side" "none" 11 "up" "side"	none none 11 none none
+	"side" "none" 11 "up" "up"	none none 11 none none
+	"side" "none" 12 "none" "none"	none none 12 none none
+	"side" "none" 12 "none" "side"	none none 12 none none
+	"side" "none" 12 "none" "up"	none none 12 none none
+	"side" "none" 12 "side" "none"	none none 12 none none
+	"side" "none" 12 "side" "side"	none none 12 none none
+	"side" "none" 12 "side" "up"	none none 12 none none
+	"side" "none" 12 "up" "none"	none none 12 none none
+	"side" "none" 12 "up" "side"	none none 12 none none
+	"side" "none" 12 "up" "up"	none none 12 none none
+	"side" "none" 13 "none" "none"	none none 13 none none
+	"side" "none" 13 "none" "side"	none none 13 none none
+	"side" "none" 13 "none" "up"	none none 13 none none
+	"side" "none" 13 "side" "none"	none none 13 none none
+	"side" "none" 13 "side" "side"	none none 13 none none
+	"side" "none" 13 "side" "up"	none none 13 none none
+	"side" "none" 13 "up" "none"	none none 13 none none
+	"side" "none" 13 "up" "side"	none none 13 none none
+	"side" "none" 13 "up" "up"	none none 13 none none
+	"side" "none" 14 "none" "none"	none none 14 none none
+	"side" "none" 14 "none" "side"	none none 14 none none
+	"side" "none" 14 "none" "up"	none none 14 none none
+	"side" "none" 14 "side" "none"	none none 14 none none
+	"side" "none" 14 "side" "side"	none none 14 none none
+	"side" "none" 14 "side" "up"	none none 14 none none
+	"side" "none" 14 "up" "none"	none none 14 none none
+	"side" "none" 14 "up" "side"	none none 14 none none
+	"side" "none" 14 "up" "up"	none none 14 none none
+	"side" "none" 15 "none" "none"	none none 15 none none
+	"side" "none" 15 "none" "side"	none none 15 none none
+	"side" "none" 15 "none" "up"	none none 15 none none
+	"side" "none" 15 "side" "none"	none none 15 none none
+	"side" "none" 15 "side" "side"	none none 15 none none
+	"side" "none" 15 "side" "up"	none none 15 none none
+	"side" "none" 15 "up" "none"	none none 15 none none
+	"side" "none" 15 "up" "side"	none none 15 none none
+	"side" "none" 15 "up" "up"	none none 15 none none
+	"side" "none" 2 "none" "none"	none none 2 none none
+	"side" "none" 2 "none" "side"	none none 2 none none
+	"side" "none" 2 "none" "up"	none none 2 none none
+	"side" "none" 2 "side" "none"	none none 2 none none
+	"side" "none" 2 "side" "side"	none none 2 none none
+	"side" "none" 2 "side" "up"	none none 2 none none
+	"side" "none" 2 "up" "none"	none none 2 none none
+	"side" "none" 2 "up" "side"	none none 2 none none
+	"side" "none" 2 "up" "up"	none none 2 none none
+	"side" "none" 3 "none" "none"	none none 3 none none
+	"side" "none" 3 "none" "side"	none none 3 none none
+	"side" "none" 3 "none" "up"	none none 3 none none
+	"side" "none" 3 "side" "none"	none none 3 none none
+	"side" "none" 3 "side" "side"	none none 3 none none
+	"side" "none" 3 "side" "up"	none none 3 none none
+	"side" "none" 3 "up" "none"	none none 3 none none
+	"side" "none" 3 "up" "side"	none none 3 none none
+	"side" "none" 3 "up" "up"	none none 3 none none
+	"side" "none" 4 "none" "none"	none none 4 none none
+	"side" "none" 4 "none" "side"	none none 4 none none
+	"side" "none" 4 "none" "up"	none none 4 none none
+	"side" "none" 4 "side" "none"	none none 4 none none
+	"side" "none" 4 "side" "side"	none none 4 none none
+	"side" "none" 4 "side" "up"	none none 4 none none
+	"side" "none" 4 "up" "none"	none none 4 none none
+	"side" "none" 4 "up" "side"	none none 4 none none
+	"side" "none" 4 "up" "up"	none none 4 none none
+	"side" "none" 5 "none" "none"	none none 5 none none
+	"side" "none" 5 "none" "side"	none none 5 none none
+	"side" "none" 5 "none" "up"	none none 5 none none
+	"side" "none" 5 "side" "none"	none none 5 none none
+	"side" "none" 5 "side" "side"	none none 5 none none
+	"side" "none" 5 "side" "up"	none none 5 none none
+	"side" "none" 5 "up" "none"	none none 5 none none
+	"side" "none" 5 "up" "side"	none none 5 none none
+	"side" "none" 5 "up" "up"	none none 5 none none
+	"side" "none" 6 "none" "none"	none none 6 none none
+	"side" "none" 6 "none" "side"	none none 6 none none
+	"side" "none" 6 "none" "up"	none none 6 none none
+	"side" "none" 6 "side" "none"	none none 6 none none
+	"side" "none" 6 "side" "side"	none none 6 none none
+	"side" "none" 6 "side" "up"	none none 6 none none
+	"side" "none" 6 "up" "none"	none none 6 none none
+	"side" "none" 6 "up" "side"	none none 6 none none
+	"side" "none" 6 "up" "up"	none none 6 none none
+	"side" "none" 7 "none" "none"	none none 7 none none
+	"side" "none" 7 "none" "side"	none none 7 none none
+	"side" "none" 7 "none" "up"	none none 7 none none
+	"side" "none" 7 "side" "none"	none none 7 none none
+	"side" "none" 7 "side" "side"	none none 7 none none
+	"side" "none" 7 "side" "up"	none none 7 none none
+	"side" "none" 7 "up" "none"	none none 7 none none
+	"side" "none" 7 "up" "side"	none none 7 none none
+	"side" "none" 7 "up" "up"	none none 7 none none
+	"side" "none" 8 "none" "none"	none none 8 none none
+	"side" "none" 8 "none" "side"	none none 8 none none
+	"side" "none" 8 "none" "up"	none none 8 none none
+	"side" "none" 8 "side" "none"	none none 8 none none
+	"side" "none" 8 "side" "side"	none none 8 none none
+	"side" "none" 8 "side" "up"	none none 8 none none
+	"side" "none" 8 "up" "none"	none none 8 none none
+	"side" "none" 8 "up" "side"	none none 8 none none
+	"side" "none" 8 "up" "up"	none none 8 none none
+	"side" "none" 9 "none" "none"	none none 9 none none
+	"side" "none" 9 "none" "side"	none none 9 none none
+	"side" "none" 9 "none" "up"	none none 9 none none
+	"side" "none" 9 "side" "none"	none none 9 none none
+	"side" "none" 9 "side" "side"	none none 9 none none
+	"side" "none" 9 "side" "up"	none none 9 none none
+	"side" "none" 9 "up" "none"	none none 9 none none
+	"side" "none" 9 "up" "side"	none none 9 none none
+	"side" "none" 9 "up" "up"	none none 9 none none
+	"side" "side" 0 "none" "none"	none none 0 none none
+	"side" "side" 0 "none" "side"	none none 0 none none
+	"side" "side" 0 "none" "up"	none none 0 none none
+	"side" "side" 0 "side" "none"	none none 0 none none
+	"side" "side" 0 "side" "side"	none none 0 none none
+	"side" "side" 0 "side" "up"	none none 0 none none
+	"side" "side" 0 "up" "none"	none none 0 none none
+	"side" "side" 0 "up" "side"	none none 0 none none
+	"side" "side" 0 "up" "up"	none none 0 none none
+	"side" "side" 1 "none" "none"	none none 1 none none
+	"side" "side" 1 "none" "side"	none none 1 none none
+	"side" "side" 1 "none" "up"	none none 1 none none
+	"side" "side" 1 "side" "none"	none none 1 none none
+	"side" "side" 1 "side" "side"	none none 1 none none
+	"side" "side" 1 "side" "up"	none none 1 none none
+	"side" "side" 1 "up" "none"	none none 1 none none
+	"side" "side" 1 "up" "side"	none none 1 none none
+	"side" "side" 1 "up" "up"	none none 1 none none
+	"side" "side" 10 "none" "none"	none none 10 none none
+	"side" "side" 10 "none" "side"	none none 10 none none
+	"side" "side" 10 "none" "up"	none none 10 none none
+	"side" "side" 10 "side" "none"	none none 10 none none
+	"side" "side" 10 "side" "side"	none none 10 none none
+	"side" "side" 10 "side" "up"	none none 10 none none
+	"side" "side" 10 "up" "none"	none none 10 none none
+	"side" "side" 10 "up" "side"	none none 10 none none
+	"side" "side" 10 "up" "up"	none none 10 none none
+	"side" "side" 11 "none" "none"	none none 11 none none
+	"side" "side" 11 "none" "side"	none none 11 none none
+	"side" "side" 11 "none" "up"	none none 11 none none
+	"side" "side" 11 "side" "none"	none none 11 none none
+	"side" "side" 11 "side" "side"	none none 11 none none
+	"side" "side" 11 "side" "up"	none none 11 none none
+	"side" "side" 11 "up" "none"	none none 11 none none
+	"side" "side" 11 "up" "side"	none none 11 none none
+	"side" "side" 11 "up" "up"	none none 11 none none
+	"side" "side" 12 "none" "none"	none none 12 none none
+	"side" "side" 12 "none" "side"	none none 12 none none
+	"side" "side" 12 "none" "up"	none none 12 none none
+	"side" "side" 12 "side" "none"	none none 12 none none
+	"side" "side" 12 "side" "side"	none none 12 none none
+	"side" "side" 12 "side" "up"	none none 12 none none
+	"side" "side" 12 "up" "none"	none none 12 none none
+	"side" "side" 12 "up" "side"	none none 12 none none
+	"side" "side" 12 "up" "up"	none none 12 none none
+	"side" "side" 13 "none" "none"	none none 13 none none
+	"side" "side" 13 "none" "side"	none none 13 none none
+	"side" "side" 13 "none" "up"	none none 13 none none
+	"side" "side" 13 "side" "none"	none none 13 none none
+	"side" "side" 13 "side" "side"	none none 13 none none
+	"side" "side" 13 "side" "up"	none none 13 none none
+	"side" "side" 13 "up" "none"	none none 13 none none
+	"side" "side" 13 "up" "side"	none none 13 none none
+	"side" "side" 13 "up" "up"	none none 13 none none
+	"side" "side" 14 "none" "none"	none none 14 none none
+	"side" "side" 14 "none" "side"	none none 14 none none
+	"side" "side" 14 "none" "up"	none none 14 none none
+	"side" "side" 14 "side" "none"	none none 14 none none
+	"side" "side" 14 "side" "side"	none none 14 none none
+	"side" "side" 14 "side" "up"	none none 14 none none
+	"side" "side" 14 "up" "none"	none none 14 none none
+	"side" "side" 14 "up" "side"	none none 14 none none
+	"side" "side" 14 "up" "up"	none none 14 none none
+	"side" "side" 15 "none" "none"	none none 15 none none
+	"side" "side" 15 "none" "side"	none none 15 none none
+	"side" "side" 15 "none" "up"	none none 15 none none
+	"side" "side" 15 "side" "none"	none none 15 none none
+	"side" "side" 15 "side" "side"	none none 15 none none
+	"side" "side" 15 "side" "up"	none none 15 none none
+	"side" "side" 15 "up" "none"	none none 15 none none
+	"side" "side" 15 "up" "side"	none none 15 none none
+	"side" "side" 15 "up" "up"	none none 15 none none
+	"side" "side" 2 "none" "none"	none none 2 none none
+	"side" "side" 2 "none" "side"	none none 2 none none
+	"side" "side" 2 "none" "up"	none none 2 none none
+	"side" "side" 2 "side" "none"	none none 2 none none
+	"side" "side" 2 "side" "side"	none none 2 none none
+	"side" "side" 2 "side" "up"	none none 2 none none
+	"side" "side" 2 "up" "none"	none none 2 none none
+	"side" "side" 2 "up" "side"	none none 2 none none
+	"side" "side" 2 "up" "up"	none none 2 none none
+	"side" "side" 3 "none" "none"	none none 3 none none
+	"side" "side" 3 "none" "side"	none none 3 none none
+	"side" "side" 3 "none" "up"	none none 3 none none
+	"side" "side" 3 "side" "none"	none none 3 none none
+	"side" "side" 3 "side" "side"	none none 3 none none
+	"side" "side" 3 "side" "up"	none none 3 none none
+	"side" "side" 3 "up" "none"	none none 3 none none
+	"side" "side" 3 "up" "side"	none none 3 none none
+	"side" "side" 3 "up" "up"	none none 3 none none
+	"side" "side" 4 "none" "none"	none none 4 none none
+	"side" "side" 4 "none" "side"	none none 4 none none
+	"side" "side" 4 "none" "up"	none none 4 none none
+	"side" "side" 4 "side" "none"	none none 4 none none
+	"side" "side" 4 "side" "side"	none none 4 none none
+	"side" "side" 4 "side" "up"	none none 4 none none
+	"side" "side" 4 "up" "none"	none none 4 none none
+	"side" "side" 4 "up" "side"	none none 4 none none
+	"side" "side" 4 "up" "up"	none none 4 none none
+	"side" "side" 5 "none" "none"	none none 5 none none
+	"side" "side" 5 "none" "side"	none none 5 none none
+	"side" "side" 5 "none" "up"	none none 5 none none
+	"side" "side" 5 "side" "none"	none none 5 none none
+	"side" "side" 5 "side" "side"	none none 5 none none
+	"side" "side" 5 "side" "up"	none none 5 none none
+	"side" "side" 5 "up" "none"	none none 5 none none
+	"side" "side" 5 "up" "side"	none none 5 none none
+	"side" "side" 5 "up" "up"	none none 5 none none
+	"side" "side" 6 "none" "none"	none none 6 none none
+	"side" "side" 6 "none" "side"	none none 6 none none
+	"side" "side" 6 "none" "up"	none none 6 none none
+	"side" "side" 6 "side" "none"	none none 6 none none
+	"side" "side" 6 "side" "side"	none none 6 none none
+	"side" "side" 6 "side" "up"	none none 6 none none
+	"side" "side" 6 "up" "none"	none none 6 none none
+	"side" "side" 6 "up" "side"	none none 6 none none
+	"side" "side" 6 "up" "up"	none none 6 none none
+	"side" "side" 7 "none" "none"	none none 7 none none
+	"side" "side" 7 "none" "side"	none none 7 none none
+	"side" "side" 7 "none" "up"	none none 7 none none
+	"side" "side" 7 "side" "none"	none none 7 none none
+	"side" "side" 7 "side" "side"	none none 7 none none
+	"side" "side" 7 "side" "up"	none none 7 none none
+	"side" "side" 7 "up" "none"	none none 7 none none
+	"side" "side" 7 "up" "side"	none none 7 none none
+	"side" "side" 7 "up" "up"	none none 7 none none
+	"side" "side" 8 "none" "none"	none none 8 none none
+	"side" "side" 8 "none" "side"	none none 8 none none
+	"side" "side" 8 "none" "up"	none none 8 none none
+	"side" "side" 8 "side" "none"	none none 8 none none
+	"side" "side" 8 "side" "side"	none none 8 none none
+	"side" "side" 8 "side" "up"	none none 8 none none
+	"side" "side" 8 "up" "none"	none none 8 none none
+	"side" "side" 8 "up" "side"	none none 8 none none
+	"side" "side" 8 "up" "up"	none none 8 none none
+	"side" "side" 9 "none" "none"	none none 9 none none
+	"side" "side" 9 "none" "side"	none none 9 none none
+	"side" "side" 9 "none" "up"	none none 9 none none
+	"side" "side" 9 "side" "none"	none none 9 none none
+	"side" "side" 9 "side" "side"	none none 9 none none
+	"side" "side" 9 "side" "up"	none none 9 none none
+	"side" "side" 9 "up" "none"	none none 9 none none
+	"side" "side" 9 "up" "side"	none none 9 none none
+	"side" "side" 9 "up" "up"	none none 9 none none
+	"side" "up" 0 "none" "none"	none none 0 none none
+	"side" "up" 0 "none" "side"	none none 0 none none
+	"side" "up" 0 "none" "up"	none none 0 none none
+	"side" "up" 0 "side" "none"	none none 0 none none
+	"side" "up" 0 "side" "side"	none none 0 none none
+	"side" "up" 0 "side" "up"	none none 0 none none
+	"side" "up" 0 "up" "none"	none none 0 none none
+	"side" "up" 0 "up" "side"	none none 0 none none
+	"side" "up" 0 "up" "up"	none none 0 none none
+	"side" "up" 1 "none" "none"	none none 1 none none
+	"side" "up" 1 "none" "side"	none none 1 none none
+	"side" "up" 1 "none" "up"	none none 1 none none
+	"side" "up" 1 "side" "none"	none none 1 none none
+	"side" "up" 1 "side" "side"	none none 1 none none
+	"side" "up" 1 "side" "up"	none none 1 none none
+	"side" "up" 1 "up" "none"	none none 1 none none
+	"side" "up" 1 "up" "side"	none none 1 none none
+	"side" "up" 1 "up" "up"	none none 1 none none
+	"side" "up" 10 "none" "none"	none none 10 none none
+	"side" "up" 10 "none" "side"	none none 10 none none
+	"side" "up" 10 "none" "up"	none none 10 none none
+	"side" "up" 10 "side" "none"	none none 10 none none
+	"side" "up" 10 "side" "side"	none none 10 none none
+	"side" "up" 10 "side" "up"	none none 10 none none
+	"side" "up" 10 "up" "none"	none none 10 none none
+	"side" "up" 10 "up" "side"	none none 10 none none
+	"side" "up" 10 "up" "up"	none none 10 none none
+	"side" "up" 11 "none" "none"	none none 11 none none
+	"side" "up" 11 "none" "side"	none none 11 none none
+	"side" "up" 11 "none" "up"	none none 11 none none
+	"side" "up" 11 "side" "none"	none none 11 none none
+	"side" "up" 11 "side" "side"	none none 11 none none
+	"side" "up" 11 "side" "up"	none none 11 none none
+	"side" "up" 11 "up" "none"	none none 11 none none
+	"side" "up" 11 "up" "side"	none none 11 none none
+	"side" "up" 11 "up" "up"	none none 11 none none
+	"side" "up" 12 "none" "none"	none none 12 none none
+	"side" "up" 12 "none" "side"	none none 12 none none
+	"side" "up" 12 "none" "up"	none none 12 none none
+	"side" "up" 12 "side" "none"	none none 12 none none
+	"side" "up" 12 "side" "side"	none none 12 none none
+	"side" "up" 12 "side" "up"	none none 12 none none
+	"side" "up" 12 "up" "none"	none none 12 none none
+	"side" "up" 12 "up" "side"	none none 12 none none
+	"side" "up" 12 "up" "up"	none none 12 none none
+	"side" "up" 13 "none" "none"	none none 13 none none
+	"side" "up" 13 "none" "side"	none none 13 none none
+	"side" "up" 13 "none" "up"	none none 13 none none
+	"side" "up" 13 "side" "none"	none none 13 none none
+	"side" "up" 13 "side" "side"	none none 13 none none
+	"side" "up" 13 "side" "up"	none none 13 none none
+	"side" "up" 13 "up" "none"	none none 13 none none
+	"side" "up" 13 "up" "side"	none none 13 none none
+	"side" "up" 13 "up" "up"	none none 13 none none
+	"side" "up" 14 "none" "none"	none none 14 none none
+	"side" "up" 14 "none" "side"	none none 14 none none
+	"side" "up" 14 "none" "up"	none none 14 none none
+	"side" "up" 14 "side" "none"	none none 14 none none
+	"side" "up" 14 "side" "side"	none none 14 none none
+	"side" "up" 14 "side" "up"	none none 14 none none
+	"side" "up" 14 "up" "none"	none none 14 none none
+	"side" "up" 14 "up" "side"	none none 14 none none
+	"side" "up" 14 "up" "up"	none none 14 none none
+	"side" "up" 15 "none" "none"	none none 15 none none
+	"side" "up" 15 "none" "side"	none none 15 none none
+	"side" "up" 15 "none" "up"	none none 15 none none
+	"side" "up" 15 "side" "none"	none none 15 none none
+	"side" "up" 15 "side" "side"	none none 15 none none
+	"side" "up" 15 "side" "up"	none none 15 none none
+	"side" "up" 15 "up" "none"	none none 15 none none
+	"side" "up" 15 "up" "side"	none none 15 none none
+	"side" "up" 15 "up" "up"	none none 15 none none
+	"side" "up" 2 "none" "none"	none none 2 none none
+	"side" "up" 2 "none" "side"	none none 2 none none
+	"side" "up" 2 "none" "up"	none none 2 none none
+	"side" "up" 2 "side" "none"	none none 2 none none
+	"side" "up" 2 "side" "side"	none none 2 none none
+	"side" "up" 2 "side" "up"	none none 2 none none
+	"side" "up" 2 "up" "none"	none none 2 none none
+	"side" "up" 2 "up" "side"	none none 2 none none
+	"side" "up" 2 "up" "up"	none none 2 none none
+	"side" "up" 3 "none" "none"	none none 3 none none
+	"side" "up" 3 "none" "side"	none none 3 none none
+	"side" "up" 3 "none" "up"	none none 3 none none
+	"side" "up" 3 "side" "none"	none none 3 none none
+	"side" "up" 3 "side" "side"	none none 3 none none
+	"side" "up" 3 "side" "up"	none none 3 none none
+	"side" "up" 3 "up" "none"	none none 3 none none
+	"side" "up" 3 "up" "side"	none none 3 none none
+	"side" "up" 3 "up" "up"	none none 3 none none
+	"side" "up" 4 "none" "none"	none none 4 none none
+	"side" "up" 4 "none" "side"	none none 4 none none
+	"side" "up" 4 "none" "up"	none none 4 none none
+	"side" "up" 4 "side" "none"	none none 4 none none
+	"side" "up" 4 "side" "side"	none none 4 none none
+	"side" "up" 4 "side" "up"	none none 4 none none
+	"side" "up" 4 "up" "none"	none none 4 none none
+	"side" "up" 4 "up" "side"	none none 4 none none
+	"side" "up" 4 "up" "up"	none none 4 none none
+	"side" "up" 5 "none" "none"	none none 5 none none
+	"side" "up" 5 "none" "side"	none none 5 none none
+	"side" "up" 5 "none" "up"	none none 5 none none
+	"side" "up" 5 "side" "none"	none none 5 none none
+	"side" "up" 5 "side" "side"	none none 5 none none
+	"side" "up" 5 "side" "up"	none none 5 none none
+	"side" "up" 5 "up" "none"	none none 5 none none
+	"side" "up" 5 "up" "side"	none none 5 none none
+	"side" "up" 5 "up" "up"	none none 5 none none
+	"side" "up" 6 "none" "none"	none none 6 none none
+	"side" "up" 6 "none" "side"	none none 6 none none
+	"side" "up" 6 "none" "up"	none none 6 none none
+	"side" "up" 6 "side" "none"	none none 6 none none
+	"side" "up" 6 "side" "side"	none none 6 none none
+	"side" "up" 6 "side" "up"	none none 6 none none
+	"side" "up" 6 "up" "none"	none none 6 none none
+	"side" "up" 6 "up" "side"	none none 6 none none
+	"side" "up" 6 "up" "up"	none none 6 none none
+	"side" "up" 7 "none" "none"	none none 7 none none
+	"side" "up" 7 "none" "side"	none none 7 none none
+	"side" "up" 7 "none" "up"	none none 7 none none
+	"side" "up" 7 "side" "none"	none none 7 none none
+	"side" "up" 7 "side" "side"	none none 7 none none
+	"side" "up" 7 "side" "up"	none none 7 none none
+	"side" "up" 7 "up" "none"	none none 7 none none
+	"side" "up" 7 "up" "side"	none none 7 none none
+	"side" "up" 7 "up" "up"	none none 7 none none
+	"side" "up" 8 "none" "none"	none none 8 none none
+	"side" "up" 8 "none" "side"	none none 8 none none
+	"side" "up" 8 "none" "up"	none none 8 none none
+	"side" "up" 8 "side" "none"	none none 8 none none
+	"side" "up" 8 "side" "side"	none none 8 none none
+	"side" "up" 8 "side" "up"	none none 8 none none
+	"side" "up" 8 "up" "none"	none none 8 none none
+	"side" "up" 8 "up" "side"	none none 8 none none
+	"side" "up" 8 "up" "up"	none none 8 none none
+	"side" "up" 9 "none" "none"	none none 9 none none
+	"side" "up" 9 "none" "side"	none none 9 none none
+	"side" "up" 9 "none" "up"	none none 9 none none
+	"side" "up" 9 "side" "none"	none none 9 none none
+	"side" "up" 9 "side" "side"	none none 9 none none
+	"side" "up" 9 "side" "up"	none none 9 none none
+	"side" "up" 9 "up" "none"	none none 9 none none
+	"side" "up" 9 "up" "side"	none none 9 none none
+	"side" "up" 9 "up" "up"	none none 9 none none
+	"up" "none" 0 "none" "none"	none none 0 none none
+	"up" "none" 0 "none" "side"	none none 0 none none
+	"up" "none" 0 "none" "up"	none none 0 none none
+	"up" "none" 0 "side" "none"	none none 0 none none
+	"up" "none" 0 "side" "side"	none none 0 none none
+	"up" "none" 0 "side" "up"	none none 0 none none
+	"up" "none" 0 "up" "none"	none none 0 none none
+	"up" "none" 0 "up" "side"	none none 0 none none
+	"up" "none" 0 "up" "up"	none none 0 none none
+	"up" "none" 1 "none" "none"	none none 1 none none
+	"up" "none" 1 "none" "side"	none none 1 none none
+	"up" "none" 1 "none" "up"	none none 1 none none
+	"up" "none" 1 "side" "none"	none none 1 none none
+	"up" "none" 1 "side" "side"	none none 1 none none
+	"up" "none" 1 "side" "up"	none none 1 none none
+	"up" "none" 1 "up" "none"	none none 1 none none
+	"up" "none" 1 "up" "side"	none none 1 none none
+	"up" "none" 1 "up" "up"	none none 1 none none
+	"up" "none" 10 "none" "none"	none none 10 none none
+	"up" "none" 10 "none" "side"	none none 10 none none
+	"up" "none" 10 "none" "up"	none none 10 none none
+	"up" "none" 10 "side" "none"	none none 10 none none
+	"up" "none" 10 "side" "side"	none none 10 none none
+	"up" "none" 10 "side" "up"	none none 10 none none
+	"up" "none" 10 "up" "none"	none none 10 none none
+	"up" "none" 10 "up" "side"	none none 10 none none
+	"up" "none" 10 "up" "up"	none none 10 none none
+	"up" "none" 11 "none" "none"	none none 11 none none
+	"up" "none" 11 "none" "side"	none none 11 none none
+	"up" "none" 11 "none" "up"	none none 11 none none
+	"up" "none" 11 "side" "none"	none none 11 none none
+	"up" "none" 11 "side" "side"	none none 11 none none
+	"up" "none" 11 "side" "up"	none none 11 none none
+	"up" "none" 11 "up" "none"	none none 11 none none
+	"up" "none" 11 "up" "side"	none none 11 none none
+	"up" "none" 11 "up" "up"	none none 11 none none
+	"up" "none" 12 "none" "none"	none none 12 none none
+	"up" "none" 12 "none" "side"	none none 12 none none
+	"up" "none" 12 "none" "up"	none none 12 none none
+	"up" "none" 12 "side" "none"	none none 12 none none
+	"up" "none" 12 "side" "side"	none none 12 none none
+	"up" "none" 12 "side" "up"	none none 12 none none
+	"up" "none" 12 "up" "none"	none none 12 none none
+	"up" "none" 12 "up" "side"	none none 12 none none
+	"up" "none" 12 "up" "up"	none none 12 none none
+	"up" "none" 13 "none" "none"	none none 13 none none
+	"up" "none" 13 "none" "side"	none none 13 none none
+	"up" "none" 13 "none" "up"	none none 13 none none
+	"up" "none" 13 "side" "none"	none none 13 none none
+	"up" "none" 13 "side" "side"	none none 13 none none
+	"up" "none" 13 "side" "up"	none none 13 none none
+	"up" "none" 13 "up" "none"	none none 13 none none
+	"up" "none" 13 "up" "side"	none none 13 none none
+	"up" "none" 13 "up" "up"	none none 13 none none
+	"up" "none" 14 "none" "none"	none none 14 none none
+	"up" "none" 14 "none" "side"	none none 14 none none
+	"up" "none" 14 "none" "up"	none none 14 none none
+	"up" "none" 14 "side" "none"	none none 14 none none
+	"up" "none" 14 "side" "side"	none none 14 none none
+	"up" "none" 14 "side" "up"	none none 14 none none
+	"up" "none" 14 "up" "none"	none none 14 none none
+	"up" "none" 14 "up" "side"	none none 14 none none
+	"up" "none" 14 "up" "up"	none none 14 none none
+	"up" "none" 15 "none" "none"	none none 15 none none
+	"up" "none" 15 "none" "side"	none none 15 none none
+	"up" "none" 15 "none" "up"	none none 15 none none
+	"up" "none" 15 "side" "none"	none none 15 none none
+	"up" "none" 15 "side" "side"	none none 15 none none
+	"up" "none" 15 "side" "up"	none none 15 none none
+	"up" "none" 15 "up" "none"	none none 15 none none
+	"up" "none" 15 "up" "side"	none none 15 none none
+	"up" "none" 15 "up" "up"	none none 15 none none
+	"up" "none" 2 "none" "none"	none none 2 none none
+	"up" "none" 2 "none" "side"	none none 2 none none
+	"up" "none" 2 "none" "up"	none none 2 none none
+	"up" "none" 2 "side" "none"	none none 2 none none
+	"up" "none" 2 "side" "side"	none none 2 none none
+	"up" "none" 2 "side" "up"	none none 2 none none
+	"up" "none" 2 "up" "none"	none none 2 none none
+	"up" "none" 2 "up" "side"	none none 2 none none
+	"up" "none" 2 "up" "up"	none none 2 none none
+	"up" "none" 3 "none" "none"	none none 3 none none
+	"up" "none" 3 "none" "side"	none none 3 none none
+	"up" "none" 3 "none" "up"	none none 3 none none
+	"up" "none" 3 "side" "none"	none none 3 none none
+	"up" "none" 3 "side" "side"	none none 3 none none
+	"up" "none" 3 "side" "up"	none none 3 none none
+	"up" "none" 3 "up" "none"	none none 3 none none
+	"up" "none" 3 "up" "side"	none none 3 none none
+	"up" "none" 3 "up" "up"	none none 3 none none
+	"up" "none" 4 "none" "none"	none none 4 none none
+	"up" "none" 4 "none" "side"	none none 4 none none
+	"up" "none" 4 "none" "up"	none none 4 none none
+	"up" "none" 4 "side" "none"	none none 4 none none
+	"up" "none" 4 "side" "side"	none none 4 none none
+	"up" "none" 4 "side" "up"	none none 4 none none
+	"up" "none" 4 "up" "none"	none none 4 none none
+	"up" "none" 4 "up" "side"	none none 4 none none
+	"up" "none" 4 "up" "up"	none none 4 none none
+	"up" "none" 5 "none" "none"	none none 5 none none
+	"up" "none" 5 "none" "side"	none none 5 none none
+	"up" "none" 5 "none" "up"	none none 5 none none
+	"up" "none" 5 "side" "none"	none none 5 none none
+	"up" "none" 5 "side" "side"	none none 5 none none
+	"up" "none" 5 "side" "up"	none none 5 none none
+	"up" "none" 5 "up" "none"	none none 5 none none
+	"up" "none" 5 "up" "side"	none none 5 none none
+	"up" "none" 5 "up" "up"	none none 5 none none
+	"up" "none" 6 "none" "none"	none none 6 none none
+	"up" "none" 6 "none" "side"	none none 6 none none
+	"up" "none" 6 "none" "up"	none none 6 none none
+	"up" "none" 6 "side" "none"	none none 6 none none
+	"up" "none" 6 "side" "side"	none none 6 none none
+	"up" "none" 6 "side" "up"	none none 6 none none
+	"up" "none" 6 "up" "none"	none none 6 none none
+	"up" "none" 6 "up" "side"	none none 6 none none
+	"up" "none" 6 "up" "up"	none none 6 none none
+	"up" "none" 7 "none" "none"	none none 7 none none
+	"up" "none" 7 "none" "side"	none none 7 none none
+	"up" "none" 7 "none" "up"	none none 7 none none
+	"up" "none" 7 "side" "none"	none none 7 none none
+	"up" "none" 7 "side" "side"	none none 7 none none
+	"up" "none" 7 "side" "up"	none none 7 none none
+	"up" "none" 7 "up" "none"	none none 7 none none
+	"up" "none" 7 "up" "side"	none none 7 none none
+	"up" "none" 7 "up" "up"	none none 7 none none
+	"up" "none" 8 "none" "none"	none none 8 none none
+	"up" "none" 8 "none" "side"	none none 8 none none
+	"up" "none" 8 "none" "up"	none none 8 none none
+	"up" "none" 8 "side" "none"	none none 8 none none
+	"up" "none" 8 "side" "side"	none none 8 none none
+	"up" "none" 8 "side" "up"	none none 8 none none
+	"up" "none" 8 "up" "none"	none none 8 none none
+	"up" "none" 8 "up" "side"	none none 8 none none
+	"up" "none" 8 "up" "up"	none none 8 none none
+	"up" "none" 9 "none" "none"	none none 9 none none
+	"up" "none" 9 "none" "side"	none none 9 none none
+	"up" "none" 9 "none" "up"	none none 9 none none
+	"up" "none" 9 "side" "none"	none none 9 none none
+	"up" "none" 9 "side" "side"	none none 9 none none
+	"up" "none" 9 "side" "up"	none none 9 none none
+	"up" "none" 9 "up" "none"	none none 9 none none
+	"up" "none" 9 "up" "side"	none none 9 none none
+	"up" "none" 9 "up" "up"	none none 9 none none
+	"up" "side" 0 "none" "none"	none none 0 none none
+	"up" "side" 0 "none" "side"	none none 0 none none
+	"up" "side" 0 "none" "up"	none none 0 none none
+	"up" "side" 0 "side" "none"	none none 0 none none
+	"up" "side" 0 "side" "side"	none none 0 none none
+	"up" "side" 0 "side" "up"	none none 0 none none
+	"up" "side" 0 "up" "none"	none none 0 none none
+	"up" "side" 0 "up" "side"	none none 0 none none
+	"up" "side" 0 "up" "up"	none none 0 none none
+	"up" "side" 1 "none" "none"	none none 1 none none
+	"up" "side" 1 "none" "side"	none none 1 none none
+	"up" "side" 1 "none" "up"	none none 1 none none
+	"up" "side" 1 "side" "none"	none none 1 none none
+	"up" "side" 1 "side" "side"	none none 1 none none
+	"up" "side" 1 "side" "up"	none none 1 none none
+	"up" "side" 1 "up" "none"	none none 1 none none
+	"up" "side" 1 "up" "side"	none none 1 none none
+	"up" "side" 1 "up" "up"	none none 1 none none
+	"up" "side" 10 "none" "none"	none none 10 none none
+	"up" "side" 10 "none" "side"	none none 10 none none
+	"up" "side" 10 "none" "up"	none none 10 none none
+	"up" "side" 10 "side" "none"	none none 10 none none
+	"up" "side" 10 "side" "side"	none none 10 none none
+	"up" "side" 10 "side" "up"	none none 10 none none
+	"up" "side" 10 "up" "none"	none none 10 none none
+	"up" "side" 10 "up" "side"	none none 10 none none
+	"up" "side" 10 "up" "up"	none none 10 none none
+	"up" "side" 11 "none" "none"	none none 11 none none
+	"up" "side" 11 "none" "side"	none none 11 none none
+	"up" "side" 11 "none" "up"	none none 11 none none
+	"up" "side" 11 "side" "none"	none none 11 none none
+	"up" "side" 11 "side" "side"	none none 11 none none
+	"up" "side" 11 "side" "up"	none none 11 none none
+	"up" "side" 11 "up" "none"	none none 11 none none
+	"up" "side" 11 "up" "side"	none none 11 none none
+	"up" "side" 11 "up" "up"	none none 11 none none
+	"up" "side" 12 "none" "none"	none none 12 none none
+	"up" "side" 12 "none" "side"	none none 12 none none
+	"up" "side" 12 "none" "up"	none none 12 none none
+	"up" "side" 12 "side" "none"	none none 12 none none
+	"up" "side" 12 "side" "side"	none none 12 none none
+	"up" "side" 12 "side" "up"	none none 12 none none
+	"up" "side" 12 "up" "none"	none none 12 none none
+	"up" "side" 12 "up" "side"	none none 12 none none
+	"up" "side" 12 "up" "up"	none none 12 none none
+	"up" "side" 13 "none" "none"	none none 13 none none
+	"up" "side" 13 "none" "side"	none none 13 none none
+	"up" "side" 13 "none" "up"	none none 13 none none
+	"up" "side" 13 "side" "none"	none none 13 none none
+	"up" "side" 13 "side" "side"	none none 13 none none
+	"up" "side" 13 "side" "up"	none none 13 none none
+	"up" "side" 13 "up" "none"	none none 13 none none
+	"up" "side" 13 "up" "side"	none none 13 none none
+	"up" "side" 13 "up" "up"	none none 13 none none
+	"up" "side" 14 "none" "none"	none none 14 none none
+	"up" "side" 14 "none" "side"	none none 14 none none
+	"up" "side" 14 "none" "up"	none none 14 none none
+	"up" "side" 14 "side" "none"	none none 14 none none
+	"up" "side" 14 "side" "side"	none none 14 none none
+	"up" "side" 14 "side" "up"	none none 14 none none
+	"up" "side" 14 "up" "none"	none none 14 none none
+	"up" "side" 14 "up" "side"	none none 14 none none
+	"up" "side" 14 "up" "up"	none none 14 none none
+	"up" "side" 15 "none" "none"	none none 15 none none
+	"up" "side" 15 "none" "side"	none none 15 none none
+	"up" "side" 15 "none" "up"	none none 15 none none
+	"up" "side" 15 "side" "none"	none none 15 none none
+	"up" "side" 15 "side" "side"	none none 15 none none
+	"up" "side" 15 "side" "up"	none none 15 none none
+	"up" "side" 15 "up" "none"	none none 15 none none
+	"up" "side" 15 "up" "side"	none none 15 none none
+	"up" "side" 15 "up" "up"	none none 15 none none
+	"up" "side" 2 "none" "none"	none none 2 none none
+	"up" "side" 2 "none" "side"	none none 2 none none
+	"up" "side" 2 "none" "up"	none none 2 none none
+	"up" "side" 2 "side" "none"	none none 2 none none
+	"up" "side" 2 "side" "side"	none none 2 none none
+	"up" "side" 2 "side" "up"	none none 2 none none
+	"up" "side" 2 "up" "none"	none none 2 none none
+	"up" "side" 2 "up" "side"	none none 2 none none
+	"up" "side" 2 "up" "up"	none none 2 none none
+	"up" "side" 3 "none" "none"	none none 3 none none
+	"up" "side" 3 "none" "side"	none none 3 none none
+	"up" "side" 3 "none" "up"	none none 3 none none
+	"up" "side" 3 "side" "none"	none none 3 none none
+	"up" "side" 3 "side" "side"	none none 3 none none
+	"up" "side" 3 "side" "up"	none none 3 none none
+	"up" "side" 3 "up" "none"	none none 3 none none
+	"up" "side" 3 "up" "side"	none none 3 none none
+	"up" "side" 3 "up" "up"	none none 3 none none
+	"up" "side" 4 "none" "none"	none none 4 none none
+	"up" "side" 4 "none" "side"	none none 4 none none
+	"up" "side" 4 "none" "up"	none none 4 none none
+	"up" "side" 4 "side" "none"	none none 4 none none
+	"up" "side" 4 "side" "side"	none none 4 none none
+	"up" "side" 4 "side" "up"	none none 4 none none
+	"up" "side" 4 "up" "none"	none none 4 none none
+	"up" "side" 4 "up" "side"	none none 4 none none
+	"up" "side" 4 "up" "up"	none none 4 none none
+	"up" "side" 5 "none" "none"	none none 5 none none
+	"up" "side" 5 "none" "side"	none none 5 none none
+	"up" "side" 5 "none" "up"	none none 5 none none
+	"up" "side" 5 "side" "none"	none none 5 none none
+	"up" "side" 5 "side" "side"	none none 5 none none
+	"up" "side" 5 "side" "up"	none none 5 none none
+	"up" "side" 5 "up" "none"	none none 5 none none
+	"up" "side" 5 "up" "side"	none none 5 none none
+	"up" "side" 5 "up" "up"	none none 5 none none
+	"up" "side" 6 "none" "none"	none none 6 none none
+	"up" "side" 6 "none" "side"	none none 6 none none
+	"up" "side" 6 "none" "up"	none none 6 none none
+	"up" "side" 6 "side" "none"	none none 6 none none
+	"up" "side" 6 "side" "side"	none none 6 none none
+	"up" "side" 6 "side" "up"	none none 6 none none
+	"up" "side" 6 "up" "none"	none none 6 none none
+	"up" "side" 6 "up" "side"	none none 6 none none
+	"up" "side" 6 "up" "up"	none none 6 none none
+	"up" "side" 7 "none" "none"	none none 7 none none
+	"up" "side" 7 "none" "side"	none none 7 none none
+	"up" "side" 7 "none" "up"	none none 7 none none
+	"up" "side" 7 "side" "none"	none none 7 none none
+	"up" "side" 7 "side" "side"	none none 7 none none
+	"up" "side" 7 "side" "up"	none none 7 none none
+	"up" "side" 7 "up" "none"	none none 7 none none
+	"up" "side" 7 "up" "side"	none none 7 none none
+	"up" "side" 7 "up" "up"	none none 7 none none
+	"up" "side" 8 "none" "none"	none none 8 none none
+	"up" "side" 8 "none" "side"	none none 8 none none
+	"up" "side" 8 "none" "up"	none none 8 none none
+	"up" "side" 8 "side" "none"	none none 8 none none
+	"up" "side" 8 "side" "side"	none none 8 none none
+	"up" "side" 8 "side" "up"	none none 8 none none
+	"up" "side" 8 "up" "none"	none none 8 none none
+	"up" "side" 8 "up" "side"	none none 8 none none
+	"up" "side" 8 "up" "up"	none none 8 none none
+	"up" "side" 9 "none" "none"	none none 9 none none
+	"up" "side" 9 "none" "side"	none none 9 none none
+	"up" "side" 9 "none" "up"	none none 9 none none
+	"up" "side" 9 "side" "none"	none none 9 none none
+	"up" "side" 9 "side" "side"	none none 9 none none
+	"up" "side" 9 "side" "up"	none none 9 none none
+	"up" "side" 9 "up" "none"	none none 9 none none
+	"up" "side" 9 "up" "side"	none none 9 none none
+	"up" "side" 9 "up" "up"	none none 9 none none
+	"up" "up" 0 "none" "none"	none none 0 none none
+	"up" "up" 0 "none" "side"	none none 0 none none
+	"up" "up" 0 "none" "up"	none none 0 none none
+	"up" "up" 0 "side" "none"	none none 0 none none
+	"up" "up" 0 "side" "side"	none none 0 none none
+	"up" "up" 0 "side" "up"	none none 0 none none
+	"up" "up" 0 "up" "none"	none none 0 none none
+	"up" "up" 0 "up" "side"	none none 0 none none
+	"up" "up" 0 "up" "up"	none none 0 none none
+	"up" "up" 1 "none" "none"	none none 1 none none
+	"up" "up" 1 "none" "side"	none none 1 none none
+	"up" "up" 1 "none" "up"	none none 1 none none
+	"up" "up" 1 "side" "none"	none none 1 none none
+	"up" "up" 1 "side" "side"	none none 1 none none
+	"up" "up" 1 "side" "up"	none none 1 none none
+	"up" "up" 1 "up" "none"	none none 1 none none
+	"up" "up" 1 "up" "side"	none none 1 none none
+	"up" "up" 1 "up" "up"	none none 1 none none
+	"up" "up" 10 "none" "none"	none none 10 none none
+	"up" "up" 10 "none" "side"	none none 10 none none
+	"up" "up" 10 "none" "up"	none none 10 none none
+	"up" "up" 10 "side" "none"	none none 10 none none
+	"up" "up" 10 "side" "side"	none none 10 none none
+	"up" "up" 10 "side" "up"	none none 10 none none
+	"up" "up" 10 "up" "none"	none none 10 none none
+	"up" "up" 10 "up" "side"	none none 10 none none
+	"up" "up" 10 "up" "up"	none none 10 none none
+	"up" "up" 11 "none" "none"	none none 11 none none
+	"up" "up" 11 "none" "side"	none none 11 none none
+	"up" "up" 11 "none" "up"	none none 11 none none
+	"up" "up" 11 "side" "none"	none none 11 none none
+	"up" "up" 11 "side" "side"	none none 11 none none
+	"up" "up" 11 "side" "up"	none none 11 none none
+	"up" "up" 11 "up" "none"	none none 11 none none
+	"up" "up" 11 "up" "side"	none none 11 none none
+	"up" "up" 11 "up" "up"	none none 11 none none
+	"up" "up" 12 "none" "none"	none none 12 none none
+	"up" "up" 12 "none" "side"	none none 12 none none
+	"up" "up" 12 "none" "up"	none none 12 none none
+	"up" "up" 12 "side" "none"	none none 12 none none
+	"up" "up" 12 "side" "side"	none none 12 none none
+	"up" "up" 12 "side" "up"	none none 12 none none
+	"up" "up" 12 "up" "none"	none none 12 none none
+	"up" "up" 12 "up" "side"	none none 12 none none
+	"up" "up" 12 "up" "up"	none none 12 none none
+	"up" "up" 13 "none" "none"	none none 13 none none
+	"up" "up" 13 "none" "side"	none none 13 none none
+	"up" "up" 13 "none" "up"	none none 13 none none
+	"up" "up" 13 "side" "none"	none none 13 none none
+	"up" "up" 13 "side" "side"	none none 13 none none
+	"up" "up" 13 "side" "up"	none none 13 none none
+	"up" "up" 13 "up" "none"	none none 13 none none
+	"up" "up" 13 "up" "side"	none none 13 none none
+	"up" "up" 13 "up" "up"	none none 13 none none
+	"up" "up" 14 "none" "none"	none none 14 none none
+	"up" "up" 14 "none" "side"	none none 14 none none
+	"up" "up" 14 "none" "up"	none none 14 none none
+	"up" "up" 14 "side" "none"	none none 14 none none
+	"up" "up" 14 "side" "side"	none none 14 none none
+	"up" "up" 14 "side" "up"	none none 14 none none
+	"up" "up" 14 "up" "none"	none none 14 none none
+	"up" "up" 14 "up" "side"	none none 14 none none
+	"up" "up" 14 "up" "up"	none none 14 none none
+	"up" "up" 15 "none" "none"	none none 15 none none
+	"up" "up" 15 "none" "side"	none none 15 none none
+	"up" "up" 15 "none" "up"	none none 15 none none
+	"up" "up" 15 "side" "none"	none none 15 none none
+	"up" "up" 15 "side" "side"	none none 15 none none
+	"up" "up" 15 "side" "up"	none none 15 none none
+	"up" "up" 15 "up" "none"	none none 15 none none
+	"up" "up" 15 "up" "side"	none none 15 none none
+	"up" "up" 15 "up" "up"	none none 15 none none
+	"up" "up" 2 "none" "none"	none none 2 none none
+	"up" "up" 2 "none" "side"	none none 2 none none
+	"up" "up" 2 "none" "up"	none none 2 none none
+	"up" "up" 2 "side" "none"	none none 2 none none
+	"up" "up" 2 "side" "side"	none none 2 none none
+	"up" "up" 2 "side" "up"	none none 2 none none
+	"up" "up" 2 "up" "none"	none none 2 none none
+	"up" "up" 2 "up" "side"	none none 2 none none
+	"up" "up" 2 "up" "up"	none none 2 none none
+	"up" "up" 3 "none" "none"	none none 3 none none
+	"up" "up" 3 "none" "side"	none none 3 none none
+	"up" "up" 3 "none" "up"	none none 3 none none
+	"up" "up" 3 "side" "none"	none none 3 none none
+	"up" "up" 3 "side" "side"	none none 3 none none
+	"up" "up" 3 "side" "up"	none none 3 none none
+	"up" "up" 3 "up" "none"	none none 3 none none
+	"up" "up" 3 "up" "side"	none none 3 none none
+	"up" "up" 3 "up" "up"	none none 3 none none
+	"up" "up" 4 "none" "none"	none none 4 none none
+	"up" "up" 4 "none" "side"	none none 4 none none
+	"up" "up" 4 "none" "up"	none none 4 none none
+	"up" "up" 4 "side" "none"	none none 4 none none
+	"up" "up" 4 "side" "side"	none none 4 none none
+	"up" "up" 4 "side" "up"	none none 4 none none
+	"up" "up" 4 "up" "none"	none none 4 none none
+	"up" "up" 4 "up" "side"	none none 4 none none
+	"up" "up" 4 "up" "up"	none none 4 none none
+	"up" "up" 5 "none" "none"	none none 5 none none
+	"up" "up" 5 "none" "side"	none none 5 none none
+	"up" "up" 5 "none" "up"	none none 5 none none
+	"up" "up" 5 "side" "none"	none none 5 none none
+	"up" "up" 5 "side" "side"	none none 5 none none
+	"up" "up" 5 "side" "up"	none none 5 none none
+	"up" "up" 5 "up" "none"	none none 5 none none
+	"up" "up" 5 "up" "side"	none none 5 none none
+	"up" "up" 5 "up" "up"	none none 5 none none
+	"up" "up" 6 "none" "none"	none none 6 none none
+	"up" "up" 6 "none" "side"	none none 6 none none
+	"up" "up" 6 "none" "up"	none none 6 none none
+	"up" "up" 6 "side" "none"	none none 6 none none
+	"up" "up" 6 "side" "side"	none none 6 none none
+	"up" "up" 6 "side" "up"	none none 6 none none
+	"up" "up" 6 "up" "none"	none none 6 none none
+	"up" "up" 6 "up" "side"	none none 6 none none
+	"up" "up" 6 "up" "up"	none none 6 none none
+	"up" "up" 7 "none" "none"	none none 7 none none
+	"up" "up" 7 "none" "side"	none none 7 none none
+	"up" "up" 7 "none" "up"	none none 7 none none
+	"up" "up" 7 "side" "none"	none none 7 none none
+	"up" "up" 7 "side" "side"	none none 7 none none
+	"up" "up" 7 "side" "up"	none none 7 none none
+	"up" "up" 7 "up" "none"	none none 7 none none
+	"up" "up" 7 "up" "side"	none none 7 none none
+	"up" "up" 7 "up" "up"	none none 7 none none
+	"up" "up" 8 "none" "none"	none none 8 none none
+	"up" "up" 8 "none" "side"	none none 8 none none
+	"up" "up" 8 "none" "up"	none none 8 none none
+	"up" "up" 8 "side" "none"	none none 8 none none
+	"up" "up" 8 "side" "side"	none none 8 none none
+	"up" "up" 8 "side" "up"	none none 8 none none
+	"up" "up" 8 "up" "none"	none none 8 none none
+	"up" "up" 8 "up" "side"	none none 8 none none
+	"up" "up" 8 "up" "up"	none none 8 none none
+	"up" "up" 9 "none" "none"	none none 9 none none
+	"up" "up" 9 "none" "side"	none none 9 none none
+	"up" "up" 9 "none" "up"	none none 9 none none
+	"up" "up" 9 "side" "none"	none none 9 none none
+	"up" "up" 9 "side" "side"	none none 9 none none
+	"up" "up" 9 "side" "up"	none none 9 none none
+	"up" "up" 9 "up" "none"	none none 9 none none
+	"up" "up" 9 "up" "side"	none none 9 none none
+	"up" "up" 9 "up" "up"	none none 9 none none
 B	reeds age	sugar_cane age	geyser
 	0	0
 	1	1

@@ -91,6 +91,7 @@ func (l *sessionList) sendSessionTo(s, to *Session) {
 			EntityUniqueID: int64(runtimeID),
 			Username:       s.conn.IdentityData().DisplayName,
 			XUID:           s.conn.IdentityData().XUID,
+			PlayFabID:      s.conn.IdentityData().PlayFabID,
 			BuildPlatform:  int32(protocol.DeviceUnknown),
 			Skin:           skinToProtocol(s.joinSkin),
 		}},
@@ -177,7 +178,6 @@ func skinToProtocol(s skin.Skin) protocol.Skin {
 		geometryVersion = protocol.CurrentVersion
 	}
 	return protocol.Skin{
-		PlayFabID:                s.PlayFabID,
 		SkinID:                   skinID,
 		SkinResourcePatch:        s.ModelConfig.Encode(),
 		SkinImageWidth:           uint32(s.Bounds().Max.X),

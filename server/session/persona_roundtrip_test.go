@@ -15,7 +15,6 @@ func TestPersonaRoundTrip(t *testing.T) {
 	in.CapeOnClassic = true
 	in.PrimaryUser = true
 	in.OverrideAppearance = true
-	in.PlayFabID = "playfab-id"
 	in.SkinID = "persona-1234"
 	in.CapeID = "cape-5678"
 	in.FullID = "full-9012"

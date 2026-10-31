@@ -581,7 +581,11 @@ func (s *Session) SendAbilities(c Controllable) {
 		// Without these the client refuses to break command and structure blocks.
 		abilities |= protocol.AbilityOperatorCommands | protocol.AbilityTeleport
 	}
-	s.writePacket(&packet.UpdateAbilities{AbilityData: protocol.AbilityData{
+	if mode == world.GameModeSpectator {
+		abilities = protocol.AbilityBuild | protocol.AbilityMine | protocol.AbilityDoorsAndSwitches | protocol.AbilityOpenContainers |
+			protocol.AbilityAttackPlayers | protocol.AbilityAttackMobs
+	}
+	pk := &packet.UpdateAbilities{AbilityData: protocol.AbilityData{
 		EntityUniqueID:     selfEntityRuntimeID,
 		PlayerPermissions:  playerPermissions(c),
 		CommandPermissions: commandPermissions(c),
@@ -595,7 +599,21 @@ func (s *Session) SendAbilities(c Controllable) {
 				WalkSpeed:        protocol.AbilityBaseWalkSpeed,
 			},
 		},
-	}})
+	}}
+	if mode == world.GameModeSpectator {
+		pk.AbilityData.Layers = append([]protocol.AbilityLayer{spectatorAbilityLayer}, pk.AbilityData.Layers...)
+	}
+	s.writePacket(pk)
+}
+
+// spectatorAbilityLayer is the ability layer sent on top of the base layer of a player in spectator mode. It keeps
+// the player flying and passing through blocks, while preventing it from stopping flight or interacting with the world.
+var spectatorAbilityLayer = protocol.AbilityLayer{
+	Type: protocol.AbilityLayerTypeSpectator,
+	Abilities: protocol.AbilityBuild | protocol.AbilityMine | protocol.AbilityDoorsAndSwitches | protocol.AbilityOpenContainers |
+		protocol.AbilityAttackPlayers | protocol.AbilityAttackMobs | protocol.AbilityInvulnerable | protocol.AbilityFlying |
+		protocol.AbilityMayFly | protocol.AbilityInstantBuild | protocol.AbilityNoClip,
+	Values: protocol.AbilityInvulnerable | protocol.AbilityFlying | protocol.AbilityNoClip,
 }
 
 // SendHealth sends the health and max health to the player.
@@ -1175,7 +1193,6 @@ func protocolToSkin(sk protocol.Skin) (s skin.Skin, err error) {
 	s.OverrideAppearance = sk.OverrideAppearance
 	s.Pix = sk.SkinData
 	s.Model = sk.SkinGeometry
-	s.PlayFabID = sk.PlayFabID
 	s.SkinID = sk.SkinID
 	s.CapeID = sk.CapeID
 	s.FullID = sk.FullID
@@ -1402,6 +1419,9 @@ func debugShapeToProtocol(shape debug.Shape, dim world.Dimension, attachedEntity
 
 // gameTypeFromMode returns the game type ID from the game mode passed.
 func gameTypeFromMode(mode world.GameMode) int32 {
+	if mode == world.GameModeSpectator {
+		return packet.GameTypeSpectator
+	}
 	if mode.AllowsFlying() && mode.CreativeInventory() {
 		return packet.GameTypeCreative
 	}

@@ -167,7 +167,6 @@ func Apply(s skin.Skin, m *Model) skin.Skin {
 	copy(out.Pix, m.Pix)
 
 	out.Persona = false
-	out.PlayFabID = s.PlayFabID
 	out.Cape = s.Cape
 	out.SkinColour = s.SkinColour
 	out.ArmSize = m.ArmSize

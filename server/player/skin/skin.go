@@ -29,7 +29,6 @@ type Skin struct {
 	// AnimationData is the raw JSON animation data belonging to the skin, driving an animated face or body.
 	AnimationData string
 
-	PlayFabID string
 	// SkinID identifies the skin. Clients cache a skin against this, so it is carried through unchanged
 	// rather than regenerated, which would make every re-broadcast look like a brand new skin.
 	SkinID string
