@@ -262,6 +262,7 @@ func (s *Session) CloseConnection() {
 	s.once.Do(func() {
 		_ = s.conn.NetConn().SetWriteDeadline(time.Now().Add(time.Second))
 		close(s.closed)
+		selfSwings.Delete(s)
 		if !s.spawned.Load() {
 			s.cleanup()
 		}

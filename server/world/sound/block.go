@@ -233,3 +233,24 @@ type sound struct{}
 
 // Play ...
 func (sound) Play(*world.World, mgl64.Vec3) {}
+
+// CauldronEvent is a sound played, with its particles, when a cauldron is used.
+type CauldronEvent struct {
+	Event CauldronEventType
+
+	sound
+}
+
+// CauldronEventType is what happened to a cauldron.
+type CauldronEventType int
+
+const (
+	CauldronFillWater CauldronEventType = iota
+	CauldronTakeWater
+	CauldronFillLava
+	CauldronTakeLava
+	CauldronAddDye
+	CauldronDyeArmour
+	CauldronCleanArmour
+	CauldronExplode
+)

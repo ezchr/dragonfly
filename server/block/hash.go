@@ -47,6 +47,7 @@ const (
 	hashCobweb
 	hashCocoaBean
 	hashComposter
+	hashCauldron
 	hashConcrete
 	hashConcretePowder
 	hashCopper
@@ -1151,4 +1152,8 @@ func (t WoodTrapdoor) Hash() (uint64, uint64) {
 
 func (w Wool) Hash() (uint64, uint64) {
 	return hashWool, uint64(w.Colour.Uint8())
+}
+
+func (c Cauldron) Hash() (uint64, uint64) {
+	return hashCauldron, uint64(c.Level) | uint64(c.Liquid.Uint8())<<3
 }

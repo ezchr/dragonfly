@@ -143,8 +143,14 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 			click := mgl64.Vec3{clamp01(cx), clamp01(cy), clamp01(cz)}
 			s.fxUsedOn(pos)
 			s.do(func(tx *world.Tx, c session.Controllable) {
+				held, _ := c.HeldItems()
+				bedrockOnly := bedrockOnlyUse(tx.Block(pos), held)
+				swings := s.selfSwingCount().Load()
 				c.UseItemOnBlock(pos, face, click)
 				s.resendHeldItem()
+				if bedrockOnly && s.selfSwingCount().Load() != swings {
+					s.swingSelf() // the client did not swing: Java does nothing here
+				}
 			})
 		}
 		s.ackBlock(seq)
@@ -181,6 +187,15 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 			hit := c.AttackEntity(e)
 			s.log.Debug("attack", "target", target, "hit", hit)
 		})
+	case v777.ServerboundPlayPickItemFromBlock:
+		// Middle click on a block: the same as a Bedrock block pick.
+		x, y, z := r.Position()
+		r.Bool() // include data (ctrl): Bedrock picks without it
+		if r.Err != nil {
+			return true, r.Err
+		}
+		pos := cube.Pos{x, y, z}
+		s.do(func(tx *world.Tx, c session.Controllable) { c.PickBlock(pos) })
 	case v777.ServerboundPlayPunch:
 		s.do(func(tx *world.Tx, c session.Controllable) { c.PunchAir() })
 	case v777.ServerboundPlayInteract:

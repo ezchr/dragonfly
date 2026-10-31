@@ -830,6 +830,15 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 		}
 		s.playNamedSound(pos, name, 0.5, 0.9+0.1*rand.Float32())
 		return
+	case sound.CauldronEvent:
+		events := map[sound.CauldronEventType]int32{
+			sound.CauldronFillWater: packet.LevelEventCauldronFillWater, sound.CauldronTakeWater: packet.LevelEventCauldronTakeWater,
+			sound.CauldronFillLava: packet.LevelEventCauldronFillLava, sound.CauldronTakeLava: packet.LevelEventCauldronTakeLava,
+			sound.CauldronAddDye: packet.LevelEventCauldronAddDye, sound.CauldronDyeArmour: packet.LevelEventCauldronDyeArmor,
+			sound.CauldronCleanArmour: packet.LevelEventCauldronCleanArmor, sound.CauldronExplode: packet.LevelEventCauldronExplode,
+		}
+		s.writePacket(&packet.LevelEvent{EventType: events[so.Event], Position: vec64To32(pos)})
+		return
 	case sound.ArmourStandPlace:
 		s.writePacket(&packet.LevelEvent{EventType: packet.LevelEventSoundArmorStandPlace, Position: vec64To32(pos)})
 		return

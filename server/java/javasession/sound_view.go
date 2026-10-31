@@ -107,6 +107,20 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, broadcast bool) {
 		s.sound(pos, sndFireworkBlast, srcAmbient, 20, 0.95+rnd()*0.1)
 	case sound.FireworkTwinkle:
 		s.sound(pos, sndFireworkTwinkle, srcAmbient, 20, 0.9+rnd()*0.15)
+	case sound.CauldronEvent:
+		// Java has no sounds of its own for dyes in a cauldron: those stay silent.
+		switch so.Event {
+		case sound.CauldronFillWater:
+			s.customSound(pos, "minecraft:item.bucket.empty", 1, 1)
+		case sound.CauldronTakeWater:
+			s.customSound(pos, "minecraft:item.bucket.fill", 1, 1)
+		case sound.CauldronFillLava:
+			s.customSound(pos, "minecraft:item.bucket.empty_lava", 1, 1)
+		case sound.CauldronTakeLava:
+			s.customSound(pos, "minecraft:item.bucket.fill_lava", 1, 1)
+		case sound.CauldronExplode:
+			s.customSound(pos, "minecraft:block.fire.extinguish", 0.5, 2.6)
+		}
 	case sound.ArmourStandPlace:
 		s.customSound(pos, "minecraft:entity.armor_stand.place", 1, 1)
 	case sound.ArmourStandBreak:

@@ -414,6 +414,7 @@ func (s *Session) ViewEntityAction(e world.Entity, a world.EntityAction) {
 		s.queue(v777.ClientboundPlayEntityEvent, w)
 	case entity.SwingArmAction:
 		if id == selfEntityID {
+			s.selfSwingCount().Add(1)
 			return // the client already swung
 		}
 		if !s.ver.Native() {
