@@ -345,6 +345,7 @@ func (s *Session) close(tx *world.Tx, c Controllable) {
 	// This should always be called last due to the timing of the removal of
 	// entity runtime IDs.
 	sessions.Remove(s, c)
+	forgetMaps(s)
 	s.entityMutex.Lock()
 	clear(s.entityRuntimeIDs)
 	clear(s.entities)
@@ -617,6 +618,7 @@ func (s *Session) registerHandlers() {
 		packet.IDInventoryTransaction:      &InventoryTransactionHandler{},
 		packet.IDItemStackRequest:          &ItemStackRequestHandler{changes: map[byte]map[byte]changeInfo{}, responseChanges: map[int32]map[*inventory.Inventory]map[byte]responseChange{}},
 		packet.IDLecternUpdate:             &LecternUpdateHandler{},
+		packet.IDMapInfoRequest:            MapInfoRequestHandler{},
 		packet.IDMobEquipment:              &MobEquipmentHandler{},
 		packet.IDModalFormResponse:         &ModalFormResponseHandler{forms: make(map[uint32]form.Form)},
 		packet.IDMovePlayer:                nil,

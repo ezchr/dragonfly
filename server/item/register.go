@@ -93,6 +93,7 @@ func init() {
 	world.RegisterItem(NetheriteIngot{})
 	world.RegisterItem(NetheriteScrap{})
 	world.RegisterItem(Paper{})
+	world.RegisterItem(FilledMap{})
 	world.RegisterItem(PhantomMembrane{})
 	world.RegisterItem(PoisonousPotato{})
 	world.RegisterItem(PoppedChorusFruit{})
