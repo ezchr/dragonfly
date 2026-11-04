@@ -479,6 +479,7 @@ func (s *Session) ViewBlockUpdate(pos cube.Pos, b world.Block, layer int) {
 	if layer != 0 {
 		return // water layer changes: waterlogging fixer to come
 	}
+	s.updateFrame(pos, b)
 	rid := world.BlockRuntimeID(b)
 	bi := s.blk
 	if int(rid) >= len(bi.java) {

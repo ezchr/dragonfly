@@ -30,9 +30,11 @@ import (
 
 // Session is one Java Edition player's connection.
 type Session struct {
-	log *slog.Logger
-	jp  *server.Player
-	id  uuid.UUID // the player's Dragonfly UUID (see Identity)
+	// frames are the item frame entities standing in for item frame blocks (itemframe.go).
+	frames frameState
+	log    *slog.Logger
+	jp     *server.Player
+	id     uuid.UUID // the player's Dragonfly UUID (see Identity)
 	// selfID is the UUID the client logged in with (Mojang's): the client finds its own tab
 	// entry, and so its own skin and game mode, under this one, not under id.
 	selfID uuid.UUID

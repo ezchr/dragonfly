@@ -102,6 +102,7 @@ func (s *Session) ViewChunk(pos world.ChunkPos, dim world.Dimension, blockEntiti
 	s.chunks.sentMu.Lock()
 	s.chunks.sent[pos] = struct{}{}
 	s.chunks.sentMu.Unlock()
+	s.showFrames(blockEntities)
 }
 
 // forgetFarChunks unloads the chunks the loader dropped around a new centre: those further than
@@ -135,6 +136,7 @@ func (s *Session) forgetAllChunks(tell bool) {
 // forgetChunk sends forget_level_chunk. sentMu must be held.
 func (s *Session) forgetChunk(pos world.ChunkPos) {
 	delete(s.chunks.sent, pos)
+	s.hideChunkFrames(pos)
 	w := s.packet()
 	w.Int64(int64(uint64(uint32(pos[0])) | uint64(uint32(pos[1]))<<32)) // ChunkPos.pack
 	s.queue(v777.ClientboundPlayForgetLevelChunk, w)
