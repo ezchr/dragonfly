@@ -109,7 +109,7 @@ func (i ItemFrame) EncodeBlock() (name string, properties map[string]any) {
 	}
 	return name, map[string]any{
 		"facing_direction":     int32(i.Facing.Opposite()),
-		"item_frame_map_bit":   uint8(0), // TODO: When maps are added, set this to true if the item is a map.
+		"item_frame_map_bit":   boolByte(i.holdsMap()),
 		"item_frame_photo_bit": uint8(0), // Only implemented in Education Edition.
 	}
 }
@@ -159,11 +159,20 @@ func (i ItemFrame) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
 	}
 }
 
+// holdsMap reports whether the frame holds a map: the client then draws it as a flat frame the
+// map fills (item_frame_map_bit).
+func (i ItemFrame) holdsMap() bool {
+	_, ok := i.Item.Item().(item.FilledMap)
+	return ok
+}
+
 // allItemFrames ...
 func allItemFrames() (frames []world.Block) {
+	m := item.NewStack(item.FilledMap{}, 1)
 	for _, f := range cube.Faces() {
-		frames = append(frames, ItemFrame{Facing: f, Glowing: true})
-		frames = append(frames, ItemFrame{Facing: f, Glowing: false})
+		for _, glowing := range []bool{true, false} {
+			frames = append(frames, ItemFrame{Facing: f, Glowing: glowing}, ItemFrame{Facing: f, Glowing: glowing, Item: m})
+		}
 	}
 	return
 }
