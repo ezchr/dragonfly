@@ -8,7 +8,6 @@
 package server
 
 import (
-	"strings"
 	"context"
 	"crypto/md5"
 	"crypto/rand"
@@ -19,6 +18,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -85,6 +85,10 @@ type Config struct {
 	// ExtraResourcePacks are offered after ResourcePack, each with its own id (Java keeps them all
 	// loaded, the later ones on top).
 	ExtraResourcePacks []*ResourcePack
+	// TranslatedResourcePacks are offered instead of ResourcePack and ExtraResourcePacks to a client
+	// without this version's core pack: an older client behind a translator, which may not read
+	// packs made for this version. None are offered to such a client if it is empty.
+	TranslatedResourcePacks []*ResourcePack
 	// SessionServer is the session server's base URL (DefaultSessionServer if empty).
 	SessionServer string
 	// PreventProxyConnections also sends the client's IP to the session server, which then
@@ -583,11 +587,12 @@ func (l *Listener) configure(c *wire.Conn, ver *version.Version, local bool) (Cl
 				}
 				c.WritePacket(pk[i].ID, body)
 			}
-			for _, rp := range l.packs() {
-				if full != nil {
-					// An older client behind a translator: our packs are for this version only.
-					break
-				}
+			packs := l.packs()
+			if full != nil {
+				// An older client behind a translator: it gets the packs made for older versions.
+				packs = l.cfg.TranslatedResourcePacks
+			}
+			for _, rp := range packs {
 				pending[rp.id()] = rp
 				c.WritePacket(ver.ClientboundConfig(v777.ClientboundConfigurationResourcePackPush), rp.push())
 			}
