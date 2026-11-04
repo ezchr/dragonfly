@@ -41,6 +41,9 @@ type EntityModel struct {
 	// Yaw turns every part about its pivot, in degrees (counter-clockwise seen from above, +x
 	// towards -z): the model's root rotation.
 	Yaw float64
+	// Scale is the entity scale the parts and offsets are made for (0: 1). An entity drawn at
+	// another scale has its parts and their offsets scaled by its scale over this one.
+	Scale float64
 }
 
 var (
@@ -107,6 +110,14 @@ func (s *Session) viewModel(e world.Entity, id int32, pos mgl64.Vec3, rot cube.R
 	// the viewer, as in item frames): undone here, so the model faces the way Yaw says.
 	q := yawQuat(m.Yaw + 180)
 	partRot := cube.Rotation{rot.Yaw(), 0}
+	f := 1.0
+	if sc, ok := e.(interface{ Scale() float64 }); ok {
+		base := m.Scale
+		if base == 0 {
+			base = 1
+		}
+		f = sc.Scale() / base
+	}
 	ids := make([]int32, 0, len(m.Parts))
 	for _, p := range m.Parts {
 		pid := s.clientEntityID()
@@ -135,17 +146,18 @@ func (s *Session) viewModel(e world.Entity, id int32, pos mgl64.Vec3, rot cube.R
 		w.VarInt(3) // moves and turns are interpolated over 3 ticks, like the stand-in's
 		w.Byte(dataDisplayTranslation)
 		w.VarInt(dataTypeVector3)
-		w.Float32(float32(p.Offset[0]))
-		w.Float32(float32(p.Offset[1]))
-		w.Float32(float32(p.Offset[2]))
-		if sc, ok := e.(interface{ Scale() float64 }); ok && sc.Scale() != 1 {
-			// An entity drawn at another size (a projectile's Scale): every part with it.
-			f := float32(sc.Scale())
+		off := p.Offset.Mul(f)
+		w.Float32(float32(off[0]))
+		w.Float32(float32(off[1]))
+		w.Float32(float32(off[2]))
+		if f != 1 {
+			// An entity drawn at another size than its model (a projectile's Scale): every part
+			// with it.
 			w.Byte(dataDisplayScale)
 			w.VarInt(dataTypeVector3)
-			w.Float32(f)
-			w.Float32(f)
-			w.Float32(f)
+			w.Float32(float32(f))
+			w.Float32(float32(f))
+			w.Float32(float32(f))
 		}
 		w.Byte(dataDisplayLeftRotation)
 		w.VarInt(dataTypeQuaternion)
