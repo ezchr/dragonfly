@@ -55,6 +55,10 @@ type SubCommand struct{}
 // for example, messages and names.
 type Varargs string
 
+// JSON is the rest of the command line, like Varargs, shown to Bedrock clients as a JSON argument
+// (vanilla's /tellraw and /titleraw message).
+type JSON string
+
 // Optional is an argument type that may be used to make any of the available parameter types optional. Optional command
 // parameters may only occur at the end of the Runnable struct. No non-optional parameter is allowed after an optional
 // parameter.
@@ -102,6 +106,8 @@ func typeNameOf(i any, name string) string {
 		return "string"
 	case Varargs:
 		return "text"
+	case JSON:
+		return "json"
 	case bool:
 		return "bool"
 	case mgl64.Vec3:

@@ -119,7 +119,7 @@ func (p parser) parseArgument(line *Line, v reflect.Value, optional bool, name s
 		err = p.bool(line, v)
 	case mgl64.Vec3:
 		err = p.vec3(line, v)
-	case Varargs:
+	case Varargs, JSON:
 		err = p.varargs(line, v)
 	case []Target:
 		err = p.targets(line, v, tx)

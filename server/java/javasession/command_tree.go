@@ -239,7 +239,7 @@ func argumentOf(p cmd.ParamInfo, last bool) cmdNode {
 	case bool:
 		n.parser = parserBool
 		return n
-	case cmd.Varargs:
+	case cmd.Varargs, cmd.JSON:
 		n.parser, n.prop = parserString, stringGreedy
 		return n
 	case mgl64.Vec3:

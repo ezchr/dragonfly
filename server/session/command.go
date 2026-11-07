@@ -199,6 +199,8 @@ func valueToParamType(i cmd.ParamInfo, source cmd.Source) (t uint32, enum comman
 		return protocol.CommandArgTypeString, enum
 	case cmd.Varargs:
 		return protocol.CommandArgTypeRawText, enum
+	case cmd.JSON:
+		return protocol.CommandArgTypeJSON, enum
 	case cmd.Target, []cmd.Target:
 		return protocol.CommandArgTypeTarget, enum
 	case bool:
