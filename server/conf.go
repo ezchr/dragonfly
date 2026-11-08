@@ -229,10 +229,20 @@ type UserConfig struct {
 		// Address is the address on which the server should listen. Players may
 		// connect to this address in order to join.
 		Address string
-		// Transport lists the network transports listened on, "raknet" and/or
-		// "nethernet". If empty, only RakNet is used. Custom transports are added
-		// programmatically through Config.Listeners.
+		// Transport lists the network transports listened on: "raknet",
+		// "nethernet" and/or "tcp". If empty, only RakNet is used. Custom
+		// transports are added programmatically through Config.Listeners.
 		Transport []string
+		// TCP holds settings for the "tcp" transport: a link for a proxy such as
+		// Beacon on the same machine, with packet batches over a TCP stream
+		// instead of RakNet. It needs a gophertunnel with the TCP network
+		// (github.com/ezchr/gophertunnel, branch beacon). It has no access
+		// control, so it must only be reachable by the proxy.
+		TCP struct {
+			// Address is the TCP address listened on. If empty, 127.0.0.1 with
+			// the port of Network.Address is used.
+			Address string
+		}
 		// NetherNet holds settings for the NetherNet HTTP signaling listener.
 		// See NetherNetConfig for how clients find it and how to expose it.
 		NetherNet struct {
@@ -372,6 +382,8 @@ func (uc UserConfig) transportListeners() ([]func(Config) (Listener, error), err
 			listeners = append(listeners, uc.rakNetListenerFunc)
 		case "nethernet":
 			listeners = append(listeners, uc.netherNetListenerFunc)
+		case "tcp":
+			listeners = append(listeners, uc.tcpListenerFunc)
 		default:
 			return nil, fmt.Errorf("unknown network transport %q", name)
 		}

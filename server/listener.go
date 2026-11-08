@@ -367,6 +367,28 @@ func logHTTPRequests(log *slog.Logger, next http.Handler) http.Handler {
 	})
 }
 
+// tcpListenerFunc returns a Listener accepting connections of gophertunnel's TCP
+// network on UserConfig.Network.TCP.Address, for a proxy on the same machine.
+func (uc UserConfig) tcpListenerFunc(conf Config) (Listener, error) {
+	addr := uc.Network.TCP.Address
+	if addr == "" {
+		_, port, err := net.SplitHostPort(uc.Network.Address)
+		if err != nil {
+			return nil, fmt.Errorf("tcp listener: no Network.TCP.Address and no port in Network.Address: %w", err)
+		}
+		addr = net.JoinHostPort("127.0.0.1", port)
+	}
+	l, err := listenerConfig(conf).Listen("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("create TCP listener: %w", err)
+	}
+	if ta, ok := l.Addr().(*net.TCPAddr); ok && !ta.IP.IsLoopback() {
+		conf.Log.Warn("TCP listener is reachable from other machines: it has no access control, keep it for the proxy only.", "addr", l.Addr())
+	}
+	conf.Log.Info("TCP listener running.", "addr", l.Addr())
+	return listener{Listener: l}, nil
+}
+
 func listenerConfig(conf Config) minecraft.ListenConfig {
 	cfg := minecraft.ListenConfig{
 		MaximumPlayers:         conf.MaxPlayers,
