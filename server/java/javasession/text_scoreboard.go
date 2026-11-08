@@ -192,8 +192,8 @@ func (s *Session) viewPlayerNameTag(p *player.Player) {
 // applyNameTag sends the team that makes e's name read as tag.
 func (s *Session) applyNameTag(e world.Entity, tag string) {
 	p, ok := e.(*player.Player)
-	if !ok {
-		return // only players are shown to Java clients so far
+	if !ok || s.unnamed(p) {
+		return // only players are shown to Java clients so far; a statue's name is drawn apart
 	}
 	name := tabName(p.Name())
 	u := p.UUID()
@@ -355,7 +355,7 @@ func (s *Session) ViewPublicScoreTag(e world.Entity) {
 // format. The objective's own format is blank, so players without a tag show nothing.
 func (s *Session) applyScoreTag(e world.Entity, tag string) {
 	p, ok := e.(*player.Player)
-	if !ok {
+	if !ok || s.unnamed(p) {
 		return
 	}
 	name := tabName(p.Name())

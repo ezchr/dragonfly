@@ -1,6 +1,7 @@
 package javasession
 
 import (
+	"github.com/df-mc/dragonfly/server/java/protocol/text"
 	"sync"
 	"time"
 
@@ -291,6 +292,13 @@ func (s *Session) showTabFor(p *player.Player) {
 		return
 	}
 	e := newTabEntry(p)
+	if s.unnamed(p) {
+		// Not a player on the server (a statue): a Java client suggests every name it has an info
+		// for in commands, so the info has no name. The skin still comes from it, the name above it
+		// is drawn apart (a text display), and the blank name's own tag is hidden (fakeTeam).
+		e.name = ""
+		s.joinFakeTeam()
+	}
 	w := s.packet()
 	w.Byte(tabAddAll)
 	w.VarInt(1)
@@ -341,3 +349,40 @@ func (s *Session) updateSelfGameMode(gameMode int32) {
 		s.tab.shown[s.selfID] = sh
 	}
 }
+
+// unnamed reports whether p is shown to this client without a name: a player entity that is not a
+// player on the server (a statue).
+func (s *Session) unnamed(p *player.Player) bool {
+	if s.tabs == nil {
+		return false
+	}
+	_, online := s.tabs.srv.Player(p.UUID())
+	return !online
+}
+
+// fakeTeam holds the blank name of the infos of statues, its name tag hidden: a Java client draws
+// a player's name tag from the info's name, and a blank one shows as an empty box. A name can only
+// be in one team, so they share this one, made once per client.
+const fakeTeam = "df_unnamed"
+
+func (s *Session) joinFakeTeam() {
+	if _, made := fakeTeams.LoadOrStore(s, struct{}{}); made {
+		return
+	}
+	w := s.packet()
+	w.String(fakeTeam)
+	w.Byte(0) // create
+	text.WriteString(w, "")
+	text.WriteString(w, "") // prefix
+	text.WriteString(w, "") // suffix
+	w.VarInt(1)             // name tag: never
+	w.VarInt(0)             // collision: always
+	w.Bool(false)           // no colour
+	w.Byte(0)
+	w.VarInt(1)
+	w.String("")
+	s.queue(v777.ClientboundPlaySetPlayerTeam, w)
+}
+
+// fakeTeams are the sessions that have the fake team.
+var fakeTeams sync.Map
