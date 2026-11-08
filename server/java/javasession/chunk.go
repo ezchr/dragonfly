@@ -84,6 +84,7 @@ func (s *Session) ViewChunk(pos world.ChunkPos, dim world.Dimension, blockEntiti
 	}
 	p := s.packet()
 	col := s.column(pos, c)
+	s.addBlockEntities(col, blockEntities)
 	var err error
 	if enc := s.blk.encoder; enc != nil {
 		s.blk.encMu.Lock()
