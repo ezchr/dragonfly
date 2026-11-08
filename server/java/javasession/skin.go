@@ -132,6 +132,9 @@ func bedrockSkin(img image.Image, slim bool) skin.Skin {
 		s.ModelConfig = skin.ModelConfig{Default: "geometry.humanoid.customSlim"}
 	}
 	s.Model = humanoidGeometry
+	// The classic skin format, as a Bedrock client sends for a classic skin: without it the skin is
+	// sent as of the current version, and Bedrock clients drew Steve instead (a Java player's statue).
+	s.GeometryVersion = "0.0.0"
 	s.Premium = true // as Geyser sends Java skins
 	id := uuid.New().String()
 	s.SkinID = id
