@@ -1,6 +1,7 @@
 package session
 
 import (
+	"crypto/sha256"
 	"image/color"
 	"log/slog"
 	"slices"
@@ -17,13 +18,50 @@ const MapSize = 128
 // mapPicture is the picture of one map id and the sessions that asked for it.
 type mapPicture struct {
 	pixels  []color.RGBA
+	sum     [32]byte // the key of pixels in sharedPixels
 	viewers map[*Session]struct{}
 }
 
+// sharedPixel is one picture's pixels, kept once for every map that shows it: walls of item frames
+// repeat the same pictures (2237 maps, 555 pictures on pvp), and each copy was 64 KB.
+type sharedPixel struct {
+	pixels []color.RGBA
+	maps   int
+}
+
 var (
-	mapsMu      sync.Mutex
-	mapPictures = map[int64]*mapPicture{}
+	mapsMu       sync.Mutex
+	mapPictures  = map[int64]*mapPicture{}
+	sharedPixels = map[[32]byte]*sharedPixel{}
 )
+
+// sharePixels returns the kept copy of pixels, kept for one more map. mapsMu held.
+func sharePixels(pixels []color.RGBA) ([]color.RGBA, [32]byte) {
+	h := sha256.New()
+	buf := make([]byte, 0, len(pixels)*4)
+	for _, c := range pixels {
+		buf = append(buf, c.R, c.G, c.B, c.A)
+	}
+	h.Write(buf)
+	var sum [32]byte
+	copy(sum[:], h.Sum(nil))
+	if sp, ok := sharedPixels[sum]; ok {
+		sp.maps++
+		return sp.pixels, sum
+	}
+	kept := slices.Clone(pixels)
+	sharedPixels[sum] = &sharedPixel{pixels: kept, maps: 1}
+	return kept, sum
+}
+
+// unsharePixels lets go of one map's use of the picture with key sum. mapsMu held.
+func unsharePixels(sum [32]byte) {
+	if sp, ok := sharedPixels[sum]; ok {
+		if sp.maps--; sp.maps <= 0 {
+			delete(sharedPixels, sum)
+		}
+	}
+}
 
 // SetMapPixels sets the picture of the map id (item.FilledMap): MapSize*MapSize pixels, row by row.
 // Every session that already shows the map gets the new picture.
@@ -31,13 +69,15 @@ func SetMapPixels(id int64, pixels []color.RGBA) {
 	if len(pixels) != MapSize*MapSize {
 		panic("session: a map picture is MapSize*MapSize pixels")
 	}
-	pixels = slices.Clone(pixels)
 	mapsMu.Lock()
 	m, ok := mapPictures[id]
 	if !ok {
 		m = &mapPicture{viewers: map[*Session]struct{}{}}
 		mapPictures[id] = m
+	} else if m.pixels != nil {
+		unsharePixels(m.sum)
 	}
+	pixels, m.sum = sharePixels(pixels) // read only from here on: other maps may show the same slice
 	m.pixels = pixels
 	mapsMu.Unlock()
 	// Every Bedrock player gets it, not only those who asked: a client does not always ask for
@@ -59,6 +99,9 @@ func SetMapPixels(id int64, pixels []color.RGBA) {
 // RemoveMap forgets the picture of the map id.
 func RemoveMap(id int64) {
 	mapsMu.Lock()
+	if m, ok := mapPictures[id]; ok && m.pixels != nil {
+		unsharePixels(m.sum)
+	}
 	delete(mapPictures, id)
 	mapsMu.Unlock()
 }
