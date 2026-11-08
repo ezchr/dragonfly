@@ -197,7 +197,15 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 		pos := cube.Pos{x, y, z}
 		s.do(func(tx *world.Tx, c session.Controllable) { c.PickBlock(pos) })
 	case v777.ServerboundPlayPunch:
-		s.do(func(tx *world.Tx, c session.Controllable) { c.PunchAir() })
+		// The client keeps punching while it holds the attack key on a block it mines: that is the
+		// arm swinging, not a miss (a miss sounds and starts the attack cooldown every tick).
+		s.do(func(tx *world.Tx, c session.Controllable) {
+			if s.input.breaking { // set in these tasks too (block_dig)
+				c.SwingArm()
+				return
+			}
+			c.PunchAir()
+		})
 	case v777.ServerboundPlayInteract:
 		target := r.VarInt()
 		hand := r.VarInt()
