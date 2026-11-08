@@ -299,6 +299,12 @@ func (s *Session) handleInput(id int32, body []byte) (bool, error) {
 				c.Wake()
 			case commandStartSprinting:
 				c.StartSprinting()
+				if !c.Sprinting() {
+					// Refused, as with too little food. A Java client that may fly sprints anyway and
+					// adds its own sprint speed modifier; sending the speed again, without modifiers,
+					// takes it off, so the player walks.
+					s.SendSpeed(c.Speed())
+				}
 			case commandStopSprinting:
 				c.StopSprinting()
 			case commandStartFallFlying: // elytra
