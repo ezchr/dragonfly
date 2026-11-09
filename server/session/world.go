@@ -1025,11 +1025,10 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 		})
 		return
 	case sound.MusicDiscEnd:
-		s.writePacket(&packet.ClientboundUpdateSoundData{
-			ServerSoundHandle: so.Handle,
-			Update:            protocol.SoundDataUpdate{Type: protocol.SoundDataUpdateStop},
-		})
-		return
+		// ClientboundUpdateSoundData would stop the music, but this gophertunnel's layout of it does not
+		// match the 1.26.6x client, which disconnects everyone near the jukebox on it. Until it does, the
+		// old event: nobody is kicked, and the music plays on.
+		pk.SoundType = packet.SoundEventRecordNull
 	case sound.FireCharge:
 		s.writePacket(&packet.LevelEvent{
 			EventType: packet.LevelEventSoundBlazeFireball,
